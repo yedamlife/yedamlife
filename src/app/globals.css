@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+/* ============================================
+   TAILWIND V4 THEME CONFIGURATION
+   ============================================ */
+
+@theme {
+  /* Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  /* Border Radius */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ============================================
+   DESIGN SYSTEM TOKENS
+   ============================================ */
+
+:root {
+  /* ===== Primitive Tokens ===== */
+
+  /* Colors - Gray Scale */
+  --gray-0: #ffffff;
+  --gray-4: #0a0a0a;
+  --gray-48: #717182;
+  --gray-90: #ececf0;
+  --gray-95: #f3f3f5;
+
+  /* Colors - Brand */
+  --brand-primary: #030213;
+  --brand-destructive: #d4183d;
+
+  /* Colors - Alpha */
+  --alpha-black-10: rgba(0, 0, 0, 0.1);
+  --alpha-black-5: rgba(0, 0, 0, 0.05);
+  --alpha-muted-30: rgba(236, 236, 240, 0.3);
+  --alpha-muted-10: rgba(236, 236, 240, 0.1);
+
+  /* Typography - Font Size */
+  --text-xs: 12.1px;
+  --text-sm: 12.3px;
+  --text-md: 13.8px;
+  --text-lg: 17.5px;
+
+  /* Typography - Line Height */
+  --leading-sm: 17.5px;
+  --leading-md: 21px;
+  --leading-lg: 24.5px;
+
+  /* Typography - Font Weight */
+  --font-normal: 400;
+  --font-medium: 500;
+
+  /* Spacing */
+  --space-1: 1.75px;
+  --space-2: 7px;
+  --space-3: 8px;
+  --space-4: 10.5px;
+  --space-5: 14px;
+  --space-6: 21px;
+
+  /* Border Radius */
+  --radius-sm: 6.75px;
+  --radius-md: 8.75px;
+  --radius-lg: 10px;
+  --radius-full: 9999px;
+
+  /* Sizes */
+  --size-icon: 14px;
+  --size-icon-lg: 17.5px;
+  --size-button-height: 31.5px;
+  --size-section-height: 49px;
+  --size-panel-width: 336px;
+  --size-header-height: 72.75px;
+
+  /* ===== Semantic Tokens ===== */
+
+  /* Background */
+  --bg-primary: var(--gray-0);
+  --bg-secondary: var(--gray-95);
+  --bg-muted: var(--gray-90);
+  --bg-inverse: var(--brand-primary);
+
+  /* Text */
+  --text-primary: var(--gray-4);
+  --text-secondary: var(--gray-48);
+  --text-inverse: var(--gray-0);
+
+  /* Border */
+  --border-default: var(--alpha-black-10);
+  --border-hover: var(--alpha-black-5);
+
+  /* Interactive */
+  --interactive-primary: var(--brand-primary);
+  --interactive-primary-hover: rgba(3, 2, 19, 0.9);
+  --interactive-destructive: var(--brand-destructive);
+
+  /* ===== Component Tokens ===== */
+
+  /* Editor */
+  --editor-padding: var(--space-6);
+  --editor-padding-sm: var(--space-5);
+  --editor-gap: var(--space-4);
+  --editor-gap-sm: var(--space-3);
+  --editor-radius: var(--radius-md);
+  --editor-input-radius: var(--radius-sm);
+  --editor-bg-muted: var(--alpha-muted-30);
+  --editor-bg-muted-light: var(--alpha-muted-10);
+
+  /* Button */
+  --button-height: var(--size-button-height);
+  --button-padding-x: 15px;
+  --button-padding-x-icon: 10.5px;
+  --button-gap: var(--space-2);
+  --button-radius: var(--radius-sm);
+
+  /* ===== Legacy/Compatibility ===== */
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
+  --primary: var(--brand-primary);
+  --primary-foreground: var(--text-inverse);
+  --muted: var(--bg-muted);
+  --muted-foreground: var(--text-secondary);
+  --border: var(--border-default);
+  --input: transparent;
+  --input-background: var(--bg-secondary);
+  --ring: oklch(0.708 0 0);
+  --radius: var(--radius-lg);
+  --destructive: var(--brand-destructive);
+  --destructive-foreground: var(--text-inverse);
+  --card: var(--bg-primary);
+  --card-foreground: var(--text-primary);
+  --popover: var(--bg-primary);
+  --popover-foreground: var(--text-primary);
+  --secondary: var(--bg-muted);
+  --secondary-foreground: var(--text-primary);
+  --accent: #e9ebef;
+  --accent-foreground: var(--text-primary);
+
+  /* Charts */
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+}
+
+/* ===== Base Styles ===== */
+html {
+  font-size: 14px;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  word-break: keep-all; /* 한국어 단어 끊김 방지 */
+}
