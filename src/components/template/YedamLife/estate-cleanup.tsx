@@ -416,11 +416,11 @@ const serviceDetails = [
       '유품정리 가운데 발견된 수첩, 일기장 등 의미있는 물건이나 귀중품일 경우 유가족에게 바로 전달하며 다량의 폐기물도 깨끗이 처분해 드립니다.',
     ],
     process: [
-      { step: '01', title: '유품 분류 정리' },
-      { step: '02', title: '간직할 유품 전달,\n그 외 반출' },
-      { step: '03', title: '재활용 물품\n기증·판매 처리' },
-      { step: '04', title: '폐기물 및\n소각물 처리' },
-      { step: '05', title: '유족과\n소통 업무 처리' },
+      { step: '01', title: '유품 분류 정리', detail: '문의 1600-0959, 홈페이지, 카카오톡, 메일 문의' },
+      { step: '02', title: '간직할 유품\n전달,\n그 외 반출', detail: '상담 후 전화로 접수하거나 홈페이지, 카카오톡으로 접수' },
+      { step: '03', title: '재활용 물품\n기증,\n기증·판매 처리', detail: '현장을 방문하여 견적을 내거나 고객 사정상 현장 사진으로 견적(고객 첨부 사진)\n- 고객과 협의하여 주의사항 숙지 후 작업 예상 시간이나 작업량, 현장 상황, 요청사항에 따른 견적\n- 일반(유품정리, 소각, 기증, 매각, 폐기)\n- 특수(크리닝 + 해충방역 + 살균소독 + 악취제거)' },
+      { step: '04', title: '폐기물 및\n소각물 처리', detail: '작업인력이 투입되어 고인과 유가족에 대한 예도의 마음으로 유품분류 및 정리, 크리닝, 소독 방역, 살균소독과 특수청소(유가족 요청 시)' },
+      { step: '05', title: '유족과\n소통 업무 처리', detail: '유가족 확인 단계로 작업 완료 후 의뢰인이 현장을 확인하거나 완료된 현장사진 전송' },
     ],
     order: [
       {
@@ -694,6 +694,7 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
   const [expandedDetail, setExpandedDetail] = useState<string | null>(null);
   const [expandedReligion, setExpandedReligion] = useState(false);
   const [showEstimateModal, setShowEstimateModal] = useState(false);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   // 외부(index.tsx CTA)에서 견적 모달 열기 이벤트 수신
   useEffect(() => {
@@ -1143,49 +1144,90 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                         : '진행과정'}
                 </h3>
                 <div className="relative">
-                  {/* 연결선 (이미지 없는 경우만) */}
-                  {!('image' in svc.process[0]) && (
-                    <div className="hidden sm:block absolute top-[5px] left-0 right-0 h-px bg-gray-300" />
-                  )}
-                  <div
-                    className={`grid grid-cols-3 gap-6 sm:gap-0`}
-                    style={{
-                      gridTemplateColumns: `repeat(${svc.process.length}, 1fr)`,
-                    }}
-                  >
-                    {svc.process.map((p) => (
-                      <div key={p.step} className="text-center relative">
-                        {'image' in p && p.image ? (
-                          <>
+                  {/* PC: 가로 한 줄 */}
+                  <div className="hidden sm:grid sm:grid-cols-5 sm:gap-0">
+                    {svc.process.map((p, idx) => {
+                      const hasImage = 'image' in p && p.image;
+                      return (
+                        <div key={p.step} className="text-center relative">
+                          {/* 연결선: 첫 번째 아이템 제외, 원형 중앙 높이에 맞춤 */}
+                          {idx > 0 && (
                             <div
-                              className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full mx-auto mb-3 overflow-hidden ${svc.id === 'incineration' ? 'bg-white p-6' : 'bg-gray-100'}`}
-                            >
-                              <img
-                                src={p.image}
-                                alt={p.title}
-                                className={`w-full h-full ${svc.id === 'incineration' ? 'object-contain' : 'object-cover'}`}
-                              />
-                            </div>
-                            <p className="text-xs text-gray-400 mb-1">
-                              {p.step}
-                            </p>
-                          </>
-                        ) : (
-                          <>
-                            <div
-                              className="w-2.5 h-2.5 rounded-full mx-auto mb-3"
-                              style={{ backgroundColor: BRAND_COLOR }}
+                              className="absolute h-px right-1/2"
+                              style={{
+                                backgroundColor: BRAND_COLOR,
+                                top: hasImage ? '56px' : '5px',
+                                left: '-50%',
+                              }}
                             />
-                            <p className="text-sm font-bold text-gray-900 mb-1.5">
-                              {p.step}
-                            </p>
-                          </>
-                        )}
-                        <p className="text-xs text-gray-600 font-medium whitespace-pre-line leading-snug">
-                          {p.title}
-                        </p>
-                      </div>
-                    ))}
+                          )}
+                          {hasImage ? (
+                            <>
+                              <div
+                                className={`w-28 h-28 rounded-full mx-auto mb-3 overflow-hidden relative z-10 ${svc.id === 'incineration' ? 'bg-white p-6' : 'bg-gray-100'}`}
+                              >
+                                <img
+                                  src={p.image}
+                                  alt={p.title}
+                                  className={`w-full h-full ${svc.id === 'incineration' ? 'object-contain' : 'object-cover'}`}
+                                />
+                              </div>
+                              <p className="text-xs text-gray-400 mb-1">
+                                {p.step}
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <div
+                                className="w-2.5 h-2.5 rounded-full mx-auto mb-3 relative z-10"
+                                style={{ backgroundColor: BRAND_COLOR }}
+                              />
+                              <p className="text-sm font-bold text-gray-900 mb-1.5">
+                                {p.step}
+                              </p>
+                            </>
+                          )}
+                          <p className="text-xs text-gray-600 font-medium whitespace-pre-line leading-snug">
+                            {p.title}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* 모바일: 2열 지그재그 (선 없이) */}
+                  <div className="sm:hidden">
+                    <div
+                      className="grid grid-cols-2 gap-y-8"
+                      style={{
+                        gridTemplateAreas: `
+                          'item1 item2'
+                          'item3 item4'
+                          'item5 .'
+                        `,
+                      }}
+                    >
+                      {svc.process.map((p, idx) => {
+                        const gridAreas = ['item1', 'item2', 'item3', 'item4', 'item5'];
+                        return (
+                          <div key={p.step} className="text-center" style={{ gridArea: gridAreas[idx] }}>
+                            {'image' in p && p.image ? (
+                              <>
+                                <div className={`w-14 h-14 rounded-full mx-auto mb-2 overflow-hidden ${svc.id === 'incineration' ? 'bg-white p-3' : 'bg-gray-100'}`}>
+                                  <img src={p.image} alt={p.title} className={`w-full h-full ${svc.id === 'incineration' ? 'object-contain' : 'object-cover'}`} />
+                                </div>
+                                <p className="text-xs text-gray-400 mb-0.5">{p.step}</p>
+                              </>
+                            ) : (
+                              <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white mx-auto mb-2" style={{ backgroundColor: BRAND_COLOR }}>
+                                {p.step}
+                              </div>
+                            )}
+                            <p className="text-xs text-gray-600 font-medium whitespace-pre-line leading-snug">{p.title}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1355,6 +1397,52 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                     </div>
                   ))}
                 </div>
+
+                {/* 내용 더보기 버튼 */}
+                {svc.process && (
+                  <div className="text-center mt-8">
+                    <button
+                      onClick={() =>
+                        setExpandedOrderId(
+                          expandedOrderId === svc.id ? null : svc.id,
+                        )
+                      }
+                      className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      내용 더보기
+                      <ChevronDown
+                        className="w-4 h-4 transition-transform"
+                        style={{
+                          transform:
+                            expandedOrderId === svc.id ? 'rotate(180deg)' : '',
+                        }}
+                      />
+                    </button>
+                  </div>
+                )}
+
+                {/* 상세 진행 순서 */}
+                {svc.process && expandedOrderId === svc.id && (
+                  <div className="mt-8 pt-8 border-t border-gray-200">
+                    <div className="max-w-2xl mx-auto space-y-4">
+                      {svc.process.map((p) => (
+                        <div key={p.step} className="flex gap-4 items-start">
+                          <div
+                            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold text-sm"
+                            style={{ backgroundColor: BRAND_COLOR_LIGHT, color: BRAND_COLOR }}
+                          >
+                            {p.step}
+                          </div>
+                          <div className="pt-1">
+                            <p className="text-sm sm:text-base text-gray-700 whitespace-pre-line">
+                              {(p as any).detail || p.title}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
