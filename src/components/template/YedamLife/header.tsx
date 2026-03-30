@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Menu, X, Phone, ChevronDown } from 'lucide-react';
+import { Menu, X, Phone, ChevronDown, Plus } from 'lucide-react';
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
@@ -40,6 +40,19 @@ export function YedamHeader({
         : `${href}?${fromParam}`;
     };
   }, [fromUrl]);
+
+  const renderLabel = (label: string) => {
+    if (!label.includes('+')) return label;
+    return label.split('+').map((part, idx) => (
+      <span key={idx}>
+        {part}
+        {idx < label.split('+').length - 1 && (
+          <Plus className="inline w-3.5 h-3.5 mx-0.5" />
+        )}
+      </span>
+    ));
+  };
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openMenuIdx, setOpenMenuIdx] = useState<number | null>(null);
   const [isServiceOpen, setIsServiceOpen] = useState(false);
@@ -113,7 +126,7 @@ export function YedamHeader({
       <header ref={headerRef} className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-20">
-            <div className="flex items-center">
+            <div className="flex items-center min-w-0 overflow-hidden md:overflow-visible">
               <a
                 href={homeUrl}
                 className="flex items-center cursor-pointer shrink-0"
@@ -121,26 +134,33 @@ export function YedamHeader({
                 <img
                   src="https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/main_logo.png"
                   alt="예담라이프"
-                  className="h-[120px] sm:h-[140px] w-auto object-contain scale-x-110"
+                  className="h-[100px] sm:h-[140px] w-auto object-contain scale-x-110"
                 />
               </a>
               <nav className="hidden md:flex items-center gap-7 ml-7">
                 {topNavItems.map((item) => (
                   <div key={item.label} className="relative group">
-                    <a
-                      href={buildHref(item.href)}
-                      onClick={(e) => handleNavClick(e, item.href)}
-                      className="flex items-center gap-1 text-[16px] font-semibold text-gray-900 transition-colors cursor-pointer whitespace-nowrap"
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = BRAND_COLOR;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = '#111827';
-                      }}
-                    >
-                      {item.label}
-                      {item.subItems && <ChevronDown className="w-3.5 h-3.5" />}
-                    </a>
+                    {item.href ? (
+                      <a
+                        href={buildHref(item.href)}
+                        onClick={(e) => handleNavClick(e, item.href)}
+                        className="flex items-center gap-1 text-[16px] font-semibold text-gray-900 transition-colors cursor-pointer whitespace-nowrap"
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = BRAND_COLOR;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = '#111827';
+                        }}
+                      >
+                        {renderLabel(item.label)}
+                        {item.subItems && <ChevronDown className="w-3.5 h-3.5" />}
+                      </a>
+                    ) : (
+                      <span className="flex items-center gap-1 text-[16px] font-semibold text-gray-900 whitespace-nowrap cursor-default">
+                        {renderLabel(item.label)}
+                        {item.subItems && <ChevronDown className="w-3.5 h-3.5" />}
+                      </span>
+                    )}
                     {item.subItems && (
                       <div className="hidden group-hover:block absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50">
                         <div className="bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[130px]">
@@ -181,17 +201,29 @@ export function YedamHeader({
             </div>
             <div className="hidden md:flex items-center gap-3">
               <a
-                href={googleFormUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center px-4 py-1.5 bg-gray-100 text-gray-900 text-[13px] font-medium rounded-lg hover:bg-gray-200 transition-colors cursor-pointer whitespace-nowrap"
+                href="tel:1660-0959"
+                className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer whitespace-nowrap"
               >
-                <Phone className="w-4 h-4" />
-                <span className="ml-2">24시 긴급 출동</span>
+                <Phone className="w-4 h-4 text-gray-500" />
+                <div className="flex flex-col leading-tight">
+                  <span className="text-[11px] text-gray-500">빠른상담신청</span>
+                  <span className="text-[13px] font-extrabold text-gray-900">1660-0959</span>
+                </div>
               </a>
             </div>
+            <div className="flex md:hidden items-center gap-1.5 shrink-0">
+              <a
+                href="tel:1660-0959"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 whitespace-nowrap"
+              >
+                <Phone className="w-3 h-3 text-gray-500 shrink-0" />
+                <div className="flex flex-col leading-tight">
+                  <span className="text-[9px] text-gray-400">빠른상담</span>
+                  <span className="text-[11px] font-bold text-gray-900">1660-0959</span>
+                </div>
+              </a>
             <button
-              className="md:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+              className="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="메뉴"
             >
@@ -201,6 +233,7 @@ export function YedamHeader({
                 <Menu className="w-6 h-6" />
               )}
             </button>
+            </div>
           </div>
         </div>
 
@@ -291,7 +324,7 @@ export function YedamHeader({
           </div>
           <nav className="flex flex-col p-4 space-y-1 overflow-y-auto h-[calc(100%-60px)]">
             {topNavItems.map((item, navIdx) => (
-              <div key={item.href}>
+              <div key={item.href || item.label}>
                 {item.subItems ? (
                   <>
                     <button
@@ -300,7 +333,7 @@ export function YedamHeader({
                       }
                       className="w-full flex items-center justify-between py-3 px-4 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer text-[15px]"
                     >
-                      {item.label}
+                      {renderLabel(item.label)}
                       <ChevronDown
                         className="w-4 h-4 text-gray-400 transition-transform duration-200"
                         style={{
@@ -353,7 +386,7 @@ export function YedamHeader({
                     onClick={(e) => handleNavClick(e, item.href)}
                     className="py-3 px-4 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer text-[15px] block"
                   >
-                    {item.label}
+                    {renderLabel(item.label)}
                   </a>
                 )}
               </div>

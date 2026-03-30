@@ -69,33 +69,45 @@ export const scrollSpySections: ScrollSpySection[][] = [
 // ── 카테고리 탭 데이터 ──
 export const categoryTabs = [
   {
-    label: '일반 상조',
+    label: '후불제 상조',
     href: '#services',
+    slug: 'general-funeral',
+    pageTitle: '후불제 상조',
     subItems: ['기본 예식', '정성 예식', '품격 예식', '프리미엄 예식'],
   },
   {
     label: '기업 상조',
     href: '#corporate-services',
+    slug: 'corporate-funeral',
+    pageTitle: '기업 상조',
     subItems: ['기업 단체', '임직원 복지', '기업 맞춤'],
   },
   {
     label: '유품정리',
     href: '#cleanup',
+    slug: 'cleanup',
+    pageTitle: '유품정리',
     subItems: ['기본 정리', '전체 정리', '특수 정리'],
   },
   {
     label: '운구의전',
     href: '#ceremony',
+    slug: 'ceremony',
+    pageTitle: '운구의전',
     subItems: ['장례의전', '추모의전', 'VIP의전'],
   },
   {
-    label: '장지플러스',
+    label: '장지+',
     href: '#burial-plus',
+    slug: 'burial-plus',
+    pageTitle: '장지+',
     subItems: ['장지 안내', '장지 예약', '프리미엄 장지'],
   },
   {
-    label: '세무·상속',
+    label: '사후행정케어',
     href: '#tax-inheritance',
+    slug: 'tax-inheritance',
+    pageTitle: '사후행정케어',
     subItems: ['세무 상담', '상속 절차', '법률 지원'],
   },
   {
@@ -131,17 +143,28 @@ export const topNavItems: {
   },
   {
     label: '멤버십 가이드',
-    href: '#products',
+    href: '',
     subItems: [
-      { label: '멤버십 가이드', href: '#membership' },
-      { label: '일반 상조 가입신청', href: '/membership/general', external: true },
-      { label: '기업 상조 가입신청', href: '/membership/corporate', external: true },
-      { label: '가입증서 보기', href: '/membership/certificate', external: true },
+      {
+        label: '후불제 상조 가입신청',
+        href: '/membership/general',
+        external: true,
+      },
+      {
+        label: '기업 상조 가입신청',
+        href: '/membership/corporate',
+        external: true,
+      },
+      {
+        label: '가입증서 보기',
+        href: '/membership/certificate',
+        external: true,
+      },
     ],
   },
   {
     label: '고객센터',
-    href: '#contact',
+    href: '',
     subItems: [
       { label: '공지사항', href: '#contact' },
       {

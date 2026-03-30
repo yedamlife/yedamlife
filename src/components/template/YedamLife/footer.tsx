@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Download, X } from 'lucide-react';
+import { ProposalModal } from './proposal-modal';
 
 const SUPABASE_BASE =
   'https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam';
@@ -10,6 +11,7 @@ export function YedamFooter() {
   const [footerModal, setFooterModal] = useState<'privacy' | 'terms' | null>(
     null,
   );
+  const [showProposalModal, setShowProposalModal] = useState(false);
 
   return (
     <>
@@ -51,14 +53,13 @@ export function YedamFooter() {
             </p>
           </div>
 
-          <a
-            href={`${SUPABASE_BASE}/yedam_company_proposal.zip`}
-            download="예담라이프회사소개서_기업상조제안서.zip"
+          <button
+            onClick={() => setShowProposalModal(true)}
             className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-full cursor-pointer hover:bg-gray-200 transition-colors mb-4 bg-white text-gray-700 border border-gray-300"
           >
             예담라이프 회사소개서 / 기업상조 제안서
             <Download className="w-4 h-4" />
-          </a>
+          </button>
 
           <div className="border-t border-gray-300 pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-6">
@@ -201,6 +202,10 @@ export function YedamFooter() {
           </div>
         </div>
       )}
+      <ProposalModal
+        open={showProposalModal}
+        onClose={() => setShowProposalModal(false)}
+      />
     </>
   );
 }

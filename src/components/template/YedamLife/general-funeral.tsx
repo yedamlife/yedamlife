@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
@@ -276,12 +277,12 @@ export function GeneralFuneral({
             className="absolute inset-0 bg-cover bg-no-repeat bg-right sm:bg-center"
             style={{
               backgroundImage:
-                'url(https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/banner01.png)',
+                'url(https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/general-funeral-hero.png)',
             }}
           />
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative z-10 py-20 sm:py-28 lg:py-36 px-4 sm:px-6">
-            <div className="text-left sm:text-center max-w-3xl mx-auto">
+            <div className="text-center max-w-3xl mx-auto">
               {/* PC: 서브타이틀 + 메인타이틀 */}
               <p
                 className="hidden sm:block text-white text-xl lg:text-2xl font-medium mb-5 tracking-wide"
@@ -293,7 +294,7 @@ export function GeneralFuneral({
                 진심으로 禮를 담아 감동을 전해드리는
               </p>
               <h1
-                className="hidden sm:block text-[34px] lg:text-[44px] font-extrabold text-white leading-snug mb-1"
+                className="hidden sm:block text-[34px] lg:text-[44px] font-bold text-white leading-snug mb-1"
                 style={{
                   textShadow: '0 2px 8px rgba(0,0,0,0.6)',
                   fontFamily: '"Nanum Myeongjo", serif',
@@ -302,13 +303,13 @@ export function GeneralFuneral({
                 대한민국 代表 후불제 상조기업
               </h1>
               <h1
-                className="hidden sm:block text-[34px] lg:text-[44px] font-extrabold leading-snug mb-10"
+                className="hidden sm:block text-[34px] lg:text-[44px] font-bold leading-snug mb-10"
                 style={{
                   textShadow: '0 2px 8px rgba(0,0,0,0.6)',
                   fontFamily: '"Nanum Myeongjo", serif',
                 }}
               >
-                <span style={{ color: '#e8d5a3', fontWeight: 800 }}>
+                <span style={{ color: '#e8d5a3', fontWeight: 700 }}>
                   &ldquo;예담라이프&rdquo;
                 </span>
               </h1>
@@ -324,7 +325,7 @@ export function GeneralFuneral({
                 진심으로 禮를 담아 감동을 전해드리는
               </p>
               <p
-                className="sm:hidden font-extrabold text-white leading-relaxed mb-0.5"
+                className="sm:hidden font-bold text-white leading-relaxed mb-0.5"
                 style={{
                   fontSize: '20px',
                   textShadow: '0 2px 8px rgba(0,0,0,0.6)',
@@ -334,18 +335,18 @@ export function GeneralFuneral({
                 대한민국 代表 후불제 상조기업
               </p>
               <p
-                className="sm:hidden font-extrabold leading-relaxed mb-7"
+                className="sm:hidden font-bold leading-relaxed mb-7"
                 style={{
                   fontSize: '20px',
                   textShadow: '0 2px 8px rgba(0,0,0,0.6)',
                   fontFamily: '"Nanum Myeongjo", serif',
                 }}
               >
-                <span style={{ color: '#e8d5a3', fontWeight: 800 }}>
+                <span style={{ color: '#e8d5a3', fontWeight: 700 }}>
                   &ldquo;예담라이프&rdquo;
                 </span>
               </p>
-              <div className="hidden sm:flex flex-col sm:flex-row items-center justify-center gap-3">
+              <div className="flex flex-row flex-wrap items-center justify-center gap-3">
                 <a
                   href="#inquiry"
                   onClick={(e) => {
@@ -355,7 +356,7 @@ export function GeneralFuneral({
                       .getElementById('inquiry')
                       ?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-white text-gray-900 text-sm sm:text-base font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-white text-gray-900 text-sm sm:text-base font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg cursor-pointer"
                 >
                   <Headphones className="w-4 h-4 sm:w-5 sm:h-5" />
                   장례상품 상담신청
@@ -369,7 +370,7 @@ export function GeneralFuneral({
                       .getElementById('inquiry')
                       ?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 border-2 border-white/70 text-white text-sm sm:text-base font-bold rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 border-2 border-white/70 text-white text-sm sm:text-base font-bold rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
                   다이렉트 장례설계
@@ -562,86 +563,88 @@ export function GeneralFuneral({
               ))}
             </div>
 
-            {/* 차트 */}
+            {/* 차트: 예담라이프 vs 선불제상조 vs 장례식장 상조 비교 */}
             {(() => {
               const priceMap = [
-                { current: 130, five: 200, ten: 290 },
-                { current: 230, five: 330, ten: 480 },
-                { current: 340, five: 480, ten: 650 },
-                { current: 460, five: 630, ten: 850 },
+                { yedam: 130, prepaid: 200, funeral: 350 },
+                { yedam: 230, prepaid: 330, funeral: 500 },
+                { yedam: 340, prepaid: 480, funeral: 700 },
+                { yedam: 460, prepaid: 630, funeral: 900 },
               ];
               const prices = priceMap[chartProductIdx];
-              const maxPrice = prices.ten;
+              const maxPrice = prices.funeral;
               const barHeight = (val: number) =>
                 Math.round((val / maxPrice) * 220);
-              const CHART_BLUE = '#4a7fb5';
+              const savingPercent = Math.round(
+                ((prices.funeral - prices.yedam) / prices.funeral) * 100,
+              );
               return (
                 <div className="relative max-w-lg mx-auto mb-14 scale-[0.8] sm:scale-100 origin-top">
                   <div className="flex items-end justify-center gap-6 sm:gap-10 h-[280px] sm:h-[320px]">
-                    {/* 현재 */}
-                    <div className="flex flex-col items-center gap-2 flex-1 max-w-[100px]">
+                    {/* 예담라이프 */}
+                    <div className="flex flex-col items-center gap-2 flex-1 max-w-[110px]">
                       <div className="relative">
                         <div
                           className="px-3 py-1.5 rounded-lg text-sm font-bold text-white whitespace-nowrap"
-                          style={{ backgroundColor: CHART_BLUE }}
+                          style={{ backgroundColor: '#4a7fb5' }}
                         >
-                          {prices.current}만원
+                          {prices.yedam}만원
                         </div>
                         <div
                           className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45"
-                          style={{ backgroundColor: CHART_BLUE }}
+                          style={{ backgroundColor: '#4a7fb5' }}
                         />
                       </div>
                       <div
                         className="w-full rounded-t-xl transition-all duration-500"
                         style={{
-                          height: `${barHeight(prices.current)}px`,
-                          backgroundColor: CHART_BLUE,
+                          height: `${barHeight(prices.yedam)}px`,
+                          backgroundColor: '#4a7fb5',
                         }}
                       />
                       <span
-                        className="text-sm font-bold"
-                        style={{ color: CHART_BLUE }}
+                        className="text-xs sm:text-sm font-bold text-center leading-tight"
+                        style={{ color: '#4a7fb5' }}
                       >
-                        현재
+                        예담라이프
                       </span>
                     </div>
 
-                    {/* 5년 뒤 */}
-                    <div className="flex flex-col items-center gap-2 flex-1 max-w-[100px]">
+                    {/* 선불제상조 */}
+                    <div className="flex flex-col items-center gap-2 flex-1 max-w-[110px]">
                       <span className="text-sm font-bold text-gray-400">
-                        {prices.five}만원
+                        {prices.prepaid}만원
                       </span>
                       <div
                         className="w-full rounded-t-xl transition-all duration-500"
                         style={{
-                          height: `${barHeight(prices.five)}px`,
-                          backgroundColor: '#e0e0e0',
+                          height: `${barHeight(prices.prepaid)}px`,
+                          backgroundColor: '#d1d5db',
                         }}
                       />
-                      <span className="text-sm font-medium text-gray-400">
-                        5년 뒤
+                      <span className="text-xs sm:text-sm font-medium text-gray-400 text-center leading-tight">
+                        선불제상조
                       </span>
                     </div>
 
-                    {/* 10년 뒤 */}
-                    <div className="flex flex-col items-center gap-2 flex-1 max-w-[100px]">
+                    {/* 장례식장 상조 */}
+                    <div className="flex flex-col items-center gap-2 flex-1 max-w-[110px]">
                       <span className="text-sm font-bold text-gray-400">
-                        {prices.ten}만원
+                        {prices.funeral}만원
                       </span>
                       <div
                         className="w-full rounded-t-xl transition-all duration-500"
                         style={{
-                          height: `${barHeight(prices.ten)}px`,
-                          backgroundColor: '#e0e0e0',
+                          height: `${barHeight(prices.funeral)}px`,
+                          backgroundColor: '#e5e7eb',
                         }}
                       />
-                      <span className="text-sm font-medium text-gray-400">
-                        10년 뒤
+                      <span className="text-xs sm:text-sm font-medium text-gray-400 text-center leading-tight">
+                        장례식장 상조
                       </span>
                     </div>
 
-                    {/* 보장 말풍선 */}
+                    {/* 절약 말풍선 */}
                     <div className="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
                       <div
                         className="w-24 h-24 rounded-full flex items-center justify-center"
@@ -654,13 +657,13 @@ export function GeneralFuneral({
                           className="text-xs font-bold text-center leading-tight"
                           style={{ color: BRAND_COLOR }}
                         >
-                          0원으로
+                          최대
                           <br />
                           <span className="text-sm font-extrabold">
-                            현재 가격
+                            {savingPercent}% 절약
                           </span>
                           <br />
-                          만기까지 보장
+                          월납입금 0원
                         </p>
                       </div>
                     </div>
@@ -670,8 +673,8 @@ export function GeneralFuneral({
                   <div
                     className="absolute left-0 right-0 border-t-2 border-dashed pointer-events-none transition-all duration-500"
                     style={{
-                      bottom: `${barHeight(prices.current) + 35}px`,
-                      borderColor: CHART_BLUE,
+                      bottom: `${barHeight(prices.yedam) + 35}px`,
+                      borderColor: '#4a7fb5',
                       opacity: 0.6,
                     }}
                   />
@@ -804,18 +807,50 @@ export function GeneralFuneral({
               <button
                 onClick={handleCarouselPrev}
                 className="absolute -left-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center cursor-pointer"
-                style={{ width: 56, height: 56, background: 'transparent', border: 'none', minHeight: 'auto', touchAction: 'manipulation' }}
+                style={{
+                  width: 56,
+                  height: 56,
+                  background: 'transparent',
+                  border: 'none',
+                  minHeight: 'auto',
+                  touchAction: 'manipulation',
+                }}
               >
-                <span className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
+                <span
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  }}
+                >
                   <ChevronLeft className="w-5 h-5 text-gray-700" />
                 </span>
               </button>
               <button
                 onClick={handleCarouselNext}
                 className="absolute -right-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center cursor-pointer"
-                style={{ width: 56, height: 56, background: 'transparent', border: 'none', minHeight: 'auto', touchAction: 'manipulation' }}
+                style={{
+                  width: 56,
+                  height: 56,
+                  background: 'transparent',
+                  border: 'none',
+                  minHeight: 'auto',
+                  touchAction: 'manipulation',
+                }}
               >
-                <span className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
+                <span
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  }}
+                >
                   <ChevronRight className="w-5 h-5 text-gray-700" />
                 </span>
               </button>
@@ -973,18 +1008,50 @@ export function GeneralFuneral({
               <button
                 onClick={handleBeforePrev}
                 className="absolute -left-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center cursor-pointer"
-                style={{ width: 56, height: 56, background: 'transparent', border: 'none', minHeight: 'auto', touchAction: 'manipulation' }}
+                style={{
+                  width: 56,
+                  height: 56,
+                  background: 'transparent',
+                  border: 'none',
+                  minHeight: 'auto',
+                  touchAction: 'manipulation',
+                }}
               >
-                <span className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
+                <span
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  }}
+                >
                   <ChevronLeft className="w-5 h-5 text-gray-700" />
                 </span>
               </button>
               <button
                 onClick={handleBeforeNext}
                 className="absolute -right-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center cursor-pointer"
-                style={{ width: 56, height: 56, background: 'transparent', border: 'none', minHeight: 'auto', touchAction: 'manipulation' }}
+                style={{
+                  width: 56,
+                  height: 56,
+                  background: 'transparent',
+                  border: 'none',
+                  minHeight: 'auto',
+                  touchAction: 'manipulation',
+                }}
               >
-                <span className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
+                <span
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  }}
+                >
                   <ChevronRight className="w-5 h-5 text-gray-700" />
                 </span>
               </button>
@@ -1098,18 +1165,50 @@ export function GeneralFuneral({
               <button
                 onClick={handleAfterPrev}
                 className="absolute -left-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center cursor-pointer"
-                style={{ width: 56, height: 56, background: 'transparent', border: 'none', minHeight: 'auto', touchAction: 'manipulation' }}
+                style={{
+                  width: 56,
+                  height: 56,
+                  background: 'transparent',
+                  border: 'none',
+                  minHeight: 'auto',
+                  touchAction: 'manipulation',
+                }}
               >
-                <span className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
+                <span
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  }}
+                >
                   <ChevronLeft className="w-5 h-5 text-gray-700" />
                 </span>
               </button>
               <button
                 onClick={handleAfterNext}
                 className="absolute -right-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center cursor-pointer"
-                style={{ width: 56, height: 56, background: 'transparent', border: 'none', minHeight: 'auto', touchAction: 'manipulation' }}
+                style={{
+                  width: 56,
+                  height: 56,
+                  background: 'transparent',
+                  border: 'none',
+                  minHeight: 'auto',
+                  touchAction: 'manipulation',
+                }}
               >
-                <span className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
+                <span
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  }}
+                >
                   <ChevronRight className="w-5 h-5 text-gray-700" />
                 </span>
               </button>
@@ -1948,57 +2047,72 @@ export function GeneralFuneral({
                     </h3>
 
                     {surveyQuestions[surveyStep].type === 'select' && (
-                      <select
+                      <Select
                         value={surveyAnswers[surveyStep] || ''}
-                        onChange={(e) =>
+                        onValueChange={(value) =>
                           setSurveyAnswers({
                             ...surveyAnswers,
-                            [surveyStep]: e.target.value,
+                            [surveyStep]: value,
                           })
                         }
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-700 bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-opacity-50 appearance-none"
-                        style={
-                          {
-                            focusRingColor: BRAND_COLOR,
-                          } as React.CSSProperties
-                        }
                       >
-                        <option value="">선택해주세요.</option>
-                        {surveyQuestions[surveyStep].options.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="w-full rounded-xl">
+                          <SelectValue placeholder="선택해주세요." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {surveyQuestions[surveyStep].options.map((opt) => (
+                            <SelectItem key={opt} value={opt}>
+                              {opt}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     )}
 
                     {surveyQuestions[surveyStep].type === 'radio' && (
-                      <div className="space-y-3">
+                      <RadioGroup
+                        value={surveyAnswers[surveyStep] || ''}
+                        onValueChange={(value) =>
+                          setSurveyAnswers({
+                            ...surveyAnswers,
+                            [surveyStep]: value,
+                          })
+                        }
+                        className="space-y-3"
+                      >
                         {surveyQuestions[surveyStep].options.map((opt) => (
                           <label
                             key={opt}
-                            className="flex items-center gap-3 cursor-pointer group"
+                            htmlFor={`q-${surveyStep}-${opt}`}
+                            className="flex items-center gap-3 cursor-pointer group rounded-xl border border-gray-200 px-4 py-3 transition-colors hover:border-gray-300 data-[state=checked]:border-[var(--brand)]"
+                            style={
+                              {
+                                '--brand': BRAND_COLOR,
+                                ...(surveyAnswers[surveyStep] === opt
+                                  ? {
+                                      borderColor: BRAND_COLOR,
+                                      backgroundColor: `${BRAND_COLOR}08`,
+                                    }
+                                  : {}),
+                              } as React.CSSProperties
+                            }
                           >
-                            <input
-                              type="radio"
-                              name={`q-${surveyStep}`}
+                            <RadioGroupItem
                               value={opt}
-                              checked={surveyAnswers[surveyStep] === opt}
-                              onChange={() =>
-                                setSurveyAnswers({
-                                  ...surveyAnswers,
-                                  [surveyStep]: opt,
-                                })
+                              id={`q-${surveyStep}-${opt}`}
+                              className="border-gray-300 data-[state=checked]:border-[var(--brand)] data-[state=checked]:text-[var(--brand)]"
+                              style={
+                                {
+                                  '--brand': BRAND_COLOR,
+                                } as React.CSSProperties
                               }
-                              className="w-4 h-4 cursor-pointer"
-                              style={{ accentColor: BRAND_COLOR }}
                             />
                             <span className="text-sm text-gray-700 group-hover:text-gray-900">
                               {opt}
                             </span>
                           </label>
                         ))}
-                      </div>
+                      </RadioGroup>
                     )}
 
                     {surveyQuestions[surveyStep].type === 'text' && (

@@ -125,7 +125,6 @@ function AboutPageContent() {
       >
         {/* ── 공통 헤더 ── */}
         <YedamHeader
-          hideCategoryTabs
           activeCategoryIdx={-1}
           onCategoryChange={(idx) => {
             router.push(`/?tab=${idx}`);

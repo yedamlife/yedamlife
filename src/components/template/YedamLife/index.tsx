@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Menu,
   X,
@@ -11,8 +11,8 @@ import {
   Phone,
   ChevronDown,
   FileText,
-  Download,
   PenLine,
+  ClipboardList,
 } from 'lucide-react';
 import {
   BRAND_COLOR,
@@ -32,11 +32,13 @@ import { YedamFooter } from './footer';
 interface YedamLifeProps {
   hideHeader?: boolean;
   embedded?: boolean;
+  initialCategoryIdx?: number;
 }
 
 export function YedamLife({
   hideHeader = false,
   embedded = false,
+  initialCategoryIdx = 0,
 }: YedamLifeProps) {
   const googleFormUrl = GOOGLE_FORM_URL;
   const pathname = usePathname();
@@ -46,12 +48,17 @@ export function YedamLife({
     const fromParam = `from=${encodeURIComponent(pathname)}`;
     return (href: string) => {
       if (!href.startsWith('/')) return href;
-      return href.includes('?') ? `${href}&${fromParam}` : `${href}?${fromParam}`;
+      return href.includes('?')
+        ? `${href}&${fromParam}`
+        : `${href}?${fromParam}`;
     };
   }, [isSharedTemplate, pathname]);
 
+  const router = useRouter();
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeCategoryIdx, setActiveCategoryIdx] = useState(0);
+  const [activeCategoryIdx, setActiveCategoryIdx] =
+    useState(initialCategoryIdx);
   const [currentBannerIdx, setCurrentBannerIdx] = useState(0);
   const [surveyStep, setSurveyStep] = useState(0);
   const [surveyAnswers, setSurveyAnswers] = useState<Record<number, string>>(
@@ -78,6 +85,16 @@ export function YedamLife({
   const inquirySectionRef = useRef<HTMLDivElement>(null);
   const [showFixedInquiryTab, setShowFixedInquiryTab] = useState(false);
   const [isFloatingOpen, setIsFloatingOpen] = useState(false);
+
+  // 브라우저 타이틀 동기화
+  useEffect(() => {
+    const tab = categoryTabs[activeCategoryIdx];
+    if (tab && !tab.external) {
+      document.title = `예담라이프 | ${tab.pageTitle}`;
+    } else {
+      document.title = '예담라이프 | 후불제 상조';
+    }
+  }, [activeCategoryIdx]);
 
   // 문의 탭 고정 표시 로직
   useEffect(() => {
@@ -112,6 +129,16 @@ export function YedamLife({
     return () => clearInterval(timer);
   }, [hideHeader]);
 
+  const handleCategoryChange = (idx: number) => {
+    setActiveCategoryIdx(idx);
+    const slug = categoryTabs[idx]?.slug;
+    if (slug && idx !== 0) {
+      router.replace(`/${slug}`, { scroll: false });
+    } else {
+      router.replace('/', { scroll: false });
+    }
+  };
+
   const handleNavClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
     href: string,
@@ -130,7 +157,7 @@ export function YedamLife({
 
     // 일반/기업 상조 가입신청 → 해당 탭 전환 후 inquiry로 스크롤
     if (href === '#inquiry-general') {
-      setActiveCategoryIdx(0);
+      handleCategoryChange(0);
       setTimeout(() => {
         document
           .getElementById('inquiry')
@@ -139,7 +166,7 @@ export function YedamLife({
       return;
     }
     if (href === '#inquiry-corporate') {
-      setActiveCategoryIdx(1);
+      handleCategoryChange(1);
       setTimeout(() => {
         document
           .getElementById('inquiry')
@@ -301,13 +328,18 @@ export function YedamLife({
                 </div>
                 <div className="hidden md:flex items-center gap-3">
                   <a
-                    href={googleFormUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center px-4 py-1.5 bg-gray-100 text-gray-900 text-[13px] font-medium rounded-lg hover:bg-gray-200 transition-colors cursor-pointer whitespace-nowrap"
+                    href="tel:1660-0959"
+                    className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer whitespace-nowrap"
                   >
-                    <Phone className="w-4 h-4" />
-                    <span className="ml-2">24시 긴급 출동</span>
+                    <Phone className="w-4 h-4 text-gray-500" />
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-[11px] text-gray-500">
+                        빠른상담신청
+                      </span>
+                      <span className="text-[13px] font-extrabold text-gray-900">
+                        1660-0959
+                      </span>
+                    </div>
                   </a>
                 </div>
                 <button
@@ -360,7 +392,7 @@ export function YedamLife({
                         ) : (
                           <button
                             onClick={() => {
-                              setActiveCategoryIdx(idx);
+                              handleCategoryChange(idx);
                               window.scrollTo({ top: 0, behavior: 'smooth' });
                             }}
                             className="flex items-center justify-center px-3 sm:px-5 py-3.5 text-base sm:text-lg font-bold whitespace-nowrap transition-colors cursor-pointer"
@@ -408,7 +440,7 @@ export function YedamLife({
               </div>
               <nav className="flex flex-col p-4 space-y-1 overflow-y-auto h-[calc(100%-60px)]">
                 {topNavItems.map((item) => (
-                  <div key={item.href}>
+                  <div key={item.label}>
                     <a
                       href={buildHref(item.href)}
                       onClick={(e) => handleNavClick(e, item.href)}
@@ -467,7 +499,7 @@ export function YedamLife({
                         <button
                           key={tab.label}
                           onClick={() => {
-                            setActiveCategoryIdx(idx);
+                            handleCategoryChange(idx);
                             setIsMobileMenuOpen(false);
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                           }}
@@ -569,35 +601,77 @@ export function YedamLife({
                 부담 없이 문의해 주세요.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a
-                  href={activeCategoryIdx === 0 ? buildHref('/membership/general') : googleFormUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="relative w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl transition-colors shadow-lg cursor-pointer hover:opacity-90 overflow-hidden"
-                  style={{
-                    backgroundColor: BRAND_COLOR_PREMIUM,
-                    color: '#ffffff',
-                  }}
-                >
-                  <span
-                    className="absolute inset-0 pointer-events-none"
+                {activeCategoryIdx === 2 ? (
+                  <>
+                    <button
+                      onClick={() =>
+                        window.dispatchEvent(
+                          new CustomEvent('open-estimate-modal'),
+                        )
+                      }
+                      className="relative w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl transition-colors shadow-lg cursor-pointer hover:opacity-90 overflow-hidden"
+                      style={{
+                        backgroundColor: BRAND_COLOR_PREMIUM,
+                        color: '#ffffff',
+                      }}
+                    >
+                      <span
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background:
+                            'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                          animation: 'shimmer 2.5s ease-in-out infinite',
+                          width: '60%',
+                        }}
+                      />
+                      <ClipboardList className="relative w-5 h-5" />
+                      <span className="relative">견적 상담</span>
+                    </button>
+                    <a
+                      href="tel:1660-0959"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
+                    >
+                      <Phone className="w-5 h-5" />
+                      빠른 상담신청
+                    </a>
+                  </>
+                ) : (
+                  <a
+                    href={
+                      activeCategoryIdx === 0
+                        ? buildHref('/membership/general')
+                        : googleFormUrl
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl transition-colors shadow-lg cursor-pointer hover:opacity-90 overflow-hidden"
                     style={{
-                      background:
-                        'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
-                      animation: 'shimmer 2.5s ease-in-out infinite',
-                      width: '60%',
+                      backgroundColor: BRAND_COLOR_PREMIUM,
+                      color: '#ffffff',
                     }}
-                  />
-                  <FileText className="relative w-5 h-5" />
-                  <span className="relative">가입증서 신청하기</span>
-                </a>
-                <a
-                  href="tel:1660-0959"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
-                >
-                  <Phone className="w-5 h-5" />
-                  전화 상담
-                </a>
+                  >
+                    <span
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background:
+                          'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                        animation: 'shimmer 2.5s ease-in-out infinite',
+                        width: '60%',
+                      }}
+                    />
+                    <FileText className="relative w-5 h-5" />
+                    <span className="relative">가입증서 신청하기</span>
+                  </a>
+                )}
+                {activeCategoryIdx !== 2 && (
+                  <a
+                    href="tel:1660-0959"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
+                  >
+                    <Phone className="w-5 h-5" />
+                    전화 상담
+                  </a>
+                )}
               </div>
             </div>
           </section>
@@ -677,26 +751,30 @@ export function YedamLife({
         {/* ── PC 우측 플로팅 사이드바 (sm 이상) ── */}
         {(activeCategoryIdx === 0 || activeCategoryIdx === 1) &&
           !hideHeader && (
-            <div className="hidden sm:flex fixed right-5 top-1/2 -translate-y-1/2 z-50 flex-col gap-3">
+            <div className="hidden sm:flex fixed right-4 bottom-6 z-50 flex-col gap-2">
               <button
                 onClick={() => {
                   if (activeCategoryIdx === 0) {
                     setInquiryMainTab('products');
                     setTimeout(() => {
-                      document.getElementById('inquiry')?.scrollIntoView({ behavior: 'smooth' });
+                      document
+                        .getElementById('inquiry')
+                        ?.scrollIntoView({ behavior: 'smooth' });
                     }, 50);
                   } else {
-                    document.getElementById('sec-corp-inquiry')?.scrollIntoView({ behavior: 'smooth' });
+                    document
+                      .getElementById('sec-corp-inquiry')
+                      ?.scrollIntoView({ behavior: 'smooth' });
                   }
                 }}
-                className="flex flex-col items-center justify-center w-[72px] h-[72px] rounded-2xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+                className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
                 style={{
                   backgroundColor: BRAND_COLOR_LIGHT,
                   color: BRAND_COLOR,
                 }}
               >
-                <Headphones className="w-6 h-6" />
-                <span className="text-xs font-bold mt-0.5">상담신청</span>
+                <Headphones className="w-5 h-5" />
+                <span className="text-[10px] font-bold mt-0.5">상담신청</span>
               </button>
               {activeCategoryIdx === 0 && (
                 <button
@@ -708,20 +786,20 @@ export function YedamLife({
                       });
                     }, 50);
                   }}
-                  className="flex flex-col items-center justify-center w-[72px] h-[72px] rounded-2xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
+                  className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
                 >
-                  <PenLine className="w-6 h-6 text-gray-700" />
-                  <span className="text-xs font-bold text-gray-600 mt-0.5">
+                  <PenLine className="w-5 h-5 text-gray-700" />
+                  <span className="text-[10px] font-bold text-gray-600 mt-0.5">
                     장례설계
                   </span>
                 </button>
               )}
               <a
                 href="tel:1660-0959"
-                className="flex flex-col items-center justify-center w-[72px] h-[72px] rounded-2xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
+                className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
               >
-                <Phone className="w-6 h-6 text-gray-700" />
-                <span className="text-[10px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
+                <Phone className="w-5 h-5 text-gray-700" />
+                <span className="text-[9px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
                   24시
                   <br />
                   긴급출동
@@ -731,35 +809,28 @@ export function YedamLife({
                 href="https://pf.kakao.com/_예담라이프"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center w-[72px] h-[72px] rounded-2xl bg-[#FEE500] shadow-lg border border-[#FEE500] hover:shadow-xl transition-shadow cursor-pointer"
+                className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-[#FEE500] shadow-lg border border-[#FEE500] hover:shadow-xl transition-shadow cursor-pointer"
               >
-                <svg className="w-7 h-7" viewBox="0 0 24 24" fill="#3C1E1E">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#3C1E1E">
                   <path d="M12 3C6.48 3 2 6.54 2 10.86c0 2.78 1.86 5.22 4.65 6.6l-.95 3.53c-.08.3.25.55.52.39l4.2-2.8c.51.07 1.04.1 1.58.1 5.52 0 10-3.54 10-7.86S17.52 3 12 3z" />
                 </svg>
-                <span className="text-[10px] font-bold text-[#3C1E1E]/70 mt-0.5">
+                <span className="text-[9px] font-bold text-[#3C1E1E]/70 mt-0.5">
                   친구추가
                 </span>
               </a>
               <a
-                href={buildHref(activeCategoryIdx === 0 ? '/membership/general' : '/membership/corporate')}
+                href={buildHref(
+                  activeCategoryIdx === 0
+                    ? '/membership/general'
+                    : '/membership/corporate',
+                )}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center w-[72px] h-[72px] rounded-2xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer text-white"
+                className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer text-white"
                 style={{ backgroundColor: '#b8964e' }}
               >
-                <FileText className="w-6 h-6" />
-                <span className="text-xs font-bold mt-0.5">가입신청</span>
-              </a>
-              <a
-                href={buildHref('/membership/certificate')}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center w-[72px] h-[72px] rounded-2xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
-              >
-                <Download className="w-6 h-6 text-gray-700" />
-                <span className="text-xs font-bold text-gray-600 mt-0.5">
-                  증서보기
-                </span>
+                <FileText className="w-5 h-5" />
+                <span className="text-[10px] font-bold mt-0.5">가입신청</span>
               </a>
             </div>
           )}
@@ -767,10 +838,10 @@ export function YedamLife({
         {/* ── 모바일 FAB (sm 미만) ── */}
         {(activeCategoryIdx === 0 || activeCategoryIdx === 1) &&
           !hideHeader && (
-            <div className="sm:hidden fixed right-4 bottom-6 z-50 flex flex-col items-end gap-2">
+            <div className="sm:hidden fixed right-3 bottom-5 z-50 flex flex-col items-end gap-1.5">
               {/* 펼쳐지는 버튼들 */}
               <div
-                className={`flex flex-col items-end gap-2 transition-all duration-300 ${
+                className={`flex flex-col items-end gap-1.5 transition-all duration-300 ${
                   isFloatingOpen
                     ? 'opacity-100 translate-y-0 pointer-events-auto'
                     : 'opacity-0 translate-y-4 pointer-events-none'
@@ -780,18 +851,18 @@ export function YedamLife({
                   href={googleFormUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-full shadow-lg cursor-pointer"
+                  className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full shadow-lg cursor-pointer"
                   style={{
                     backgroundColor: BRAND_COLOR_LIGHT,
                     color: BRAND_COLOR,
                   }}
                 >
-                  <span className="text-xs font-bold">상담신청</span>
+                  <span className="text-[10px] font-bold">상담신청</span>
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center"
+                    className="w-8 h-8 rounded-full flex items-center justify-center"
                     style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
                   >
-                    <Headphones className="w-5 h-5" />
+                    <Headphones className="w-4 h-4" />
                   </div>
                 </a>
                 {activeCategoryIdx === 0 && (
@@ -805,68 +876,59 @@ export function YedamLife({
                         });
                       }, 50);
                     }}
-                    className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-full bg-white shadow-lg border border-gray-200 cursor-pointer"
+                    className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full bg-white shadow-lg border border-gray-200 cursor-pointer"
                   >
-                    <span className="text-xs font-bold text-gray-700">
+                    <span className="text-[10px] font-bold text-gray-700">
                       장례설계
                     </span>
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                      <PenLine className="w-5 h-5 text-gray-700" />
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      <PenLine className="w-4 h-4 text-gray-700" />
                     </div>
                   </button>
                 )}
                 <a
                   href="tel:1660-0959"
-                  className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-full bg-white shadow-lg border border-gray-200 cursor-pointer"
+                  className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full bg-white shadow-lg border border-gray-200 cursor-pointer"
                 >
-                  <span className="text-xs font-bold text-gray-700">
+                  <span className="text-[10px] font-bold text-gray-700">
                     24시 긴급출동
                   </span>
-                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Phone className="w-5 h-5 text-gray-700" />
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                    <Phone className="w-4 h-4 text-gray-700" />
                   </div>
                 </a>
                 <a
                   href="https://pf.kakao.com/_예담라이프"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-full bg-[#FEE500] shadow-lg cursor-pointer"
+                  className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full bg-[#FEE500] shadow-lg cursor-pointer"
                 >
-                  <span className="text-xs font-bold text-[#3C1E1E]">
+                  <span className="text-[10px] font-bold text-[#3C1E1E]">
                     친구추가
                   </span>
-                  <div className="w-10 h-10 rounded-full bg-[#F5DC00] flex items-center justify-center">
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#3C1E1E">
+                  <div className="w-8 h-8 rounded-full bg-[#F5DC00] flex items-center justify-center">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#3C1E1E">
                       <path d="M12 3C6.48 3 2 6.54 2 10.86c0 2.78 1.86 5.22 4.65 6.6l-.95 3.53c-.08.3.25.55.52.39l4.2-2.8c.51.07 1.04.1 1.58.1 5.52 0 10-3.54 10-7.86S17.52 3 12 3z" />
                     </svg>
                   </div>
                 </a>
                 <a
-                  href={buildHref(activeCategoryIdx === 0 ? '/membership/general' : '/membership/corporate')}
+                  href={buildHref(
+                    activeCategoryIdx === 0
+                      ? '/membership/general'
+                      : '/membership/corporate',
+                  )}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-full shadow-lg cursor-pointer text-white"
+                  className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full shadow-lg cursor-pointer text-white"
                   style={{ backgroundColor: '#b8964e' }}
                 >
-                  <span className="text-xs font-bold">가입신청</span>
+                  <span className="text-[10px] font-bold">가입신청</span>
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center"
+                    className="w-8 h-8 rounded-full flex items-center justify-center"
                     style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
                   >
-                    <FileText className="w-5 h-5" />
-                  </div>
-                </a>
-                <a
-                  href={buildHref('/membership/certificate')}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-full bg-white shadow-lg border border-gray-200 cursor-pointer"
-                >
-                  <span className="text-xs font-bold text-gray-700">
-                    증서보기
-                  </span>
-                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Download className="w-5 h-5 text-gray-700" />
+                    <FileText className="w-4 h-4" />
                   </div>
                 </a>
               </div>
@@ -874,7 +936,7 @@ export function YedamLife({
               {/* FAB 토글 버튼 */}
               <button
                 onClick={() => setIsFloatingOpen(!isFloatingOpen)}
-                className="w-12 h-12 rounded-full shadow-xl flex items-center justify-center cursor-pointer transition-all duration-300"
+                className="w-10 h-10 rounded-full shadow-xl flex items-center justify-center cursor-pointer transition-all duration-300"
                 style={{
                   backgroundColor: '#333',
                   color: '#fff',
@@ -882,9 +944,9 @@ export function YedamLife({
                 }}
               >
                 {isFloatingOpen ? (
-                  <Plus className="w-6 h-6" />
+                  <Plus className="w-5 h-5" />
                 ) : (
-                  <MessageCircle className="w-6 h-6" />
+                  <MessageCircle className="w-5 h-5" />
                 )}
               </button>
             </div>

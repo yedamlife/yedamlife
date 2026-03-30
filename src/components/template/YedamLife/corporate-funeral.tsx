@@ -37,6 +37,7 @@ import {
 } from './constants';
 
 import { Ticker } from './components';
+import { ProposalModal } from './proposal-modal';
 
 import {
   Select,
@@ -66,6 +67,9 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
     corpTableFilter,
     setCorpTableFilter,
   } = props;
+
+  // 제안서 문의 모달
+  const [showProposalModal, setShowProposalModal] = useState(false);
 
   // 모바일 캐러셀: 확장 배열 [last, ...all, first]
   const [corpCarouselIdx, setCorpCarouselIdx] = useState(1);
@@ -246,31 +250,40 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                 'url(https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/main_logo_company.png)',
             }}
           />
-          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-0 bg-black/55" />
           <div className="relative z-10 py-20 sm:py-28 lg:py-36 px-4 sm:px-6">
             <div className="text-center max-w-3xl mx-auto">
               <p
-                className="text-white/90 text-sm sm:text-lg font-medium mb-4 sm:mb-6 tracking-wide"
-                style={{ textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}
+                className="text-white/90 text-base sm:text-lg font-medium mb-4 sm:mb-6 tracking-wide"
+                style={{
+                  textShadow: '0 2px 6px rgba(0,0,0,0.6)',
+                  fontFamily: '"Nanum Myeongjo", serif',
+                }}
               >
                 기업 복리후생의 새로운 기준
               </p>
               <h1
-                className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-white leading-snug mb-2 sm:mb-3"
-                style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}
+                className="text-2xl sm:text-[28px] lg:text-[36px] font-bold text-white leading-snug mb-2 sm:mb-3"
+                style={{
+                  textShadow: '0 2px 8px rgba(0,0,0,0.6)',
+                  fontFamily: '"Nanum Myeongjo", serif',
+                }}
               >
                 임직원과 그 가족을 위한
               </h1>
               <h1
-                className="text-xl sm:text-3xl lg:text-4xl font-extrabold leading-snug mb-8 sm:mb-10"
-                style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}
+                className="text-2xl sm:text-[28px] lg:text-[36px] font-bold leading-snug mb-8 sm:mb-10"
+                style={{
+                  textShadow: '0 2px 8px rgba(0,0,0,0.6)',
+                  fontFamily: '"Nanum Myeongjo", serif',
+                }}
               >
                 <span className="text-white">기업 맞춤형 상조 복지서비스 </span>
-                <span style={{ color: '#e8d5a3', fontWeight: 800 }}>
+                <span style={{ color: '#e8d5a3', fontWeight: 700 }}>
                   &ldquo;예담라이프&rdquo;
                 </span>
               </h1>
-              <div className="hidden sm:flex flex-col sm:flex-row items-center justify-center gap-3">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <a
                   href="#corp-comparison"
                   onClick={(e) => {
@@ -279,19 +292,18 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                       .getElementById('corp-comparison')
                       ?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-white text-gray-900 text-sm sm:text-base font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-white text-gray-900 text-sm sm:text-base font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg cursor-pointer"
                 >
                   <Headphones className="w-4 h-4 sm:w-5 sm:h-5" />
                   기업상조 도입 상담
                 </a>
-                <a
-                  href="https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/예담라이프회사소개서_기업상조제안서.zip"
-                  download
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 border-2 border-white/70 text-white text-sm sm:text-base font-bold rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+                <button
+                  onClick={() => setShowProposalModal(true)}
+                  className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 border-2 border-white/70 text-white text-sm sm:text-base font-bold rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   <Download className="w-4 h-4 sm:w-5 sm:h-5" />
                   기업상조 제안서 다운로드
-                </a>
+                </button>
               </div>
             </div>
           </div>
@@ -750,18 +762,50 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
               <button
                 onClick={handleCorpCarouselPrev}
                 className="absolute -left-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center cursor-pointer"
-                style={{ width: 56, height: 56, background: 'transparent', border: 'none', minHeight: 'auto', touchAction: 'manipulation' }}
+                style={{
+                  width: 56,
+                  height: 56,
+                  background: 'transparent',
+                  border: 'none',
+                  minHeight: 'auto',
+                  touchAction: 'manipulation',
+                }}
               >
-                <span className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
+                <span
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  }}
+                >
                   <ChevronLeft className="w-5 h-5 text-gray-700" />
                 </span>
               </button>
               <button
                 onClick={handleCorpCarouselNext}
                 className="absolute -right-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center cursor-pointer"
-                style={{ width: 56, height: 56, background: 'transparent', border: 'none', minHeight: 'auto', touchAction: 'manipulation' }}
+                style={{
+                  width: 56,
+                  height: 56,
+                  background: 'transparent',
+                  border: 'none',
+                  minHeight: 'auto',
+                  touchAction: 'manipulation',
+                }}
               >
-                <span className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
+                <span
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  }}
+                >
                   <ChevronRight className="w-5 h-5 text-gray-700" />
                 </span>
               </button>
@@ -963,18 +1007,50 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
               <button
                 onClick={handleBenefitPrev}
                 className="absolute -left-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center cursor-pointer"
-                style={{ width: 56, height: 56, background: 'transparent', border: 'none', minHeight: 'auto', touchAction: 'manipulation' }}
+                style={{
+                  width: 56,
+                  height: 56,
+                  background: 'transparent',
+                  border: 'none',
+                  minHeight: 'auto',
+                  touchAction: 'manipulation',
+                }}
               >
-                <span className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
+                <span
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  }}
+                >
                   <ChevronLeft className="w-5 h-5 text-gray-700" />
                 </span>
               </button>
               <button
                 onClick={handleBenefitNext}
                 className="absolute -right-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center cursor-pointer"
-                style={{ width: 56, height: 56, background: 'transparent', border: 'none', minHeight: 'auto', touchAction: 'manipulation' }}
+                style={{
+                  width: 56,
+                  height: 56,
+                  background: 'transparent',
+                  border: 'none',
+                  minHeight: 'auto',
+                  touchAction: 'manipulation',
+                }}
               >
-                <span className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
+                <span
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  }}
+                >
                   <ChevronRight className="w-5 h-5 text-gray-700" />
                 </span>
               </button>
@@ -1262,7 +1338,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
-              장례 복지 혜택 진행과정
+              기업 상조 복지 혜택 진행과정
             </h2>
             <p className="text-sm sm:text-base text-gray-500 mt-3">
               기업 부담{' '}
@@ -1893,17 +1969,21 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
               <FileText className="relative w-5 h-5" />
               <span className="relative">가입증서 신청하기</span>
             </a>
-            <a
-              href="https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/예담라이프회사소개서_기업상조제안서.zip"
-              download
+            <button
+              onClick={() => setShowProposalModal(true)}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
             >
               <Download className="w-5 h-5" />
               기업상조 제안서 다운로드
-            </a>
+            </button>
           </div>
         </div>
       </section>
+
+      <ProposalModal
+        open={showProposalModal}
+        onClose={() => setShowProposalModal(false)}
+      />
     </>
   );
 }
