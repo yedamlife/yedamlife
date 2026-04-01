@@ -307,7 +307,7 @@ export const membershipServices = [
     note: '*현장 답사 가능',
     icon: MapPin,
     image:
-      'https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/membership01.jpg',
+      'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/membership01.jpg',
   },
   {
     title: '개장 및 이장 컨설팅',
@@ -315,7 +315,7 @@ export const membershipServices = [
     note: '*현장 답사 가능',
     icon: Sparkles,
     image:
-      'https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/membership02.jpg',
+      'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/membership02.jpg',
   },
   {
     title: '고인 유품정리 컨설팅',
@@ -323,7 +323,7 @@ export const membershipServices = [
     note: '*무료방문견적',
     icon: Heart,
     image:
-      'https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/membership03.jpg',
+      'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/membership03.jpg',
   },
   {
     title: '법률 컨설팅',
@@ -331,7 +331,7 @@ export const membershipServices = [
     note: '(상속/증여/세금 등)',
     icon: Scale,
     image:
-      'https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/membership04.jpg',
+      'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/membership04.jpg',
   },
   {
     title: '장례 운구지원 컨설팅',
@@ -339,7 +339,7 @@ export const membershipServices = [
     note: '',
     icon: Shield,
     image:
-      'https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/membership05.jpg',
+      'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/membership05.jpg',
   },
 ];
 
@@ -724,7 +724,7 @@ export const afterServices = [
 
 // ── 주요 고객사 ──
 export const LOGO_BASE =
-  'https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam';
+  'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife';
 const clientLogoNums = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
   23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
@@ -973,7 +973,7 @@ export const corpServiceData = [
 
 // ── 기업상조 상품 (2개) ──
 export const CORP_IMAGE_BASE =
-  'https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam';
+  'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife';
 
 export const corpFuneralProducts = [
   {

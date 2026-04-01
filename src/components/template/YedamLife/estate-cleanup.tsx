@@ -1,15 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import {
-  Phone,
-  Plus,
-  ChevronDown,
-} from 'lucide-react';
+import { Phone, Plus, ChevronDown } from 'lucide-react';
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
-
   fmtShort,
   daysAgo,
   membershipServices,
@@ -306,7 +301,7 @@ function BeforeAfterCarousel({
 }
 
 const SUPABASE_BASE =
-  'https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam';
+  'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife';
 
 // ── 6대 서비스 ──
 const services = [
@@ -416,11 +411,34 @@ const serviceDetails = [
       '유품정리 가운데 발견된 수첩, 일기장 등 의미있는 물건이나 귀중품일 경우 유가족에게 바로 전달하며 다량의 폐기물도 깨끗이 처분해 드립니다.',
     ],
     process: [
-      { step: '01', title: '유품 분류 정리', detail: '문의 1600-0959, 홈페이지, 카카오톡, 메일 문의' },
-      { step: '02', title: '간직할 유품\n전달,\n그 외 반출', detail: '상담 후 전화로 접수하거나 홈페이지, 카카오톡으로 접수' },
-      { step: '03', title: '재활용 물품\n기증,\n기증·판매 처리', detail: '현장을 방문하여 견적을 내거나 고객 사정상 현장 사진으로 견적(고객 첨부 사진)\n- 고객과 협의하여 주의사항 숙지 후 작업 예상 시간이나 작업량, 현장 상황, 요청사항에 따른 견적\n- 일반(유품정리, 소각, 기증, 매각, 폐기)\n- 특수(크리닝 + 해충방역 + 살균소독 + 악취제거)' },
-      { step: '04', title: '폐기물 및\n소각물 처리', detail: '작업인력이 투입되어 고인과 유가족에 대한 예도의 마음으로 유품분류 및 정리, 크리닝, 소독 방역, 살균소독과 특수청소(유가족 요청 시)' },
-      { step: '05', title: '유족과\n소통 업무 처리', detail: '유가족 확인 단계로 작업 완료 후 의뢰인이 현장을 확인하거나 완료된 현장사진 전송' },
+      {
+        step: '01',
+        title: '유품 분류 정리',
+        detail: '문의 1600-0959, 홈페이지, 카카오톡, 메일 문의',
+      },
+      {
+        step: '02',
+        title: '간직할 유품\n전달,\n그 외 반출',
+        detail: '상담 후 전화로 접수하거나 홈페이지, 카카오톡으로 접수',
+      },
+      {
+        step: '03',
+        title: '재활용 물품\n기증,\n기증·판매 처리',
+        detail:
+          '현장을 방문하여 견적을 내거나 고객 사정상 현장 사진으로 견적(고객 첨부 사진)\n- 고객과 협의하여 주의사항 숙지 후 작업 예상 시간이나 작업량, 현장 상황, 요청사항에 따른 견적\n- 일반(유품정리, 소각, 기증, 매각, 폐기)\n- 특수(크리닝 + 해충방역 + 살균소독 + 악취제거)',
+      },
+      {
+        step: '04',
+        title: '폐기물 및\n소각물 처리',
+        detail:
+          '작업인력이 투입되어 고인과 유가족에 대한 예도의 마음으로 유품분류 및 정리, 크리닝, 소독 방역, 살균소독과 특수청소(유가족 요청 시)',
+      },
+      {
+        step: '05',
+        title: '유족과\n소통 업무 처리',
+        detail:
+          '유가족 확인 단계로 작업 완료 후 의뢰인이 현장을 확인하거나 완료된 현장사진 전송',
+      },
     ],
     order: [
       {
@@ -867,7 +885,10 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                               </span>
                               <span
                                 className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                                style={{ backgroundColor: BRAND_COLOR_LIGHT, color: BRAND_COLOR }}
+                                style={{
+                                  backgroundColor: BRAND_COLOR_LIGHT,
+                                  color: BRAND_COLOR,
+                                }}
                               >
                                 상담완료
                               </span>
@@ -1208,22 +1229,45 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                       }}
                     >
                       {svc.process.map((p, idx) => {
-                        const gridAreas = ['item1', 'item2', 'item3', 'item4', 'item5'];
+                        const gridAreas = [
+                          'item1',
+                          'item2',
+                          'item3',
+                          'item4',
+                          'item5',
+                        ];
                         return (
-                          <div key={p.step} className="text-center" style={{ gridArea: gridAreas[idx] }}>
+                          <div
+                            key={p.step}
+                            className="text-center"
+                            style={{ gridArea: gridAreas[idx] }}
+                          >
                             {'image' in p && p.image ? (
                               <>
-                                <div className={`w-14 h-14 rounded-full mx-auto mb-2 overflow-hidden ${svc.id === 'incineration' ? 'bg-white p-3' : 'bg-gray-100'}`}>
-                                  <img src={p.image} alt={p.title} className={`w-full h-full ${svc.id === 'incineration' ? 'object-contain' : 'object-cover'}`} />
+                                <div
+                                  className={`w-14 h-14 rounded-full mx-auto mb-2 overflow-hidden ${svc.id === 'incineration' ? 'bg-white p-3' : 'bg-gray-100'}`}
+                                >
+                                  <img
+                                    src={p.image}
+                                    alt={p.title}
+                                    className={`w-full h-full ${svc.id === 'incineration' ? 'object-contain' : 'object-cover'}`}
+                                  />
                                 </div>
-                                <p className="text-xs text-gray-400 mb-0.5">{p.step}</p>
+                                <p className="text-xs text-gray-400 mb-0.5">
+                                  {p.step}
+                                </p>
                               </>
                             ) : (
-                              <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white mx-auto mb-2" style={{ backgroundColor: BRAND_COLOR }}>
+                              <div
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white mx-auto mb-2"
+                                style={{ backgroundColor: BRAND_COLOR }}
+                              >
                                 {p.step}
                               </div>
                             )}
-                            <p className="text-xs text-gray-600 font-medium whitespace-pre-line leading-snug">{p.title}</p>
+                            <p className="text-xs text-gray-600 font-medium whitespace-pre-line leading-snug">
+                              {p.title}
+                            </p>
                           </div>
                         );
                       })}
@@ -1429,7 +1473,10 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                         <div key={p.step} className="flex gap-4 items-start">
                           <div
                             className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold text-sm"
-                            style={{ backgroundColor: BRAND_COLOR_LIGHT, color: BRAND_COLOR }}
+                            style={{
+                              backgroundColor: BRAND_COLOR_LIGHT,
+                              color: BRAND_COLOR,
+                            }}
                           >
                             {p.step}
                           </div>
@@ -1491,7 +1538,13 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
       ))}
 
       {/* ── 멤버십 제휴할인 ── */}
-      <section className="py-16 sm:py-24 overflow-hidden" style={{ background: 'linear-gradient(180deg, #faf6ee 0%, #fcf9f4 50%, #ffffff 100%)' }}>
+      <section
+        className="py-16 sm:py-24 overflow-hidden"
+        style={{
+          background:
+            'linear-gradient(180deg, #faf6ee 0%, #fcf9f4 50%, #ffffff 100%)',
+        }}
+      >
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-4">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
@@ -1576,7 +1629,12 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
           style={{ backgroundColor: BRAND_COLOR_LIGHT }}
           title="견적 상담"
         >
-          <span className="text-[10px] lg:text-xs font-bold leading-tight text-center whitespace-pre" style={{ color: BRAND_COLOR }}>{'견적\n상담'}</span>
+          <span
+            className="text-[10px] lg:text-xs font-bold leading-tight text-center whitespace-pre"
+            style={{ color: BRAND_COLOR }}
+          >
+            {'견적\n상담'}
+          </span>
         </button>
         <a
           href="https://pf.kakao.com/_예담라이프"
@@ -1585,7 +1643,11 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
           className="flex items-center justify-center rounded-full shadow-lg cursor-pointer hover:scale-105 transition-transform w-12 h-12 lg:w-14 lg:h-14 overflow-hidden"
           title="카카오톡"
         >
-          <img src="https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/kakao.png" alt="카카오톡" className="w-full h-full object-cover" />
+          <img
+            src="https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/kakao.png"
+            alt="카카오톡"
+            className="w-full h-full object-cover"
+          />
         </a>
         <a
           href="https://blog.naver.com/heung3974"
@@ -1594,7 +1656,11 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
           className="flex items-center justify-center rounded-full shadow-lg cursor-pointer hover:scale-105 transition-transform w-12 h-12 lg:w-14 lg:h-14 overflow-hidden"
           title="블로그"
         >
-          <img src="https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/blog.png" alt="블로그" className="w-full h-full object-cover" />
+          <img
+            src="https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/blog.png"
+            alt="블로그"
+            className="w-full h-full object-cover"
+          />
         </a>
       </div>
 

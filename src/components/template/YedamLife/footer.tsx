@@ -5,7 +5,7 @@ import { Download, X } from 'lucide-react';
 import { ProposalModal } from './proposal-modal';
 
 const SUPABASE_BASE =
-  'https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam';
+  'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife';
 
 export function YedamFooter() {
   const [footerModal, setFooterModal] = useState<'privacy' | 'terms' | null>(
@@ -113,8 +113,8 @@ export function YedamFooter() {
                   <p>
                     예담라이프 주식회사(이하 &quot;회사&quot;)는
                     개인정보보호법에 따라 이용자의 개인정보 보호 및 권익을
-                    보호하고 개인정보와 관련한 이용자의 고충을 원활하게 처리할 수
-                    있도록 다음과 같은 처리방침을 두고 있습니다.
+                    보호하고 개인정보와 관련한 이용자의 고충을 원활하게 처리할
+                    수 있도록 다음과 같은 처리방침을 두고 있습니다.
                   </p>
                   <p className="font-bold text-gray-800 mt-6 mb-2">
                     1. 개인정보의 수집 및 이용 목적
@@ -186,8 +186,9 @@ export function YedamFooter() {
                     제4조 (면책조항)
                   </p>
                   <p>
-                    회사는 천재지변 또는 이에 준하는 불가항력으로 인하여 서비스를
-                    제공할 수 없는 경우에는 서비스 제공에 관한 책임이 면제됩니다.
+                    회사는 천재지변 또는 이에 준하는 불가항력으로 인하여
+                    서비스를 제공할 수 없는 경우에는 서비스 제공에 관한 책임이
+                    면제됩니다.
                   </p>
                   <p className="font-bold text-gray-800 mt-6 mb-2">
                     제5조 (분쟁해결)

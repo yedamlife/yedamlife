@@ -3,13 +3,7 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Script from 'next/script';
-import {
-  Gift,
-  Phone,
-  CheckCircle2,
-  FileText,
-  Search,
-} from 'lucide-react';
+import { Gift, Phone, CheckCircle2, FileText, Search } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -207,7 +201,7 @@ function MembershipGeneralPageContent() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
                 <img
-                  src="https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/main_logo.png"
+                  src="https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/main_logo.png"
                   alt="예담라이프"
                   className="h-[120px] sm:h-[150px] w-auto object-contain"
                 />
@@ -712,7 +706,7 @@ function MembershipGeneralPageContent() {
                 >
                   <div className="h-32 sm:h-40 overflow-hidden">
                     <img
-                      src={`https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/before-service-${String(idx + 1).padStart(2, '0')}.png`}
+                      src={`https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/before-service-${String(idx + 1).padStart(2, '0')}.png`}
                       alt={service.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />

@@ -132,7 +132,7 @@ export function YedamHeader({
                 className="flex items-center cursor-pointer shrink-0"
               >
                 <img
-                  src="https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/main_logo.png"
+                  src="https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/main_logo.png"
                   alt="예담라이프"
                   className="h-[100px] sm:h-[140px] w-auto object-contain scale-x-110"
                 />
@@ -153,12 +153,16 @@ export function YedamHeader({
                         }}
                       >
                         {renderLabel(item.label)}
-                        {item.subItems && <ChevronDown className="w-3.5 h-3.5" />}
+                        {item.subItems && (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        )}
                       </a>
                     ) : (
                       <span className="flex items-center gap-1 text-[16px] font-semibold text-gray-900 whitespace-nowrap cursor-default">
                         {renderLabel(item.label)}
-                        {item.subItems && <ChevronDown className="w-3.5 h-3.5" />}
+                        {item.subItems && (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        )}
                       </span>
                     )}
                     {item.subItems && (
@@ -206,8 +210,12 @@ export function YedamHeader({
               >
                 <Phone className="w-4 h-4 text-gray-500" />
                 <div className="flex flex-col leading-tight">
-                  <span className="text-[11px] text-gray-500">빠른상담신청</span>
-                  <span className="text-[13px] font-extrabold text-gray-900">1660-0959</span>
+                  <span className="text-[11px] text-gray-500">
+                    빠른상담신청
+                  </span>
+                  <span className="text-[13px] font-extrabold text-gray-900">
+                    1660-0959
+                  </span>
                 </div>
               </a>
             </div>
@@ -219,20 +227,22 @@ export function YedamHeader({
                 <Phone className="w-3 h-3 text-gray-500 shrink-0" />
                 <div className="flex flex-col leading-tight">
                   <span className="text-[9px] text-gray-400">빠른상담</span>
-                  <span className="text-[11px] font-bold text-gray-900">1660-0959</span>
+                  <span className="text-[11px] font-bold text-gray-900">
+                    1660-0959
+                  </span>
                 </div>
               </a>
-            <button
-              className="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="메뉴"
-            >
-              {isMobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
-            </button>
+              <button
+                className="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="메뉴"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="w-6 h-6" />
+                ) : (
+                  <Menu className="w-6 h-6" />
+                )}
+              </button>
             </div>
           </div>
         </div>

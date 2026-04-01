@@ -5,7 +5,7 @@ import { Download, FileText, X } from 'lucide-react';
 import { BRAND_COLOR } from './constants';
 
 const PROPOSAL_ZIP_URL =
-  'https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/yedam_company_proposal.zip';
+  'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/yedam_company_proposal.zip';
 
 interface ProposalModalProps {
   open: boolean;
@@ -40,7 +40,13 @@ export function ProposalModal({ open, onClose }: ProposalModalProps) {
 
   useEffect(() => {
     if (open) {
-      setTouched({ name: false, phone: false, email: false, companyName: false, position: false });
+      setTouched({
+        name: false,
+        phone: false,
+        email: false,
+        companyName: false,
+        position: false,
+      });
     }
   }, [open]);
 
@@ -51,7 +57,9 @@ export function ProposalModal({ open, onClose }: ProposalModalProps) {
   };
 
   const handleSubmit = () => {
-    const allTouched = Object.fromEntries(FIELDS.map((f) => [f.key, true])) as Record<FormKey, boolean>;
+    const allTouched = Object.fromEntries(
+      FIELDS.map((f) => [f.key, true]),
+    ) as Record<FormKey, boolean>;
     setTouched(allTouched);
     if (FIELDS.some((f) => !form[f.key].trim())) return;
     window.open(PROPOSAL_ZIP_URL, '_blank');
@@ -111,7 +119,9 @@ export function ProposalModal({ open, onClose }: ProposalModalProps) {
                 onBlur={() => setTouched((prev) => ({ ...prev, name: true }))}
                 className={inputClass('name')}
               />
-              {getError('name') && <p className="text-xs text-red-500 mt-1">{getError('name')}</p>}
+              {getError('name') && (
+                <p className="text-xs text-red-500 mt-1">{getError('name')}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-[#4a5a2b] mb-1.5">
@@ -127,7 +137,9 @@ export function ProposalModal({ open, onClose }: ProposalModalProps) {
                 onBlur={() => setTouched((prev) => ({ ...prev, phone: true }))}
                 className={inputClass('phone')}
               />
-              {getError('phone') && <p className="text-xs text-red-500 mt-1">{getError('phone')}</p>}
+              {getError('phone') && (
+                <p className="text-xs text-red-500 mt-1">{getError('phone')}</p>
+              )}
             </div>
           </div>
 
@@ -145,7 +157,9 @@ export function ProposalModal({ open, onClose }: ProposalModalProps) {
               onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
               className={inputClass('email')}
             />
-            {getError('email') && <p className="text-xs text-red-500 mt-1">{getError('email')}</p>}
+            {getError('email') && (
+              <p className="text-xs text-red-500 mt-1">{getError('email')}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -163,10 +177,16 @@ export function ProposalModal({ open, onClose }: ProposalModalProps) {
                     companyName: e.target.value,
                   }))
                 }
-                onBlur={() => setTouched((prev) => ({ ...prev, companyName: true }))}
+                onBlur={() =>
+                  setTouched((prev) => ({ ...prev, companyName: true }))
+                }
                 className={inputClass('companyName')}
               />
-              {getError('companyName') && <p className="text-xs text-red-500 mt-1">{getError('companyName')}</p>}
+              {getError('companyName') && (
+                <p className="text-xs text-red-500 mt-1">
+                  {getError('companyName')}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-[#4a5a2b] mb-1.5">
@@ -182,10 +202,16 @@ export function ProposalModal({ open, onClose }: ProposalModalProps) {
                     position: e.target.value,
                   }))
                 }
-                onBlur={() => setTouched((prev) => ({ ...prev, position: true }))}
+                onBlur={() =>
+                  setTouched((prev) => ({ ...prev, position: true }))
+                }
                 className={inputClass('position')}
               />
-              {getError('position') && <p className="text-xs text-red-500 mt-1">{getError('position')}</p>}
+              {getError('position') && (
+                <p className="text-xs text-red-500 mt-1">
+                  {getError('position')}
+                </p>
+              )}
             </div>
           </div>
 

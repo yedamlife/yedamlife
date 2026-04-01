@@ -263,7 +263,7 @@ export function YedamLife({
                     className="flex items-center cursor-pointer shrink-0"
                   >
                     <img
-                      src="https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/main_logo.png"
+                      src="https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/main_logo.png"
                       alt="예담라이프"
                       className="h-[120px] sm:h-[140px] w-auto object-contain scale-x-110"
                     />
@@ -582,7 +582,7 @@ export function YedamLife({
             className="relative py-16 sm:py-24 overflow-hidden"
             style={{
               backgroundImage:
-                'url(https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/ungu_main_banner.png)',
+                'url(https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/ungu_main_banner.png)',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',

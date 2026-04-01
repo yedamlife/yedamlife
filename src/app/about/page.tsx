@@ -21,7 +21,7 @@ import {
 } from '@/components/template/YedamLife/constants';
 
 const SUPABASE_BASE =
-  'https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam';
+  'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife';
 
 const scrollSpySections = [
   { id: 'greeting', label: '인사말' },

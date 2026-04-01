@@ -247,7 +247,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
             className="absolute inset-0 bg-cover bg-position-[center_right_-30vw] sm:bg-center bg-no-repeat"
             style={{
               backgroundImage:
-                'url(https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/main_logo_company.png)',
+                'url(https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/main_logo_company.png)',
             }}
           />
           <div className="absolute inset-0 bg-black/55" />
@@ -1928,7 +1928,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
         className="relative py-16 sm:py-24 overflow-hidden"
         style={{
           backgroundImage:
-            'url(https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/ungu_main_banner.png)',
+            'url(https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/ungu_main_banner.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',

@@ -277,7 +277,7 @@ export function GeneralFuneral({
             className="absolute inset-0 bg-cover bg-no-repeat bg-right sm:bg-center"
             style={{
               backgroundImage:
-                'url(https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/general-funeral-hero.png)',
+                'url(https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/general-funeral-hero.png)',
             }}
           />
           <div className="absolute inset-0 bg-black/40" />
@@ -760,7 +760,7 @@ export function GeneralFuneral({
                       <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 h-full flex flex-col">
                         <div className="h-44 overflow-hidden">
                           <img
-                            src={`https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/product_bnr0${originalIdx + 1}.jpg`}
+                            src={`https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/product_bnr0${originalIdx + 1}.jpg`}
                             alt={product.name}
                             className="w-full h-full object-cover"
                           />
@@ -888,7 +888,7 @@ export function GeneralFuneral({
               >
                 <div className="h-44 overflow-hidden">
                   <img
-                    src={`https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/product_bnr0${idx + 1}.jpg`}
+                    src={`https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/product_bnr0${idx + 1}.jpg`}
                     alt={product.name}
                     className="w-full h-full object-cover"
                   />
@@ -987,7 +987,7 @@ export function GeneralFuneral({
                       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden h-full flex flex-col">
                         <div className="h-44 overflow-hidden">
                           <img
-                            src={`https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/before-service-${String(originalIdx + 1).padStart(2, '0')}.png`}
+                            src={`https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/before-service-${String(originalIdx + 1).padStart(2, '0')}.png`}
                             alt={item.title}
                             className="w-full h-full object-cover"
                           />
@@ -1087,7 +1087,7 @@ export function GeneralFuneral({
               >
                 <div className="h-44 overflow-hidden">
                   <img
-                    src={`https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/before-service-${String(idx + 1).padStart(2, '0')}.png`}
+                    src={`https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/before-service-${String(idx + 1).padStart(2, '0')}.png`}
                     alt={item.title}
                     className="w-full h-full object-cover"
                   />
@@ -1144,7 +1144,7 @@ export function GeneralFuneral({
                       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden h-full flex flex-col">
                         <div className="h-40 overflow-hidden">
                           <img
-                            src={`https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/after-service-${String(originalIdx + 1).padStart(2, '0')}.jpg`}
+                            src={`https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/after-service-${String(originalIdx + 1).padStart(2, '0')}.jpg`}
                             alt={item.title}
                             className="w-full h-full object-cover"
                           />
@@ -1244,7 +1244,7 @@ export function GeneralFuneral({
               >
                 <div className="h-32 overflow-hidden">
                   <img
-                    src={`https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/after-service-${String(idx + 1).padStart(2, '0')}.jpg`}
+                    src={`https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/after-service-${String(idx + 1).padStart(2, '0')}.jpg`}
                     alt={item.title}
                     className="w-full h-full object-cover"
                   />
@@ -1504,7 +1504,7 @@ export function GeneralFuneral({
                 style={{ backgroundColor: '#FEE500', color: '#3C1E1E' }}
               >
                 <img
-                  src="https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/kakao_icon.png"
+                  src="https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/kakao_icon.png"
                   alt="카카오톡"
                   className="w-4 h-4 object-contain"
                 />
@@ -1514,7 +1514,7 @@ export function GeneralFuneral({
             {/* 우측: 전국 본부 현황 지도 */}
             <div className="relative flex items-center justify-center">
               <img
-                src="https://mrwwnkmklzgevbzdkbtz.supabase.co/storage/v1/object/public/private-templates/yedam/map.png"
+                src="https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/map.png"
                 alt="전국 본부 현황 지도"
                 className="w-full max-w-[200px] sm:max-w-[240px] lg:max-w-[280px]"
               />
