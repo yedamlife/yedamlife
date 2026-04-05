@@ -60,9 +60,15 @@ export const scrollSpySections: ScrollSpySection[][] = [
   // Tab 3: 운구의전
   [
     { id: 'sec-ceremony-hero', label: '소개' },
-    { id: 'sec-ceremony-products', label: '의전 서비스' },
-    { id: 'sec-ceremony-why', label: '차별점' },
-    { id: 'sec-ceremony-faq', label: '자주 묻는 질문' },
+    { id: 'sec-ceremony-products', label: 'Point 4' },
+    { id: 'sec-ceremony-why', label: '진행절차' },
+    { id: 'sec-ceremony-faq', label: 'Q&A' },
+  ],
+  // Tab 4: 장지+
+  [
+    { id: 'sec-burial-hero', label: '소개' },
+    { id: 'sec-burial-stats', label: '통계' },
+    { id: 'sec-burial-products', label: '장지 검색' },
   ],
 ];
 
@@ -91,8 +97,8 @@ export const categoryTabs = [
   },
   {
     label: '운구의전',
-    href: '#ceremony',
-    slug: 'ceremony',
+    href: '#funeral-escort',
+    slug: 'funeral-escort',
     pageTitle: '운구의전',
     subItems: ['장례의전', '추모의전', 'VIP의전'],
   },
@@ -105,8 +111,8 @@ export const categoryTabs = [
   },
   {
     label: '사후행정케어',
-    href: '#tax-inheritance',
-    slug: 'tax-inheritance',
+    href: '#post-care',
+    slug: 'post-care',
     pageTitle: '사후행정케어',
     subItems: ['세무 상담', '상속 절차', '법률 지원'],
   },
@@ -466,7 +472,7 @@ export const productDetails: Record<
         items: [
           { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
           { label: '장의버스', value: '' },
-          { label: '장의 리무진', value: '버스, 리무진 중 택 1 / 150km' },
+          { label: '장의버스 / 장의리무진', value: '버스, 리무진 중 택 1 / 150km' },
         ],
       },
       {
@@ -517,7 +523,7 @@ export const productDetails: Record<
         items: [
           { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
           { label: '장의버스', value: '' },
-          { label: '장의 리무진', value: '버스, 리무진 중 택 1 / 180km' },
+          { label: '장의버스 / 장의리무진', value: '버스, 리무진 중 택 1 / 180km' },
         ],
       },
       {
@@ -569,7 +575,7 @@ export const productDetails: Record<
         items: [
           { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
           { label: '장의버스', value: '' },
-          { label: '장의 리무진', value: '버스&리무진 / 200km' },
+          { label: '장의버스 / 장의리무진', value: '버스&리무진 / 200km' },
         ],
       },
       {
@@ -624,7 +630,7 @@ export const productDetails: Record<
         items: [
           { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
           { label: '장의버스', value: '' },
-          { label: '장의 리무진', value: '버스&리무진 / 300km' },
+          { label: '장의버스 / 장의리무진', value: '버스&리무진 / 300km' },
         ],
       },
       {

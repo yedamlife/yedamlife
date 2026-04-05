@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Phone, Plus, ChevronDown } from 'lucide-react';
+import { Phone, Plus, ChevronDown, ClipboardList, ScrollText } from 'lucide-react';
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
+  BRAND_COLOR_PREMIUM,
   fmtShort,
   daysAgo,
-  membershipServices,
 } from './constants';
-import { FaqItem } from './components';
+import { FaqItem, MembershipSection, CtaSection } from './components';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
@@ -1164,6 +1164,56 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                         ? '특수청소 진행과정'
                         : '진행과정'}
                 </h3>
+
+                {svc.id === 'special' ? (
+                  /* ── 특수청소 전용 레이아웃 ── */
+                  <>
+                    {/* PC: 3x2 그리드 */}
+                    <div className="hidden sm:grid sm:grid-cols-3 gap-x-6 gap-y-10 max-w-3xl mx-auto">
+                      {svc.process.map((p) => (
+                        <div key={p.step} className="text-center">
+                          {'image' in p && p.image && (
+                            <div className="w-28 h-28 rounded-full mx-auto mb-4 overflow-hidden bg-gray-100">
+                              <img
+                                src={p.image}
+                                alt={p.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <p className="text-xs font-bold text-gray-900 mb-1">
+                            {p.step}
+                          </p>
+                          <p className="text-sm font-bold text-gray-900">
+                            {p.title}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    {/* 모바일: 2x3 그리드 */}
+                    <div className="sm:hidden grid grid-cols-2 gap-x-4 gap-y-8">
+                      {svc.process.map((p) => (
+                        <div key={p.step} className="text-center">
+                          {'image' in p && p.image && (
+                            <div className="w-16 h-16 rounded-full mx-auto mb-3 overflow-hidden bg-gray-100">
+                              <img
+                                src={p.image}
+                                alt={p.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <p className="text-xs font-bold text-gray-900 mb-1">
+                            {p.step}
+                          </p>
+                          <p className="text-sm font-bold text-gray-900">
+                            {p.title}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
                 <div className="relative">
                   {/* PC: 가로 한 줄 */}
                   <div className="hidden sm:grid sm:grid-cols-5 sm:gap-0">
@@ -1274,6 +1324,7 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                     </div>
                   </div>
                 </div>
+                )}
               </div>
             )}
 
@@ -1538,55 +1589,12 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
       ))}
 
       {/* ── 멤버십 제휴할인 ── */}
-      <section
-        className="py-16 sm:py-24 overflow-hidden"
+      <MembershipSection
         style={{
           background:
             'linear-gradient(180deg, #faf6ee 0%, #fcf9f4 50%, #ffffff 100%)',
         }}
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-4">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-              예담라이프 멤버십 서비스 &quot;제휴 할인&quot;
-            </h2>
-          </div>
-          <div className="flex justify-center mb-12">
-            <div className="w-px h-10 bg-gray-400" />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
-            {membershipServices.map((item) => (
-              <div
-                key={item.title}
-                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow"
-              >
-                <div className="h-36 bg-gray-100 overflow-hidden">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-4 text-center">
-                  <h3 className="text-sm font-bold text-gray-900 mb-1">
-                    {item.title}
-                  </h3>
-                  <div
-                    className="w-8 h-px mx-auto mb-2"
-                    style={{ backgroundColor: BRAND_COLOR, opacity: 0.2 }}
-                  />
-                  <p className="text-xs text-gray-500 leading-relaxed">
-                    {item.desc}
-                  </p>
-                  {item.note && (
-                    <p className="text-xs text-gray-400 mt-1">{item.note}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      />
 
       {/* ── FAQ ── */}
       <section
@@ -1614,53 +1622,60 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
         </div>
       </section>
 
-      {/* ── 우측 플로팅 버튼 (항상 노출) ── */}
-      <div className="fixed right-4 lg:right-6 bottom-6 lg:bottom-8 z-50 flex flex-col items-end gap-2.5 lg:gap-3">
-        <a
-          href="tel:1899-1477"
-          className="flex items-center justify-center rounded-full bg-blue-100 shadow-lg border border-gray-200 cursor-pointer hover:scale-105 transition-transform w-12 h-12 lg:w-14 lg:h-14"
-          title="전화 상담"
-        >
-          <Phone className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
-        </a>
+      {/* ── PC 우측 플로팅 버튼 (sm 이상) ── */}
+      <div className="hidden sm:flex fixed right-4 bottom-6 z-50 flex-col gap-2">
         <button
           onClick={() => setShowEstimateModal(true)}
-          className="flex items-center justify-center rounded-full shadow-lg border border-gray-200 cursor-pointer hover:scale-105 transition-transform w-12 h-12 lg:w-14 lg:h-14"
-          style={{ backgroundColor: BRAND_COLOR_LIGHT }}
-          title="견적 상담"
+          className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+          style={{
+            backgroundColor: BRAND_COLOR_LIGHT,
+            color: BRAND_COLOR,
+          }}
         >
-          <span
-            className="text-[10px] lg:text-xs font-bold leading-tight text-center whitespace-pre"
-            style={{ color: BRAND_COLOR }}
-          >
-            {'견적\n상담'}
-          </span>
+          <ScrollText className="w-5 h-5" />
+          <span className="text-[10px] font-bold mt-0.5">견적상담</span>
         </button>
         <a
-          href="https://pf.kakao.com/_예담라이프"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center rounded-full shadow-lg cursor-pointer hover:scale-105 transition-transform w-12 h-12 lg:w-14 lg:h-14 overflow-hidden"
-          title="카카오톡"
+          href="tel:1899-1477"
+          className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
         >
-          <img
-            src="https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/kakao.png"
-            alt="카카오톡"
-            className="w-full h-full object-cover"
-          />
+          <Phone className="w-5 h-5 text-gray-700" />
+          <span className="text-[9px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
+            빠른
+            <br />
+            상담신청
+          </span>
         </a>
-        <a
-          href="https://blog.naver.com/heung3974"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center rounded-full shadow-lg cursor-pointer hover:scale-105 transition-transform w-12 h-12 lg:w-14 lg:h-14 overflow-hidden"
-          title="블로그"
+      </div>
+
+      {/* ── 모바일 플로팅 버튼 (sm 미만) ── */}
+      <div className="sm:hidden fixed right-3 bottom-5 z-50 flex flex-col items-end gap-2">
+        <button
+          onClick={() => setShowEstimateModal(true)}
+          className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full shadow-lg cursor-pointer"
+          style={{
+            backgroundColor: BRAND_COLOR_LIGHT,
+            color: BRAND_COLOR,
+          }}
         >
-          <img
-            src="https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/blog.png"
-            alt="블로그"
-            className="w-full h-full object-cover"
-          />
+          <span className="text-[10px] font-bold">견적상담</span>
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
+          >
+            <ScrollText className="w-4 h-4" />
+          </div>
+        </button>
+        <a
+          href="tel:1899-1477"
+          className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full bg-white shadow-lg border border-gray-200 cursor-pointer"
+        >
+          <span className="text-[10px] font-bold text-gray-700">
+            빠른 상담신청
+          </span>
+          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+            <Phone className="w-4 h-4 text-gray-700" />
+          </div>
         </a>
       </div>
 
@@ -1915,6 +1930,60 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
           </div>
         </div>
       )}
+
+      {/* ══════════════ CTA ══════════════ */}
+      <CtaSection
+        id="contact"
+        title={
+          <>
+            가장 어려운 순간,
+            <br />
+            예담라이프가 함께합니다
+          </>
+        }
+        description={
+          <>
+            전문 상담사가 24시간 대기하고 있습니다.
+            <br />
+            부담 없이 문의해 주세요.
+          </>
+        }
+        buttons={
+          <>
+            <button
+              onClick={() =>
+                window.dispatchEvent(
+                  new CustomEvent('open-estimate-modal'),
+                )
+              }
+              className="relative w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl transition-colors shadow-lg cursor-pointer hover:opacity-90 overflow-hidden"
+              style={{
+                backgroundColor: BRAND_COLOR_PREMIUM,
+                color: '#ffffff',
+              }}
+            >
+              <span
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                  animation: 'shimmer 2.5s ease-in-out infinite',
+                  width: '60%',
+                }}
+              />
+              <ClipboardList className="relative w-5 h-5" />
+              <span className="relative">견적 상담</span>
+            </button>
+            <a
+              href="tel:1660-0959"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
+            >
+              <Phone className="w-5 h-5" />
+              빠른 상담신청
+            </a>
+          </>
+        }
+      />
     </>
   );
 }

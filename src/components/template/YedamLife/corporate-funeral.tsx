@@ -4,7 +4,6 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Building2,
   Briefcase,
-  Headphones,
   ArrowRight,
   ChevronLeft,
   ChevronRight,
@@ -18,6 +17,7 @@ import {
   Users,
   MapPin,
   PiggyBank,
+  ScrollText,
 } from 'lucide-react';
 
 import {
@@ -29,15 +29,40 @@ import {
   corpFuneralProducts,
   corpTestimonials,
   corpComparisonData,
-  membershipServices,
   clientLogoRow1,
   clientLogoRow2,
   clientLogoRow3,
   LOGO_BASE,
 } from './constants';
 
-import { Ticker } from './components';
+import { Ticker, CtaSection, MembershipSection } from './components';
 import { ProposalModal } from './proposal-modal';
+
+const PRODUCT_IMG_BASE =
+  'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/products';
+
+const PRODUCT_LABEL_IMAGES: Record<string, { src: string; alt: string }[]> = {
+  '장례지도사': [{ src: `${PRODUCT_IMG_BASE}/funeral_director.avif`, alt: '장례지도사' }],
+  '장례관리사': [{ src: `${PRODUCT_IMG_BASE}/funeral_manager.avif`, alt: '장례관리사' }],
+  '입관상례사': [{ src: `${PRODUCT_IMG_BASE}/encoffinment_director.avif`, alt: '입관상례사' }],
+  '앰뷸런스': [{ src: `${PRODUCT_IMG_BASE}/ambulance.avif`, alt: '앰뷸런스' }],
+  '장의버스 / 리무진': [
+    { src: `${PRODUCT_IMG_BASE}/funeral_bus-v2.avif`, alt: '장의버스' },
+    { src: `${PRODUCT_IMG_BASE}/limousine-v2.avif`, alt: '리무진' },
+  ],
+  '수의(화장용)': [{ src: `${PRODUCT_IMG_BASE}/burial_shroud_converted.avif`, alt: '수의' }],
+  '관(화장용) / 횡대(매장시)': [
+    { src: `${PRODUCT_IMG_BASE}/cremation_coffin.avif`, alt: '관' },
+    { src: `${PRODUCT_IMG_BASE}/burial_boards_converted.avif`, alt: '횡대' },
+  ],
+  '유골함': [{ src: `${PRODUCT_IMG_BASE}/cremation_urn_converted.avif`, alt: '유골함' }],
+  '입관용품': [{ src: `${PRODUCT_IMG_BASE}/encoffinment_supplies.avif`, alt: '입관용품' }],
+  '빈소용품': [{ src: `${PRODUCT_IMG_BASE}/altar_supplies.avif`, alt: '빈소용품' }],
+  '헌화': [{ src: `${PRODUCT_IMG_BASE}/flower_offering.avif`, alt: '헌화' }],
+  '관꽃장식': [{ src: `${PRODUCT_IMG_BASE}/casket_spray.avif`, alt: '관꽃장식' }],
+  '남자상복': [{ src: `${PRODUCT_IMG_BASE}/male_mourning_clothes_converted.avif`, alt: '남자상복' }],
+  '여자상복': [{ src: `${PRODUCT_IMG_BASE}/female_mourning_clothes.avif`, alt: '여자상복' }],
+};
 
 import {
   Select,
@@ -189,6 +214,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
 
   // 주요정보 안내사항 토글
   const [corpNoticeOpen, setCorpNoticeOpen] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   const corpNoticeItems: { category: string; items: string[] }[] = [
     {
@@ -284,19 +310,17 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                 </span>
               </h1>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <a
-                  href="#corp-comparison"
-                  onClick={(e) => {
-                    e.preventDefault();
+                <button
+                  onClick={() => {
                     document
-                      .getElementById('corp-comparison')
+                      .getElementById('sec-corp-inquiry')
                       ?.scrollIntoView({ behavior: 'smooth' });
                   }}
                   className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-white text-gray-900 text-sm sm:text-base font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg cursor-pointer"
                 >
-                  <Headphones className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <ScrollText className="w-4 h-4 sm:w-5 sm:h-5" />
                   기업상조 도입 상담
-                </a>
+                </button>
                 <button
                   onClick={() => setShowProposalModal(true)}
                   className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 border-2 border-white/70 text-white text-sm sm:text-base font-bold rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
@@ -410,50 +434,45 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
               스마트한 선택
             </h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               {
                 title: '맞춤형 복지 설계',
-                desc: '기업 규모와 특성에 맞춰\n유연하게 복지 플랜을\n설계할 수 있습니다.',
-                icon: Settings,
+                desc: '기업 규모·특성에 맞춘\n유연한 복지 플랜 설계',
+                image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80',
               },
               {
-                title: '임직원 실질 혜택 제공',
-                desc: '임직원과 가족 모두에게\n장례지원 및 다양한\n복지 혜택이 제공됩니다.',
-                icon: Users,
+                title: '임직원 실질 혜택',
+                desc: '임직원과 가족 모두에게\n장례지원 및 복지 혜택 제공',
+                image: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600&q=80',
               },
               {
                 title: '전국 서비스망 운영',
-                desc: '전국 어디서나 동일한 품질의\n서비스를 제공하여 신속하고\n안정적인 지원이 가능합니다.',
-                icon: MapPin,
+                desc: '전국 어디서나 동일한 품질의\n신속하고 안정적인 지원',
+                image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80',
               },
               {
                 title: '비용 절감 효과',
-                desc: '단체 계약을 통한 합리적인\n비용으로 고품질 복지 서비스를\n누릴 수 있습니다.',
-                icon: PiggyBank,
+                desc: '단체 계약 통한 합리적 비용으로\n고품질 복지 서비스 제공',
+                image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&q=80',
               },
             ].map((card) => (
               <div
                 key={card.title}
-                className="bg-white rounded-2xl border border-gray-200 overflow-hidden"
+                className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col"
               >
-                <div
-                  className="py-3 px-5 flex items-center justify-center gap-2"
-                  style={{ backgroundColor: BRAND_COLOR_LIGHT }}
-                >
-                  <card.icon
-                    className="w-4 h-4 shrink-0"
-                    style={{ color: BRAND_COLOR }}
+                <div className="aspect-4/3 overflow-hidden">
+                  <img
+                    src={card.image}
+                    alt={card.title}
+                    className="w-full h-full object-cover"
                   />
-                  <p
-                    className="text-sm sm:text-base font-bold"
-                    style={{ color: BRAND_COLOR }}
-                  >
-                    {card.title}
-                  </p>
                 </div>
-                <div className="px-5 py-5 text-center">
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                <div className="px-4 py-4 flex-1">
+                  <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">
+                    {card.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
                     {card.desc}
                   </p>
                 </div>
@@ -499,125 +518,105 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
             ))}
           </div>
 
-          {/* 차트 */}
+          {/* 차트: 예담라이프 vs 선불제상조 vs 장례식장 상조 비교 */}
           {(() => {
             const corpPriceMap = [
-              { competitor: 370, discount: 150, final: 220 },
-              { competitor: 490, discount: 160, final: 330 },
+              { yedam: 220, prepaid: 370, funeral: 550 },
+              { yedam: 330, prepaid: 490, funeral: 700 },
             ];
             const prices = corpPriceMap[corpChartProductIdx];
-            const maxPrice = prices.competitor;
+            const maxPrice = prices.funeral;
             const barHeight = (val: number) =>
               Math.round((val / maxPrice) * 220);
-            const CHART_BLUE = '#4a7fb5';
-            const LABEL_H = 40; // 하단 라벨 고정 높이
+            const savingPercent = Math.round(
+              ((prices.funeral - prices.yedam) / prices.funeral) * 100,
+            );
             return (
               <div className="relative max-w-lg mx-auto mb-14 scale-[0.8] sm:scale-100 origin-top">
-                <div
-                  className="flex items-end justify-center gap-6 sm:gap-10"
-                  style={{ height: 320 }}
-                >
-                  {/* 선불제 타 상조 */}
-                  <div className="flex flex-col items-center flex-1 max-w-[100px]">
-                    <span className="text-sm font-bold text-gray-400 mb-2">
-                      {prices.competitor}만원
-                    </span>
-                    <div
-                      className="w-full rounded-t-xl transition-all duration-500"
-                      style={{
-                        height: `${barHeight(prices.competitor)}px`,
-                        backgroundColor: '#e0e0e0',
-                      }}
-                    />
-                    <div
-                      className="flex items-center justify-center"
-                      style={{ height: LABEL_H }}
-                    >
-                      <span className="text-sm font-medium text-gray-400 text-center">
-                        선불제 타 상조
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 할인 혜택 */}
-                  <div className="flex flex-col items-center flex-1 max-w-[100px]">
-                    <span className="text-sm font-bold text-gray-400 mb-2">
-                      -{prices.discount}만원
-                    </span>
-                    <div
-                      className="w-full rounded-t-xl transition-all duration-500"
-                      style={{
-                        height: `${barHeight(prices.discount)}px`,
-                        backgroundColor: '#d1d5db',
-                      }}
-                    />
-                    <div
-                      className="flex items-center justify-center"
-                      style={{ height: LABEL_H }}
-                    >
-                      <span className="text-sm font-medium text-gray-400 text-center">
-                        예담라이프
-                        <br />
-                        할인 혜택
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 최종 이용 금액 */}
-                  <div className="flex flex-col items-center flex-1 max-w-[100px]">
-                    <div className="relative mb-2">
+                <div className="flex items-end justify-center gap-6 sm:gap-10 h-[280px] sm:h-[320px]">
+                  {/* 예담라이프 */}
+                  <div className="flex flex-col items-center gap-2 flex-1 max-w-[110px]">
+                    <div className="relative">
                       <div
                         className="px-3 py-1.5 rounded-lg text-sm font-bold text-white whitespace-nowrap"
-                        style={{ backgroundColor: CHART_BLUE }}
+                        style={{ backgroundColor: '#4a7fb5' }}
                       >
-                        {prices.final}만원
+                        {prices.yedam}만원
                       </div>
                       <div
                         className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45"
-                        style={{ backgroundColor: CHART_BLUE }}
+                        style={{ backgroundColor: '#4a7fb5' }}
                       />
                     </div>
                     <div
                       className="w-full rounded-t-xl transition-all duration-500"
                       style={{
-                        height: `${barHeight(prices.final)}px`,
-                        backgroundColor: CHART_BLUE,
+                        height: `${barHeight(prices.yedam)}px`,
+                        backgroundColor: '#4a7fb5',
                       }}
                     />
-                    <div
-                      className="flex items-center justify-center"
-                      style={{ height: LABEL_H }}
+                    <span
+                      className="text-xs sm:text-sm font-bold text-center leading-tight"
+                      style={{ color: '#4a7fb5' }}
                     >
-                      <span
-                        className="text-sm font-bold"
-                        style={{ color: CHART_BLUE }}
-                      >
-                        최종 이용 금액
-                      </span>
-                    </div>
+                      예담라이프
+                    </span>
                   </div>
 
-                  {/* 보장 원형 */}
-                  <div className="flex flex-col items-center justify-end flex-1 max-w-[120px]">
+                  {/* 선불제상조 */}
+                  <div className="flex flex-col items-center gap-2 flex-1 max-w-[110px]">
+                    <span className="text-sm font-bold text-gray-400">
+                      {prices.prepaid}만원
+                    </span>
+                    <div
+                      className="w-full rounded-t-xl transition-all duration-500"
+                      style={{
+                        height: `${barHeight(prices.prepaid)}px`,
+                        backgroundColor: '#d1d5db',
+                      }}
+                    />
+                    <span className="text-xs sm:text-sm font-medium text-gray-400 text-center leading-tight">
+                      선불제상조
+                    </span>
+                  </div>
+
+                  {/* 장례식장 상조 */}
+                  <div className="flex flex-col items-center gap-2 flex-1 max-w-[110px]">
+                    <span className="text-sm font-bold text-gray-400">
+                      {prices.funeral}만원
+                    </span>
+                    <div
+                      className="w-full rounded-t-xl transition-all duration-500"
+                      style={{
+                        height: `${barHeight(prices.funeral)}px`,
+                        backgroundColor: '#e5e7eb',
+                      }}
+                    />
+                    <span className="text-xs sm:text-sm font-medium text-gray-400 text-center leading-tight">
+                      장례식장
+                    </span>
+                  </div>
+
+                  {/* 절약 말풍선 */}
+                  <div className="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
                     <div
                       className="w-24 h-24 rounded-full flex items-center justify-center"
                       style={{
                         backgroundColor: BRAND_COLOR_LIGHT,
                         animation: 'heartbeat 1.5s ease-in-out infinite',
-                        marginBottom: `${LABEL_H}px`,
                       }}
                     >
                       <p
                         className="text-xs font-bold text-center leading-tight"
                         style={{ color: BRAND_COLOR }}
                       >
-                        기업 혜택가로
+                        최대
                         <br />
                         <span className="text-sm font-extrabold">
-                          현재 가격
+                          {savingPercent}% 절약
                         </span>
                         <br />
-                        보장
+                        월납입금 0원
                       </p>
                     </div>
                   </div>
@@ -627,8 +626,8 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                 <div
                   className="absolute left-0 right-0 border-t-2 border-dashed pointer-events-none transition-all duration-500"
                   style={{
-                    bottom: `${barHeight(prices.final) + LABEL_H}px`,
-                    borderColor: CHART_BLUE,
+                    bottom: `${barHeight(prices.yedam) + 35}px`,
+                    borderColor: '#4a7fb5',
                     opacity: 0.6,
                   }}
                 />
@@ -1279,54 +1278,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
       </section>
 
       {/* ── 9. 기업 멤버십 혜택 ── */}
-      <section className="py-16 sm:py-24 bg-white overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-4">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-              예담라이프 멤버십 서비스 &quot;제휴 할인&quot;
-            </h2>
-          </div>
-          <div className="flex justify-center mb-12">
-            <div className="w-px h-10 bg-gray-400" />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
-            {membershipServices.map((item) => {
-              return (
-                <div
-                  key={item.title}
-                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow"
-                >
-                  <div className="h-36 bg-gray-100 overflow-hidden">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-4 text-center">
-                    <h3 className="text-sm font-bold text-gray-900 mb-1">
-                      {item.title}
-                    </h3>
-                    <div
-                      className="w-8 h-px mx-auto mb-2"
-                      style={{
-                        backgroundColor: BRAND_COLOR,
-                        opacity: 0.2,
-                      }}
-                    />
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      {item.desc}
-                    </p>
-                    {item.note && (
-                      <p className="text-xs text-gray-400 mt-1">{item.note}</p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      <MembershipSection background="bg-white" ctaHref="/membership/corporate" ctaLabel="기업 상조 가입신청" />
 
       {/* ── 10. 장례 복지 혜택 진행과정 (마일스톤) ── */}
       <section
@@ -1644,10 +1596,10 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                 <table className="min-w-[700px] w-full border-collapse text-sm">
                   <thead>
                     <tr>
-                      <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-24">
+                      <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-[80px] sm:w-[100px]">
                         항목
                       </th>
-                      <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-32">
+                      <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-[140px] sm:w-[180px]">
                         내용
                       </th>
                       <th
@@ -1673,23 +1625,40 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                         >
                           {itemIdx === 0 && (
                             <td
-                              className="p-3 border border-gray-200 font-bold text-gray-700 whitespace-pre-line align-top"
+                              className="p-3 border border-gray-200 font-bold text-gray-700 whitespace-pre-line align-middle"
                               rowSpan={section.items.length}
                             >
                               {section.category}
                             </td>
                           )}
-                          <td className="p-3 border border-gray-200 text-gray-700">
+                          <td className="p-3 border border-gray-200 text-gray-700 text-center">
                             <div className="font-medium">{item.label}</div>
                             {item.sub && (
                               <div className="text-xs text-gray-400">
                                 {item.sub}
                               </div>
                             )}
+                            {PRODUCT_LABEL_IMAGES[item.label] && (
+                              <div className="flex justify-center gap-2 mt-2">
+                                {PRODUCT_LABEL_IMAGES[item.label].map((img) => (
+                                  <div
+                                    key={img.alt}
+                                    className="w-24 h-24 rounded overflow-hidden cursor-pointer"
+                                    onClick={() => setLightboxSrc(img.src)}
+                                  >
+                                    <img
+                                      src={img.src}
+                                      alt={img.alt}
+                                      className="w-full h-full object-cover scale-110"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </td>
                           {item.values[0] && item.values[1] === '' ? (
                             <td
-                              className="p-3 border border-gray-200 text-center text-gray-600"
+                              className="p-3 border border-gray-200 text-center text-gray-600 align-middle"
                               colSpan={2}
                             >
                               {item.values[0]}
@@ -1698,7 +1667,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                             item.values.map((val, vi) => (
                               <td
                                 key={vi}
-                                className="p-3 border border-gray-200 text-center text-gray-600 whitespace-pre-line"
+                                className="p-3 border border-gray-200 text-center text-gray-600 whitespace-pre-line align-middle"
                               >
                                 {val || '-'}
                               </td>
@@ -1723,10 +1692,10 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                     <table className="min-w-[500px] w-full border-collapse text-sm">
                       <thead>
                         <tr>
-                          <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700 w-24">
+                          <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700 w-[80px] sm:w-[100px]">
                             구분
                           </th>
-                          <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700">
+                          <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700 w-[140px] sm:w-[180px]">
                             항목
                           </th>
                           <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700">
@@ -1743,7 +1712,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                             >
                               {itemIdx === 0 && (
                                 <td
-                                  className="p-3 text-center font-bold text-gray-700 whitespace-pre-line align-middle border-r border-gray-200 w-24"
+                                  className="p-3 text-center font-bold text-gray-700 whitespace-pre-line align-middle border-r border-gray-200"
                                   rowSpan={section.items.length}
                                 >
                                   {section.category}
@@ -1754,6 +1723,23 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                                 {item.sub && (
                                   <div className="text-xs text-gray-400 whitespace-pre-line">
                                     {item.sub}
+                                  </div>
+                                )}
+                                {PRODUCT_LABEL_IMAGES[item.label] && (
+                                  <div className="flex justify-center gap-2 mt-2">
+                                    {PRODUCT_LABEL_IMAGES[item.label].map((img) => (
+                                      <div
+                                        key={img.alt}
+                                        className="w-24 h-24 rounded overflow-hidden cursor-pointer"
+                                        onClick={() => setLightboxSrc(img.src)}
+                                      >
+                                        <img
+                                          src={img.src}
+                                          alt={img.alt}
+                                          className="w-full h-full object-cover scale-110"
+                                        />
+                                      </div>
+                                    ))}
                                   </div>
                                 )}
                               </td>
@@ -1924,29 +1910,23 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
       </section>
 
       {/* ── 14. CTA 버튼 섹션 ── */}
-      <section
-        className="relative py-16 sm:py-24 overflow-hidden"
-        style={{
-          backgroundImage:
-            'url(https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/ungu_main_banner.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      >
-        <div className="absolute inset-0 bg-black/60" />
-        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-2xl sm:text-3xl font-extrabold mb-4 text-white">
+      <CtaSection
+        title={
+          <>
             기업의 복리후생,
             <br />
             예담라이프와 함께 시작하세요
-          </h2>
-          <p className="text-white/70 mb-8 leading-relaxed">
+          </>
+        }
+        description={
+          <>
             전문 상담사가 기업 맞춤 복지 플랜을 제안해 드립니다.
             <br />
             부담 없이 문의해 주세요.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          </>
+        }
+        buttons={
+          <>
             <a
               href="/membership/corporate"
               target="_blank"
@@ -1976,14 +1956,35 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
               <Download className="w-5 h-5" />
               기업상조 제안서 다운로드
             </button>
-          </div>
-        </div>
-      </section>
+          </>
+        }
+      />
 
       <ProposalModal
         open={showProposalModal}
         onClose={() => setShowProposalModal(false)}
       />
+
+      {/* 이미지 확대 모달 */}
+      {lightboxSrc && (
+        <div
+          className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 cursor-pointer"
+          onClick={() => setLightboxSrc(null)}
+        >
+          <img
+            src={lightboxSrc}
+            alt=""
+            className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            onClick={() => setLightboxSrc(null)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </>
   );
 }

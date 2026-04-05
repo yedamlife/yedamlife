@@ -7,17 +7,15 @@ import {
   X,
   Plus,
   MessageCircle,
-  Headphones,
   Phone,
   ChevronDown,
   FileText,
   PenLine,
-  ClipboardList,
+  ScrollText,
 } from 'lucide-react';
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
-  BRAND_COLOR_PREMIUM,
   GOOGLE_FORM_URL,
   categoryTabs,
   topNavItems,
@@ -26,7 +24,9 @@ import {
 import { GeneralFuneral } from './general-funeral';
 import { CorporateFuneral } from './corporate-funeral';
 import { EstateCleanup } from './estate-cleanup';
-import { CeremonyService } from './ceremony-service';
+import { CeremonyService } from './funeral-escort-service';
+import { BurialPlus } from './burial-plus';
+import { PostCare } from './post-care';
 import { YedamFooter } from './footer';
 
 interface YedamLifeProps {
@@ -203,6 +203,14 @@ export function YedamLife({
         @keyframes scrollRight {
           0% { transform: translateX(-50%); }
           100% { transform: translateX(0); }
+        }
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(40px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInLeft {
+          from { opacity: 0; transform: translateX(-40px); }
+          to { opacity: 1; transform: translateX(0); }
         }
       `}</style>
 
@@ -539,6 +547,7 @@ export function YedamLife({
         {activeCategoryIdx === 0 && (
           <GeneralFuneral
             googleFormUrl={googleFormUrl}
+            membershipHref={buildHref('/membership/general')}
             inquiryMainTab={inquiryMainTab}
             setInquiryMainTab={setInquiryMainTab}
             chartProductIdx={chartProductIdx}
@@ -575,107 +584,11 @@ export function YedamLife({
           <CeremonyService googleFormUrl={googleFormUrl} />
         )}
 
-        {/* ── CTA Section (기업상조는 자체 CTA 보유) ── */}
-        {activeCategoryIdx !== 1 && (
-          <section
-            id="contact"
-            className="relative py-16 sm:py-24 overflow-hidden"
-            style={{
-              backgroundImage:
-                'url(https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/ungu_main_banner.png)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-            }}
-          >
-            <div className="absolute inset-0 bg-black/60" />
-            <div className="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
-              <h2 className="text-2xl sm:text-3xl font-extrabold mb-4 text-white">
-                가장 어려운 순간,
-                <br />
-                예담라이프가 함께합니다
-              </h2>
-              <p className="text-white/70 mb-8 leading-relaxed">
-                전문 상담사가 24시간 대기하고 있습니다.
-                <br />
-                부담 없이 문의해 주세요.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                {activeCategoryIdx === 2 ? (
-                  <>
-                    <button
-                      onClick={() =>
-                        window.dispatchEvent(
-                          new CustomEvent('open-estimate-modal'),
-                        )
-                      }
-                      className="relative w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl transition-colors shadow-lg cursor-pointer hover:opacity-90 overflow-hidden"
-                      style={{
-                        backgroundColor: BRAND_COLOR_PREMIUM,
-                        color: '#ffffff',
-                      }}
-                    >
-                      <span
-                        className="absolute inset-0 pointer-events-none"
-                        style={{
-                          background:
-                            'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
-                          animation: 'shimmer 2.5s ease-in-out infinite',
-                          width: '60%',
-                        }}
-                      />
-                      <ClipboardList className="relative w-5 h-5" />
-                      <span className="relative">견적 상담</span>
-                    </button>
-                    <a
-                      href="tel:1660-0959"
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
-                    >
-                      <Phone className="w-5 h-5" />
-                      빠른 상담신청
-                    </a>
-                  </>
-                ) : (
-                  <a
-                    href={
-                      activeCategoryIdx === 0
-                        ? buildHref('/membership/general')
-                        : googleFormUrl
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="relative w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl transition-colors shadow-lg cursor-pointer hover:opacity-90 overflow-hidden"
-                    style={{
-                      backgroundColor: BRAND_COLOR_PREMIUM,
-                      color: '#ffffff',
-                    }}
-                  >
-                    <span
-                      className="absolute inset-0 pointer-events-none"
-                      style={{
-                        background:
-                          'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
-                        animation: 'shimmer 2.5s ease-in-out infinite',
-                        width: '60%',
-                      }}
-                    />
-                    <FileText className="relative w-5 h-5" />
-                    <span className="relative">가입증서 신청하기</span>
-                  </a>
-                )}
-                {activeCategoryIdx !== 2 && (
-                  <a
-                    href="tel:1660-0959"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
-                  >
-                    <Phone className="w-5 h-5" />
-                    전화 상담
-                  </a>
-                )}
-              </div>
-            </div>
-          </section>
+        {activeCategoryIdx === 4 && (
+          <BurialPlus googleFormUrl={googleFormUrl} />
         )}
+
+        {activeCategoryIdx === 5 && <PostCare />}
 
         {/* ── 고정 문의 탭 (스크롤 시 fixed) ── */}
         {showFixedInquiryTab && !hideHeader && (
@@ -773,7 +686,7 @@ export function YedamLife({
                   color: BRAND_COLOR,
                 }}
               >
-                <Headphones className="w-5 h-5" />
+                <ScrollText className="w-5 h-5" />
                 <span className="text-[10px] font-bold mt-0.5">상담신청</span>
               </button>
               {activeCategoryIdx === 0 && (
@@ -862,7 +775,7 @@ export function YedamLife({
                     className="w-8 h-8 rounded-full flex items-center justify-center"
                     style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
                   >
-                    <Headphones className="w-4 h-4" />
+                    <ScrollText className="w-4 h-4" />
                   </div>
                 </a>
                 {activeCategoryIdx === 0 && (

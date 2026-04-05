@@ -19,6 +19,8 @@ import {
   RefreshCw,
   ChevronDown,
   Info,
+  ScrollText,
+  PenLine,
 } from 'lucide-react';
 import {
   Select,
@@ -31,10 +33,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
+  BRAND_COLOR_PREMIUM,
   consultationData,
   obituaryData,
   serviceBenefits,
-  membershipServices,
   funeralProducts,
   productDetails,
   testimonials,
@@ -46,10 +48,92 @@ import {
   surveyQuestions,
   comparisonData,
 } from './constants';
-import { Ticker, FaqItem, CountUp } from './components';
+import {
+  Ticker,
+  FaqItem,
+  CountUp,
+  MembershipSection,
+  CtaSection,
+} from './components';
+
+const PRODUCT_IMG_BASE =
+  'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/products';
+
+const PRODUCT_LABEL_IMAGES: Record<string, { src: string; alt: string }[]> = {
+  장례지도사: [
+    { src: `${PRODUCT_IMG_BASE}/funeral_director.avif`, alt: '장례지도사' },
+  ],
+  장례관리사: [
+    { src: `${PRODUCT_IMG_BASE}/funeral_manager.avif`, alt: '장례관리사' },
+  ],
+  입관지도사: [
+    {
+      src: `${PRODUCT_IMG_BASE}/encoffinment_director.avif`,
+      alt: '입관지도사',
+    },
+  ],
+  입관상례사: [
+    {
+      src: `${PRODUCT_IMG_BASE}/encoffinment_director.avif`,
+      alt: '입관상례사',
+    },
+  ],
+  앰뷸런스: [{ src: `${PRODUCT_IMG_BASE}/ambulance.avif`, alt: '앰뷸런스' }],
+  '장의버스 / 리무진': [
+    { src: `${PRODUCT_IMG_BASE}/funeral_bus-v2.avif`, alt: '장의버스' },
+    { src: `${PRODUCT_IMG_BASE}/limousine-v2.avif`, alt: '리무진' },
+  ],
+  '장의버스 / 장의리무진': [
+    { src: `${PRODUCT_IMG_BASE}/funeral_bus-v2.avif`, alt: '장의버스' },
+    { src: `${PRODUCT_IMG_BASE}/limousine-v2.avif`, alt: '리무진' },
+  ],
+  '수의(화장용)': [
+    { src: `${PRODUCT_IMG_BASE}/burial_shroud_converted.avif`, alt: '수의' },
+  ],
+  '관(화장용) / 횡대(매장시)': [
+    { src: `${PRODUCT_IMG_BASE}/cremation_coffin.avif`, alt: '관' },
+    { src: `${PRODUCT_IMG_BASE}/burial_boards_converted.avif`, alt: '횡대' },
+  ],
+  '관(화장용)': [
+    { src: `${PRODUCT_IMG_BASE}/cremation_coffin.avif`, alt: '관' },
+  ],
+  횡대: [
+    { src: `${PRODUCT_IMG_BASE}/burial_boards_converted.avif`, alt: '횡대' },
+  ],
+  유골함: [
+    { src: `${PRODUCT_IMG_BASE}/cremation_urn_converted.avif`, alt: '유골함' },
+  ],
+  입관용품: [
+    { src: `${PRODUCT_IMG_BASE}/encoffinment_supplies.avif`, alt: '입관용품' },
+  ],
+  빈소용품: [
+    { src: `${PRODUCT_IMG_BASE}/altar_supplies.avif`, alt: '빈소용품' },
+  ],
+  헌화: [{ src: `${PRODUCT_IMG_BASE}/flower_offering.avif`, alt: '헌화' }],
+  관꽃장식: [{ src: `${PRODUCT_IMG_BASE}/casket_spray.avif`, alt: '관꽃장식' }],
+  남자상복: [
+    {
+      src: `${PRODUCT_IMG_BASE}/male_mourning_clothes_converted.avif`,
+      alt: '남자상복',
+    },
+  ],
+  여자상복: [
+    {
+      src: `${PRODUCT_IMG_BASE}/female_mourning_clothes.avif`,
+      alt: '여자상복',
+    },
+  ],
+  운구지원: [
+    {
+      src: `${PRODUCT_IMG_BASE}/pallbearing_support_converted.avif`,
+      alt: '운구지원',
+    },
+  ],
+};
 
 export interface GeneralFuneralProps {
   googleFormUrl: string;
+  membershipHref: string;
   inquiryMainTab: 'products' | 'design';
   setInquiryMainTab: (tab: 'products' | 'design') => void;
   chartProductIdx: number;
@@ -67,6 +151,7 @@ export interface GeneralFuneralProps {
 
 export function GeneralFuneral({
   googleFormUrl,
+  membershipHref,
   inquiryMainTab,
   setInquiryMainTab,
   chartProductIdx,
@@ -211,6 +296,7 @@ export function GeneralFuneral({
 
   // 주요정보 안내사항 토글
   const [noticeOpen, setNoticeOpen] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   // 주요정보 안내사항 데이터 (전 상품 공통)
   const noticeItems: { category: string; items: string[] }[] = [
@@ -358,7 +444,7 @@ export function GeneralFuneral({
                   }}
                   className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-white text-gray-900 text-sm sm:text-base font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg cursor-pointer"
                 >
-                  <Headphones className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <ScrollText className="w-4 h-4 sm:w-5 sm:h-5" />
                   장례상품 상담신청
                 </a>
                 <a
@@ -372,7 +458,7 @@ export function GeneralFuneral({
                   }}
                   className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 border-2 border-white/70 text-white text-sm sm:text-base font-bold rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
                 >
-                  <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <PenLine className="w-4 h-4 sm:w-5 sm:h-5" />
                   다이렉트 장례설계
                 </a>
               </div>
@@ -459,67 +545,63 @@ export function GeneralFuneral({
             <div className="text-center mb-14">
               {/*  행간 조절 */}
               <h2
-                className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-4 tracking-wide leading-tight"
+                className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-4 tracking-wide leading-relaxed"
                 style={{ color: '#1a1a1a', letterSpacing: '-0.02em' }}
               >
                 예담라이프는 진심을 담아 <br />
-                아름다운 이별을 준비합니다.
+                아름다운 이별을 준비합니다
               </h2>
             </div>
 
-            {/* 4개 카드 - 배너 스타일 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* 4개 카드 - 이미지 스타일 */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
                 {
                   title: '투명한 가격 정책',
-                  icon: Shield,
-                  desc: '• 사전 가입비, 월회비, 연회비 전혀 없습니다.\n• 발인 전날 비용 정산\n• 장례용품 품질보증, 가격 정찰제',
+                  desc: '가입비·월회비·연회비 없음\n발인 전날 비용 정산\n품질보증 가격 정찰제',
+                  image:
+                    'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&q=80',
                 },
                 {
                   title: '고객 맞춤 시스템',
-                  icon: User,
-                  desc: '엄격한 서비스 관리로\n고객 가풍, 예산에 따른 맞춤형 장례서비스 제공해요',
+                  desc: '가풍과 예산에 맞춘\n맞춤형 장례서비스 제공',
+                  image:
+                    'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600&q=80',
                 },
                 {
-                  title: '혜택 8가지 + 사후 케어까지',
-                  icon: Gift,
-                  desc: '상조 할인·운구지원 등 사전 혜택 8가지와\n감동후기·1주기 답례·돌봄상담 등\n사후 케어까지 빠짐없이 제공해요',
+                  title: '사전 혜택 + 사후 케어',
+                  desc: '상조 할인·운구지원 등 8가지 혜택\n1주기 답례·돌봄상담까지',
+                  image:
+                    'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=600&q=80',
                 },
                 {
                   title: '멤버십 시스템',
-                  icon: Star,
-                  desc: '멤버십 전용 제휴 할인으로\n장지 · 개장&이장 · 유품정리 · 법률·세무\n무료 컨설팅을 받을 수 있어요',
+                  desc: '장지·유품정리·법률·세무\n제휴 할인 및 무료 컨설팅',
+                  image:
+                    'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=80',
                 },
-              ].map((card) => {
-                const Icon = card.icon;
-                return (
-                  <div
-                    key={card.title}
-                    className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col"
-                  >
-                    <div
-                      className="py-3 px-5 flex items-center justify-center gap-2"
-                      style={{ backgroundColor: BRAND_COLOR_LIGHT }}
-                    >
-                      <Icon
-                        className="w-4 h-4 shrink-0"
-                        style={{ color: BRAND_COLOR }}
-                      />
-                      <p
-                        className="text-sm sm:text-base font-bold"
-                        style={{ color: BRAND_COLOR }}
-                      >
-                        {card.title}
-                      </p>
-                    </div>
-                    <div className="px-5 py-5 text-center flex-1 flex items-center justify-center">
-                      <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                        {card.desc}
-                      </p>
-                    </div>
+              ].map((card) => (
+                <div
+                  key={card.title}
+                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col"
+                >
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img
+                      src={card.image}
+                      alt={card.title}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                );
-              })}
+                  <div className="px-4 py-4 flex-1">
+                    <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">
+                      {card.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                      {card.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -640,7 +722,7 @@ export function GeneralFuneral({
                         }}
                       />
                       <span className="text-xs sm:text-sm font-medium text-gray-400 text-center leading-tight">
-                        장례식장 상조
+                        장례식장
                       </span>
                     </div>
 
@@ -1264,57 +1346,12 @@ export function GeneralFuneral({
       </section>
 
       {/* ── 4. 멤버십 제휴할인 ── */}
-      <section
+      <MembershipSection
         id="sec-membership"
-        className="py-16 sm:py-24 overflow-hidden bg-white"
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-4">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-              예담라이프 멤버십 서비스 &quot;제휴 할인&quot;
-            </h2>
-          </div>
-          <div className="flex justify-center mb-12">
-            <div className="w-px h-10 bg-gray-400" />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
-            {membershipServices.map((item) => {
-              return (
-                <div
-                  key={item.title}
-                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow"
-                >
-                  <div className="h-36 bg-gray-100 overflow-hidden">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-4 text-center">
-                    <h3 className="text-sm font-bold text-gray-900 mb-1">
-                      {item.title}
-                    </h3>
-                    <div
-                      className="w-8 h-px mx-auto mb-2"
-                      style={{
-                        backgroundColor: BRAND_COLOR,
-                        opacity: 0.2,
-                      }}
-                    />
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      {item.desc}
-                    </p>
-                    {item.note && (
-                      <p className="text-xs text-gray-400 mt-1">{item.note}</p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+        background="bg-white"
+        ctaHref={membershipHref}
+        ctaLabel="후불제 상조 가입신청"
+      />
 
       {/* ── 6. 후기 ── */}
       <section
@@ -1630,7 +1667,7 @@ export function GeneralFuneral({
                             <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-24">
                               항목
                             </th>
-                            <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-32">
+                            <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-56">
                               내용
                             </th>
                             {funeralProducts.map((p) => (
@@ -1658,13 +1695,13 @@ export function GeneralFuneral({
                               >
                                 {itemIdx === 0 && (
                                   <td
-                                    className="p-3 border border-gray-200 font-bold text-gray-700 whitespace-pre-line align-top"
+                                    className="p-3 border border-gray-200 font-bold text-gray-700 whitespace-pre-line align-middle"
                                     rowSpan={section.items.length}
                                   >
                                     {section.category}
                                   </td>
                                 )}
-                                <td className="p-3 border border-gray-200 text-gray-700">
+                                <td className="p-3 border border-gray-200 text-gray-700 text-center">
                                   <div className="font-medium">
                                     {item.label}
                                   </div>
@@ -1673,10 +1710,31 @@ export function GeneralFuneral({
                                       {item.sub}
                                     </div>
                                   )}
+                                  {PRODUCT_LABEL_IMAGES[item.label] && (
+                                    <div className="flex justify-center gap-2 mt-2">
+                                      {PRODUCT_LABEL_IMAGES[item.label].map(
+                                        (img) => (
+                                          <div
+                                            key={img.alt}
+                                            className="w-24 h-24 rounded overflow-hidden cursor-pointer"
+                                            onClick={() =>
+                                              setLightboxSrc(img.src)
+                                            }
+                                          >
+                                            <img
+                                              src={img.src}
+                                              alt={img.alt}
+                                              className="w-full h-full object-cover scale-110"
+                                            />
+                                          </div>
+                                        ),
+                                      )}
+                                    </div>
+                                  )}
                                 </td>
                                 {item.values[0] && item.values[1] === '' ? (
                                   <td
-                                    className="p-3 border border-gray-200 text-center text-gray-600"
+                                    className="p-3 border border-gray-200 text-center text-gray-600 align-middle"
                                     colSpan={4}
                                   >
                                     {item.values[0]}
@@ -1685,7 +1743,7 @@ export function GeneralFuneral({
                                   item.values.map((val, vi) => (
                                     <td
                                       key={vi}
-                                      className="p-3 border border-gray-200 text-center text-gray-600 whitespace-pre-line"
+                                      className="p-3 border border-gray-200 text-center text-gray-600 whitespace-pre-line align-middle"
                                     >
                                       {val || '-'}
                                     </td>
@@ -1793,8 +1851,15 @@ export function GeneralFuneral({
                                 </tr>
                               </thead>
                               <tbody>
-                                {detail.tableRows.map((section) =>
-                                  section.items.map((item, itemIdx) => (
+                                {detail.tableRows.map((section) => {
+                                  const filtered = section.items.filter(
+                                    (item) =>
+                                      item.value &&
+                                      item.value !== '-' &&
+                                      item.value !== 'x',
+                                  );
+                                  if (filtered.length === 0) return null;
+                                  return filtered.map((item, itemIdx) => (
                                     <tr
                                       key={`${section.category}-${item.label}-${itemIdx}`}
                                       className="border-b border-gray-200"
@@ -1802,7 +1867,7 @@ export function GeneralFuneral({
                                       {itemIdx === 0 && (
                                         <td
                                           className="p-3 text-center font-bold text-gray-700 whitespace-pre-line align-middle border-r border-gray-200 w-24"
-                                          rowSpan={section.items.length}
+                                          rowSpan={filtered.length}
                                         >
                                           {section.category}
                                         </td>
@@ -1816,13 +1881,34 @@ export function GeneralFuneral({
                                             {item.sub}
                                           </div>
                                         )}
+                                        {PRODUCT_LABEL_IMAGES[item.label] && (
+                                          <div className="flex justify-center gap-2 mt-2">
+                                            {PRODUCT_LABEL_IMAGES[
+                                              item.label
+                                            ].map((img) => (
+                                              <div
+                                                key={img.alt}
+                                                className="w-24 h-24 rounded overflow-hidden cursor-pointer"
+                                                onClick={() =>
+                                                  setLightboxSrc(img.src)
+                                                }
+                                              >
+                                                <img
+                                                  src={img.src}
+                                                  alt={img.alt}
+                                                  className="w-full h-full object-cover scale-110"
+                                                />
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
                                       </td>
                                       <td className="p-3 text-center text-gray-900 font-medium align-middle whitespace-pre-line">
                                         {item.value || '-'}
                                       </td>
                                     </tr>
-                                  )),
-                                )}
+                                  ));
+                                })}
                               </tbody>
                             </table>
                           </div>
@@ -2167,6 +2253,79 @@ export function GeneralFuneral({
           </div>
         </section>
       </div>
+
+      {/* ══════════════ CTA ══════════════ */}
+      <CtaSection
+        id="contact"
+        title={
+          <>
+            가장 어려운 순간,
+            <br />
+            예담라이프가 함께합니다
+          </>
+        }
+        description={
+          <>
+            전문 상담사가 24시간 대기하고 있습니다.
+            <br />
+            부담 없이 문의해 주세요.
+          </>
+        }
+        buttons={
+          <>
+            <a
+              href={membershipHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl transition-colors shadow-lg cursor-pointer hover:opacity-90 overflow-hidden"
+              style={{
+                backgroundColor: BRAND_COLOR_PREMIUM,
+                color: '#ffffff',
+              }}
+            >
+              <span
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                  animation: 'shimmer 2.5s ease-in-out infinite',
+                  width: '60%',
+                }}
+              />
+              <FileText className="relative w-5 h-5" />
+              <span className="relative">가입증서 신청하기</span>
+            </a>
+            <a
+              href="tel:1660-0959"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
+            >
+              <Headphones className="w-5 h-5" />
+              전화 상담
+            </a>
+          </>
+        }
+      />
+
+      {/* 이미지 확대 모달 */}
+      {lightboxSrc && (
+        <div
+          className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 cursor-pointer"
+          onClick={() => setLightboxSrc(null)}
+        >
+          <img
+            src={lightboxSrc}
+            alt=""
+            className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            onClick={() => setLightboxSrc(null)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </>
   );
 }
