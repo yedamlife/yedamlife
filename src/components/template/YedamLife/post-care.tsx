@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Phone,
   ScrollText,
@@ -10,13 +11,52 @@ import {
   FileText,
   CheckCircle2,
   X,
+  ArrowRight,
+  Layers,
 } from 'lucide-react';
 import { BRAND_COLOR, BRAND_COLOR_LIGHT } from './constants';
 import { CountUp, FaqItem, CtaSection, MembershipSection } from './components';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const SUPABASE_BASE =
   'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife';
+
+// ── 시/도 & 시/군/구 데이터 ──
+const REGIONS: Record<string, string[]> = {
+  서울: ['전체', '강남구', '강동구', '강북구', '강서구', '관악구', '광진구', '구로구', '금천구', '노원구', '도봉구', '동대문구', '동작구', '마포구', '서대문구', '서초구', '성동구', '성북구', '송파구', '양천구', '영등포구', '용산구', '은평구', '종로구', '중구', '중랑구'],
+  경기: ['전체', '수원시', '성남시', '용인시', '고양시', '안양시', '부천시', '광명시', '평택시', '과천시', '오산시', '시흥시', '군포시', '의왕시', '하남시', '이천시', '안성시', '김포시', '화성시', '광주시', '양주시', '포천시', '여주시', '연천군', '가평군', '양평군', '동두천시', '구리시', '남양주시', '파주시', '의정부시'],
+  인천: ['전체', '중구', '동구', '미추홀구', '연수구', '남동구', '부평구', '계양구', '서구', '강화군', '옹진군'],
+  부산: ['전체', '중구', '서구', '동구', '영도구', '부산진구', '동래구', '남구', '북구', '해운대구', '사하구', '금정구', '강서구', '연제구', '수영구', '사상구', '기장군'],
+  대구: ['전체', '중구', '동구', '서구', '남구', '북구', '수성구', '달서구', '달성군'],
+  광주: ['전체', '동구', '서구', '남구', '북구', '광산구'],
+  대전: ['전체', '동구', '중구', '서구', '유성구', '대덕구'],
+  울산: ['전체', '중구', '남구', '동구', '북구', '울주군'],
+  세종: ['전체'],
+  강원: ['전체', '춘천시', '원주시', '강릉시', '동해시', '태백시', '속초시', '삼척시', '홍천군', '횡성군', '영월군', '평창군', '정선군', '철원군', '화천군', '양구군', '인제군', '고성군', '양양군'],
+  충북: ['전체', '청주시', '충주시', '제천시', '보은군', '옥천군', '영동군', '증평군', '진천군', '괴산군', '음성군', '단양군'],
+  충남: ['전체', '천안시', '공주시', '보령시', '아산시', '서산시', '논산시', '계룡시', '당진시', '금산군', '부여군', '서천군', '청양군', '홍성군', '예산군', '태안군'],
+  전북: ['전체', '전주시', '군산시', '익산시', '정읍시', '남원시', '김제시', '완주군', '진안군', '무주군', '장수군', '임실군', '순창군', '고창군', '부안군'],
+  전남: ['전체', '목포시', '여수시', '순천시', '나주시', '광양시', '담양군', '곡성군', '구례군', '고흥군', '보성군', '화순군', '장흥군', '강진군', '해남군', '영암군', '무안군', '함평군', '영광군', '장성군', '완도군', '진도군', '신안군'],
+  경북: ['전체', '포항시', '경주시', '김천시', '안동시', '구미시', '영주시', '영천시', '상주시', '문경시', '경산시', '군위군', '의성군', '청송군', '영양군', '영덕군', '청도군', '고령군', '성주군', '칠곡군', '예천군', '봉화군', '울진군', '울릉군'],
+  경남: ['전체', '창원시', '진주시', '통영시', '사천시', '김해시', '밀양시', '거제시', '양산시', '의령군', '함안군', '창녕군', '고성군', '남해군', '하동군', '산청군', '함양군', '거창군', '합천군'],
+  제주: ['전체', '제주시', '서귀포시'],
+};
+
+// ── 원스톱 통합 서비스 (카드 전용, 상세 섹션 없음) ──
+const onestopService = {
+  id: 'onestop',
+  icon: Layers,
+  title: '원스톱 통합 서비스',
+  subtitle: '심리 · 세무 · 상속 · 법률 한 번에',
+  desc: '여러 곳을 방문할 필요 없이 예담 한 곳에서 사후행정 전반을 통합 관리해 드립니다.',
+};
 
 // ── 서비스 데이터 ──
 const services = [
@@ -175,6 +215,8 @@ function PostCareConsultationModal({
   const [form, setForm] = useState({
     name: '',
     phone: '',
+    region: '' as string,
+    district: '' as string,
     serviceType: '' as string,
     message: '',
     agreeAll: false,
@@ -182,20 +224,46 @@ function PostCareConsultationModal({
     agreeThirdParty: false,
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitted(true);
     if (
       !form.name.trim() ||
       !form.phone.trim() ||
-      !form.serviceType ||
-      !form.agreePrivacy ||
-      !form.agreeThirdParty
+      !form.serviceType
     ) {
       return;
     }
-    alert('상담 신청이 완료되었습니다.\n담당자가 빠르게 연락 드리겠습니다.');
-    onClose();
+
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/v1/post-care/consultation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          phone: form.phone,
+          region: form.region || undefined,
+          district: form.district || undefined,
+          service_type: form.serviceType,
+          message: form.message || undefined,
+          privacy_agreed: form.agreePrivacy,
+          third_party_agreed: form.agreeThirdParty,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('API error');
+      }
+
+      toast.success('상담 신청이 완료되었습니다.\n담당자가 빠르게 연락 드리겠습니다.');
+      onClose();
+    } catch {
+      toast.error('신청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!open) return null;
@@ -251,13 +319,54 @@ function PostCareConsultationModal({
                   setForm((p) => ({ ...p, phone: e.target.value }))
                 }
                 className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 ${submitted && !form.phone.trim() ? 'border-red-400' : 'border-gray-200'}`}
-                placeholder="010-0000-0000"
+                placeholder="-를 제외한 숫자만 입력해주세요"
               />
               {submitted && !form.phone.trim() && (
                 <p className="text-xs text-red-500 mt-1">
                   연락처를 입력해주세요.
                 </p>
               )}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-900 mb-1.5">
+              희망 지역 선택
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <Select
+                value={form.region}
+                onValueChange={(v) =>
+                  setForm((p) => ({ ...p, region: v, district: '' }))
+                }
+              >
+                <SelectTrigger className="h-auto px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white cursor-pointer">
+                  <SelectValue placeholder="시/도" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="z-200 max-h-60">
+                  {Object.keys(REGIONS).map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={form.district}
+                onValueChange={(v) => setForm((p) => ({ ...p, district: v }))}
+                disabled={!form.region}
+              >
+                <SelectTrigger className="h-auto px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white cursor-pointer">
+                  <SelectValue placeholder="시/구/군" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="z-200 max-h-60">
+                  {(REGIONS[form.region] ?? []).map((d) => (
+                    <SelectItem key={d} value={d}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -314,20 +423,16 @@ function PostCareConsultationModal({
               placeholder="상담이 필요한 내용을 간략히 적어주세요."
             />
           </div>
-          {submitted && (!form.agreePrivacy || !form.agreeThirdParty) && (
-            <p className="text-xs text-red-500 mt-1">
-              필수 약관에 동의해주세요.
-            </p>
-          )}
         </div>
 
         <div className="px-6 py-4 shrink-0">
           <button
             onClick={handleSubmit}
-            className="w-full py-4 rounded-xl text-white font-bold text-base cursor-pointer hover:opacity-90 transition-all"
+            disabled={submitting}
+            className="w-full py-4 rounded-xl text-white font-bold text-base cursor-pointer hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: BRAND_COLOR }}
           >
-            상담 신청하기
+            {submitting ? '신청 중...' : '상담 신청하기'}
           </button>
         </div>
       </div>
@@ -497,7 +602,44 @@ export function PostCare() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+            {/* 원스톱 통합 서비스 카드 */}
+            {(() => {
+              const Icon = onestopService.icon;
+              return (
+                <button
+                  key={onestopService.id}
+                  onClick={() => setShowConsultation(true)}
+                  className="relative flex flex-col items-center justify-between text-center px-6 py-8 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 hover:shadow-md transition-all cursor-pointer h-full"
+                >
+                  <div
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mb-4"
+                    style={{ backgroundColor: BRAND_COLOR_LIGHT }}
+                  >
+                    <Icon
+                      className="w-8 h-8 sm:w-10 sm:h-10"
+                      style={{ color: BRAND_COLOR }}
+                    />
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1.5">
+                    {onestopService.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-400 mb-3">
+                    {onestopService.subtitle}
+                  </p>
+                  <p className="text-sm text-gray-500 leading-relaxed mb-4">
+                    {onestopService.desc}
+                  </p>
+                  <span
+                    className="inline-flex items-center justify-center gap-1 w-full text-xs sm:text-sm font-semibold bg-gray-100 text-gray-900 px-4 py-2 rounded-lg"
+                  >
+                    자세히 보기 <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </button>
+              );
+            })()}
+
+            {/* 개별 서비스 카드 */}
             {services.map((service) => {
               const Icon = service.icon;
               const colorMap: Record<string, { bg: string; icon: string }> = {
@@ -515,7 +657,7 @@ export function PostCare() {
                       .getElementById(`sec-postcare-${service.id}`)
                       ?.scrollIntoView({ behavior: 'smooth' })
                   }
-                  className="relative flex flex-col items-center text-center px-6 py-8 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 hover:shadow-md transition-all cursor-pointer"
+                  className="relative flex flex-col items-center justify-between text-center px-6 py-8 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 hover:shadow-md transition-all cursor-pointer h-full"
                 >
                   <div
                     className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mb-4"
@@ -532,9 +674,14 @@ export function PostCare() {
                   <p className="text-xs sm:text-sm text-gray-400 mb-3">
                     {service.subtitle}
                   </p>
-                  <p className="text-sm text-gray-500 leading-relaxed">
+                  <p className="text-sm text-gray-500 leading-relaxed mb-4">
                     {service.desc}
                   </p>
+                  <span
+                    className="inline-flex items-center justify-center gap-1 w-full text-xs sm:text-sm font-semibold bg-gray-100 text-gray-900 px-4 py-2 rounded-lg"
+                  >
+                    자세히 보기 <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
                 </button>
               );
             })}

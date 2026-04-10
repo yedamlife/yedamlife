@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Phone, Plus, ChevronDown, ClipboardList, ScrollText } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
@@ -732,30 +733,58 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
     visitDate: '',
   });
 
-  const handleEstimateSubmit = () => {
+  const [estimateSubmitting, setEstimateSubmitting] = useState(false);
+
+  const handleEstimateSubmit = async () => {
     if (!estimateForm.name || !estimateForm.phone) {
-      alert('성함과 연락처는 필수 항목입니다.');
+      toast.warning('성함과 연락처는 필수 항목입니다.');
       return;
     }
     if (estimateForm.serviceTypes.length === 0) {
-      alert('서비스 종류를 선택해주세요.');
+      toast.warning('서비스 종류를 선택해주세요.');
       return;
     }
-    alert(
-      '견적 상담 신청이 완료되었습니다.\n담당자가 빠른 시일 내에 연락드리겠습니다.',
-    );
-    setShowEstimateModal(false);
-    setEstimateForm({
-      name: '',
-      phone: '',
-      address: '',
-      addressDetail: '',
-      serviceTypes: [],
-      area: '',
-      floor: '',
-      housing: '',
-      visitDate: '',
-    });
+
+    setEstimateSubmitting(true);
+    try {
+      const res = await fetch('/api/v1/estate-cleanup/estimate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: estimateForm.name,
+          phone: estimateForm.phone,
+          address: estimateForm.address || undefined,
+          address_detail: estimateForm.addressDetail || undefined,
+          service_types: estimateForm.serviceTypes,
+          area: estimateForm.area || undefined,
+          floor: estimateForm.floor || undefined,
+          housing_type: estimateForm.housing || undefined,
+          visit_date: estimateForm.visitDate || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('API error');
+      }
+
+      toast.success('견적 상담 신청이 완료되었습니다.\n담당자가 빠른 시일 내에 연락드리겠습니다.');
+      setShowEstimateModal(false);
+      setEstimateForm({
+        name: '',
+        phone: '',
+        address: '',
+        addressDetail: '',
+        serviceTypes: [],
+        area: '',
+        floor: '',
+        housing: '',
+        visitDate: '',
+      });
+    } catch {
+      toast.error('신청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setEstimateSubmitting(false);
+    }
   };
 
   const toggleServiceType = (type: string) => {
@@ -1724,7 +1753,7 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                   </label>
                   <input
                     type="tel"
-                    placeholder="'-' 제외 입력"
+                    placeholder="-를 제외한 숫자만 입력해주세요"
                     value={estimateForm.phone}
                     onChange={(e) =>
                       setEstimateForm((p) => ({ ...p, phone: e.target.value }))
@@ -1921,10 +1950,11 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
 
               <button
                 onClick={handleEstimateSubmit}
-                className="w-full py-3.5 rounded-xl text-white font-bold text-sm cursor-pointer hover:opacity-90 transition-all"
+                disabled={estimateSubmitting}
+                className="w-full py-3.5 rounded-xl text-white font-bold text-sm cursor-pointer hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: BRAND_COLOR }}
               >
-                신청하기
+                {estimateSubmitting ? '신청 중...' : '신청하기'}
               </button>
             </div>
           </div>

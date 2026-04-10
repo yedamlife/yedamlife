@@ -56,12 +56,33 @@ export function ProposalModal({ open, onClose }: ProposalModalProps) {
     return form[key].trim() ? '' : field.msg;
   };
 
-  const handleSubmit = () => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
     const allTouched = Object.fromEntries(
       FIELDS.map((f) => [f.key, true]),
     ) as Record<FormKey, boolean>;
     setTouched(allTouched);
     if (FIELDS.some((f) => !form[f.key].trim())) return;
+
+    setSubmitting(true);
+    try {
+      await fetch('/api/v1/corporate-funeral/proposal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          phone: form.phone,
+          email: form.email,
+          company_name: form.companyName,
+          position: form.position,
+        }),
+      });
+    } catch {
+      // 제안서 다운로드는 API 실패와 무관하게 진행
+    } finally {
+      setSubmitting(false);
+    }
     window.open(PROPOSAL_ZIP_URL, '_blank');
     onClose();
   };
@@ -129,7 +150,7 @@ export function ProposalModal({ open, onClose }: ProposalModalProps) {
               </label>
               <input
                 type="tel"
-                placeholder="'-' 빼고 숫자만"
+                placeholder="-를 제외한 숫자만 입력해주세요"
                 value={form.phone}
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, phone: e.target.value }))

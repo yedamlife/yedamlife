@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { toast } from 'sonner';
 import {
   Star,
-  CheckCircle2,
   Headphones,
   ArrowRight,
   ChevronLeft,
@@ -12,11 +12,6 @@ import {
   User,
   MessageCircle,
   Mail,
-  Shield,
-  Search,
-  Gift,
-  Handshake,
-  RefreshCw,
   ChevronDown,
   Info,
   ScrollText,
@@ -166,6 +161,17 @@ export function GeneralFuneral({
   embedded,
   headerRef,
 }: GeneralFuneralProps) {
+  // 상담 신청 폼 state
+  const [consultForm, setConsultForm] = useState({
+    product: '',
+    name: '',
+    phone: '',
+    region: '',
+    timeSlot: '',
+    privacyAgreed: false,
+  });
+  const [consultSubmitting, setConsultSubmitting] = useState(false);
+
   // 모바일 캐러셀: 확장 배열 [last, ...all, first] → 인덱스 1부터 시작
   const [carouselInternalIdx, setCarouselInternalIdx] = useState(1);
   const [carouselTransition, setCarouselTransition] = useState(true);
@@ -1974,11 +1980,8 @@ export function GeneralFuneral({
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                     <Select
-                      value={
-                        productInquiryTab !== 'all'
-                          ? productInquiryTab
-                          : undefined
-                      }
+                      value={consultForm.product || (productInquiryTab !== 'all' ? productInquiryTab : undefined)}
+                      onValueChange={(v) => setConsultForm((p) => ({ ...p, product: v }))}
                     >
                       <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer">
                         <SelectValue placeholder="상품을 선택해주세요." />
@@ -1995,65 +1998,50 @@ export function GeneralFuneral({
                     <input
                       type="text"
                       placeholder="이름"
+                      value={consultForm.name}
+                      onChange={(e) => setConsultForm((p) => ({ ...p, name: e.target.value }))}
                       className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white"
                     />
                     <input
                       type="tel"
-                      placeholder="연락처(01012345678)"
+                      placeholder="-를 제외한 숫자만 입력해주세요"
+                      value={consultForm.phone}
+                      onChange={(e) => setConsultForm((p) => ({ ...p, phone: e.target.value }))}
                       className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white"
                     />
-                    <Select>
+                    <Select
+                      value={consultForm.region}
+                      onValueChange={(v) => setConsultForm((p) => ({ ...p, region: v }))}
+                    >
                       <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer">
                         <SelectValue placeholder="시/도 선택해주세요." />
                       </SelectTrigger>
                       <SelectContent>
                         {[
-                          '서울',
-                          '부산',
-                          '대구',
-                          '인천',
-                          '광주',
-                          '대전',
-                          '울산',
-                          '세종',
-                          '경기',
-                          '강원',
-                          '충북',
-                          '충남',
-                          '전북',
-                          '전남',
-                          '경북',
-                          '경남',
-                          '제주',
-                          '미정',
+                          '서울', '부산', '대구', '인천', '광주', '대전',
+                          '울산', '세종', '경기', '강원', '충북', '충남',
+                          '전북', '전남', '경북', '경남', '제주', '미정',
                         ].map((v) => (
-                          <SelectItem key={v} value={v}>
-                            {v}
-                          </SelectItem>
+                          <SelectItem key={v} value={v}>{v}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                     <div className="sm:col-span-2">
-                      <Select>
+                      <Select
+                        value={consultForm.timeSlot}
+                        onValueChange={(v) => setConsultForm((p) => ({ ...p, timeSlot: v }))}
+                      >
                         <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer w-full">
                           <SelectValue placeholder="상담시간을 선택해주세요." />
                         </SelectTrigger>
                         <SelectContent>
                           {[
-                            '00:00~06:00',
-                            '06:00~08:00',
-                            '08:00~10:00',
-                            '10:00~12:00',
-                            '12:00~14:00',
-                            '14:00~16:00',
-                            '16:00~18:00',
-                            '18:00~20:00',
-                            '20:00~22:00',
+                            '00:00~06:00', '06:00~08:00', '08:00~10:00',
+                            '10:00~12:00', '12:00~14:00', '14:00~16:00',
+                            '16:00~18:00', '18:00~20:00', '20:00~22:00',
                             '22:00~24:00',
                           ].map((v) => (
-                            <SelectItem key={v} value={v}>
-                              {v}
-                            </SelectItem>
+                            <SelectItem key={v} value={v}>{v}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -2063,6 +2051,8 @@ export function GeneralFuneral({
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
+                        checked={consultForm.privacyAgreed}
+                        onChange={(e) => setConsultForm((p) => ({ ...p, privacyAgreed: e.target.checked }))}
                         className="w-4 h-4 rounded cursor-pointer"
                         style={{ accentColor: BRAND_COLOR }}
                       />
@@ -2070,15 +2060,52 @@ export function GeneralFuneral({
                         개인정보 수집 및 이용 동의
                       </span>
                     </label>
-                    <a
-                      href={googleFormUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-8 py-3 text-white text-sm font-bold rounded-xl cursor-pointer hover:opacity-90 transition-opacity"
+                    <button
+                      disabled={consultSubmitting}
+                      onClick={async () => {
+                        if (!consultForm.name.trim() || !consultForm.phone.trim()) {
+                          toast.warning('이름과 연락처를 입력해주세요.');
+                          return;
+                        }
+                        if (!consultForm.privacyAgreed) {
+                          toast.warning('개인정보 수집 및 이용에 동의해주세요.');
+                          return;
+                        }
+                        setConsultSubmitting(true);
+                        try {
+                          const res = await fetch('/api/v1/general-funeral/consultation', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              funeral_location: consultForm.region || '미정',
+                              expected_guests: '상담 후 결정',
+                              funeral_scale: consultForm.product || '상담 후 결정',
+                              binso_required: '상담 후 결정',
+                              escort_service: '상담 후 결정',
+                              clothing_type: '상담 후 결정',
+                              funeral_gown_required: '상담 후 결정',
+                              additional_service: '상담 후 결정',
+                              contact_number: consultForm.phone,
+                            }),
+                          });
+                          const result = await res.json();
+                          if (result.success) {
+                            toast.success('상담 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.');
+                            setConsultForm({ product: '', name: '', phone: '', region: '', timeSlot: '', privacyAgreed: false });
+                          } else {
+                            toast.error(result.message || '오류가 발생했습니다.');
+                          }
+                        } catch {
+                          toast.error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                        } finally {
+                          setConsultSubmitting(false);
+                        }
+                      }}
+                      className="px-8 py-3 text-white text-sm font-bold rounded-xl cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50"
                       style={{ backgroundColor: BRAND_COLOR }}
                     >
-                      상담 신청
-                    </a>
+                      {consultSubmitting ? '신청 중...' : '상담 신청'}
+                    </button>
                   </div>
                 </div>
               </>
@@ -2210,7 +2237,7 @@ export function GeneralFuneral({
                         />
                         <input
                           type="tel"
-                          placeholder="연락처 (01012345678)"
+                          placeholder="-를 제외한 숫자만 입력해주세요"
                           className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none"
                         />
                       </div>

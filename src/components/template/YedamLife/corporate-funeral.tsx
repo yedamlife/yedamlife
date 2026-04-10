@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { toast } from 'sonner';
 import {
   Building2,
   Briefcase,
@@ -95,6 +96,17 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
 
   // 제안서 문의 모달
   const [showProposalModal, setShowProposalModal] = useState(false);
+
+  // 상담 신청 폼 state
+  const [corpConsultForm, setCorpConsultForm] = useState({
+    product: '',
+    name: '',
+    phone: '',
+    region: '',
+    timeSlot: '',
+    privacyAgreed: false,
+  });
+  const [corpConsultSubmitting, setCorpConsultSubmitting] = useState(false);
 
   // 모바일 캐러셀: 확장 배열 [last, ...all, first]
   const [corpCarouselIdx, setCorpCarouselIdx] = useState(1);
@@ -1808,7 +1820,10 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
           <div className="mt-8 p-6 bg-gray-50 rounded-2xl border border-gray-200">
             <p className="text-sm font-bold text-gray-700 mb-4">상담 신청</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-              <Select>
+              <Select
+                value={corpConsultForm.product}
+                onValueChange={(v) => setCorpConsultForm((p) => ({ ...p, product: v }))}
+              >
                 <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer">
                   <SelectValue placeholder="상품을 선택해주세요." />
                 </SelectTrigger>
@@ -1820,65 +1835,50 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
               <input
                 type="text"
                 placeholder="이름"
+                value={corpConsultForm.name}
+                onChange={(e) => setCorpConsultForm((p) => ({ ...p, name: e.target.value }))}
                 className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white"
               />
               <input
                 type="tel"
-                placeholder="연락처(01012345678)"
+                placeholder="-를 제외한 숫자만 입력해주세요"
+                value={corpConsultForm.phone}
+                onChange={(e) => setCorpConsultForm((p) => ({ ...p, phone: e.target.value }))}
                 className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white"
               />
-              <Select>
+              <Select
+                value={corpConsultForm.region}
+                onValueChange={(v) => setCorpConsultForm((p) => ({ ...p, region: v }))}
+              >
                 <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer">
                   <SelectValue placeholder="시/도 선택해주세요." />
                 </SelectTrigger>
                 <SelectContent>
                   {[
-                    '서울',
-                    '부산',
-                    '대구',
-                    '인천',
-                    '광주',
-                    '대전',
-                    '울산',
-                    '세종',
-                    '경기',
-                    '강원',
-                    '충북',
-                    '충남',
-                    '전북',
-                    '전남',
-                    '경북',
-                    '경남',
-                    '제주',
-                    '미정',
+                    '서울', '부산', '대구', '인천', '광주', '대전',
+                    '울산', '세종', '경기', '강원', '충북', '충남',
+                    '전북', '전남', '경북', '경남', '제주', '미정',
                   ].map((v) => (
-                    <SelectItem key={v} value={v}>
-                      {v}
-                    </SelectItem>
+                    <SelectItem key={v} value={v}>{v}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <div className="sm:col-span-2">
-                <Select>
+                <Select
+                  value={corpConsultForm.timeSlot}
+                  onValueChange={(v) => setCorpConsultForm((p) => ({ ...p, timeSlot: v }))}
+                >
                   <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer w-full">
                     <SelectValue placeholder="상담시간을 선택해주세요." />
                   </SelectTrigger>
                   <SelectContent>
                     {[
-                      '00:00~06:00',
-                      '06:00~08:00',
-                      '08:00~10:00',
-                      '10:00~12:00',
-                      '12:00~14:00',
-                      '14:00~16:00',
-                      '16:00~18:00',
-                      '18:00~20:00',
-                      '20:00~22:00',
+                      '00:00~06:00', '06:00~08:00', '08:00~10:00',
+                      '10:00~12:00', '12:00~14:00', '14:00~16:00',
+                      '16:00~18:00', '18:00~20:00', '20:00~22:00',
                       '22:00~24:00',
                     ].map((v) => (
-                      <SelectItem key={v} value={v}>
-                        {v}
-                      </SelectItem>
+                      <SelectItem key={v} value={v}>{v}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1888,6 +1888,8 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={corpConsultForm.privacyAgreed}
+                  onChange={(e) => setCorpConsultForm((p) => ({ ...p, privacyAgreed: e.target.checked }))}
                   className="w-4 h-4 rounded cursor-pointer"
                   style={{ accentColor: BRAND_COLOR }}
                 />
@@ -1895,15 +1897,53 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                   개인정보 수집 및 이용 동의
                 </span>
               </label>
-              <a
-                href={googleFormUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-8 py-3 text-white text-sm font-bold rounded-xl cursor-pointer hover:opacity-90 transition-opacity"
+              <button
+                disabled={corpConsultSubmitting}
+                onClick={async () => {
+                  if (!corpConsultForm.product) {
+                    toast.warning('상품을 선택해주세요.');
+                    return;
+                  }
+                  if (!corpConsultForm.name.trim() || !corpConsultForm.phone.trim()) {
+                    toast.warning('이름과 연락처를 입력해주세요.');
+                    return;
+                  }
+                  if (!corpConsultForm.privacyAgreed) {
+                    toast.warning('개인정보 수집 및 이용에 동의해주세요.');
+                    return;
+                  }
+                  setCorpConsultSubmitting(true);
+                  try {
+                    const res = await fetch('/api/v1/corporate-funeral/consultation', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        product: corpConsultForm.product,
+                        name: corpConsultForm.name,
+                        phone: corpConsultForm.phone,
+                        region: corpConsultForm.region || '미정',
+                        preferred_time: corpConsultForm.timeSlot || '미정',
+                        privacy_agreed: corpConsultForm.privacyAgreed,
+                      }),
+                    });
+                    const result = await res.json();
+                    if (result.success) {
+                      toast.success('상담 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.');
+                      setCorpConsultForm({ product: '', name: '', phone: '', region: '', timeSlot: '', privacyAgreed: false });
+                    } else {
+                      toast.error(result.message || '오류가 발생했습니다.');
+                    }
+                  } catch {
+                    toast.error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                  } finally {
+                    setCorpConsultSubmitting(false);
+                  }
+                }}
+                className="px-8 py-3 text-white text-sm font-bold rounded-xl cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50"
                 style={{ backgroundColor: BRAND_COLOR }}
               >
-                상담 신청
-              </a>
+                {corpConsultSubmitting ? '신청 중...' : '상담 신청'}
+              </button>
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { X, Search, CalendarIcon, Clock } from 'lucide-react';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { BRAND_COLOR, BRAND_COLOR_LIGHT } from './constants';
@@ -144,8 +145,9 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
       ? (Number(form.people) / 2) * (PRICE_PER_2[form.funeralMethod] ?? 0)
       : 0;
 
-  const handleSubmit = () => {
-    // 필수값 검증
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
     const required: (keyof ReservationForm)[] = [
       'writerName',
       'writerPhone',
@@ -158,12 +160,46 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
     ];
     const missing = required.some((k) => !form[k].trim());
     if (missing) {
-      alert('필수 항목을 모두 입력해주세요.');
+      toast.warning('필수 항목을 모두 입력해주세요.');
       return;
     }
-    // TODO: 실제 예약 API 연동
-    alert('예약 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.');
-    onClose();
+
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/v1/general-funeral/reservation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          writer_name: form.writerName,
+          writer_phone: form.writerPhone,
+          deceased_name: form.deceasedName,
+          deceased_gender: form.deceasedGender,
+          funeral_hall: form.funeralHall,
+          funeral_hall_address: form.funeralHallAddress,
+          room_name: form.roomName,
+          departure_date: form.departureDate,
+          departure_hour: form.departureHour,
+          departure_minute: form.departureMinute,
+          funeral_method: form.funeralMethod,
+          destination_address: form.destinationAddress,
+          destination_detail: form.destinationDetail,
+          clothing: form.clothing,
+          people: Number(form.people),
+          price,
+        }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        toast.success('예약 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.');
+        onClose();
+      } else {
+        toast.error(result.message || '오류가 발생했습니다. 다시 시도해주세요.');
+      }
+    } catch {
+      toast.error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!open) return null;
@@ -215,7 +251,7 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
               />
               <input
                 type="tel"
-                placeholder="연락처"
+                placeholder="-를 제외한 숫자만 입력해주세요"
                 value={form.writerPhone}
                 onChange={(e) => update('writerPhone', e.target.value)}
                 className={inputClass}

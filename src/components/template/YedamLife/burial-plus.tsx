@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Phone, MapPin, X, ScrollText } from 'lucide-react';
+import { toast } from 'sonner';
 import { CountUp, CtaSection, MembershipSection } from './components';
 import {
   Select,
@@ -671,12 +672,14 @@ function BurialConsultationModal({
     religion: '',
     region: '',
     district: '',
+    budget: '',
     message: '',
     agreeAll: false,
     agreePrivacy: false,
     agreeThirdParty: false,
   });
   const [showThirdParty, setShowThirdParty] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -686,6 +689,7 @@ function BurialConsultationModal({
         religion: '',
         region: '',
         district: '',
+        budget: '',
         message: '',
         agreeAll: false,
         agreePrivacy: false,
@@ -703,22 +707,43 @@ function BurialConsultationModal({
     }
   }, [open]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (
       !form.name.trim() ||
       !form.phone.trim() ||
       !form.religion ||
       !form.region
     ) {
-      alert('필수 항목을 모두 입력해주세요.');
+      toast.warning('필수 항목을 모두 입력해주세요.');
       return;
     }
-    if (!form.agreePrivacy || !form.agreeThirdParty) {
-      alert('필수 동의 항목에 모두 동의해주세요.');
-      return;
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/v1/burial-plus/consultation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          phone: form.phone,
+          religion: form.religion,
+          region: form.region,
+          district: form.district || null,
+          budget: form.budget || null,
+          message: form.message || null,
+        }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        toast.success('상담 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.');
+        onClose();
+      } else {
+        toast.error(result.message || '오류가 발생했습니다. 다시 시도해주세요.');
+      }
+    } catch {
+      toast.error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setSubmitting(false);
     }
-    alert('상담 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.');
-    onClose();
   };
 
   if (!open) return null;
@@ -778,7 +803,7 @@ function BurialConsultationModal({
               </label>
               <input
                 type="tel"
-                placeholder="-를 제외한 숫자만 입력해 주세요"
+                placeholder="-를 제외한 숫자만 입력해주세요"
                 value={form.phone}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, phone: e.target.value }))
@@ -852,6 +877,34 @@ function BurialConsultationModal({
             </div>
           </div>
 
+          {/* 예산 */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+              예산
+            </label>
+            <Select
+              value={form.budget}
+              onValueChange={(v) => setForm((p) => ({ ...p, budget: v }))}
+            >
+              <SelectTrigger className="h-auto px-4 py-3 rounded-lg border-gray-200 bg-white text-sm">
+                <SelectValue placeholder="예산을 선택해 주세요" />
+              </SelectTrigger>
+              <SelectContent className="z-[200]">
+                {[
+                  '100~300만원',
+                  '300~500만원',
+                  '500~700만원',
+                  '700~1,000만원',
+                  '1,000만원 이상',
+                ].map((b) => (
+                  <SelectItem key={b} value={b}>
+                    {b}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* 메세지 */}
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-1.5">
@@ -873,10 +926,11 @@ function BurialConsultationModal({
         <div className="px-6 py-4 shrink-0">
           <button
             onClick={handleSubmit}
-            className="w-full py-4 rounded-xl text-white font-bold text-base cursor-pointer hover:opacity-90 transition-all"
+            disabled={submitting}
+            className="w-full py-4 rounded-xl text-white font-bold text-base cursor-pointer hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: BRAND_COLOR }}
           >
-            신청하기
+            {submitting ? '신청 중...' : '신청하기'}
           </button>
         </div>
       </div>

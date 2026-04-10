@@ -105,7 +105,9 @@ function MembershipCorporatePageContent() {
     }).open();
   };
 
-  const handleSubmit = () => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
     if (!formData.name || !formData.phone || !formData.product) {
       alert('필수 항목을 입력해주세요. (신청인, 휴대폰, 가입상품)');
       return;
@@ -114,7 +116,38 @@ function MembershipCorporatePageContent() {
       alert('개인정보 이용·제공·활용 동의가 필요합니다.');
       return;
     }
-    setSubmitted(true);
+
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/v1/corporate-funeral/membership', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          phone: formData.phone,
+          birth_date: formData.birthDate,
+          gender: formData.gender,
+          religion: formData.religion,
+          address: formData.address,
+          address_detail: formData.addressDetail,
+          company_name: formData.companyName,
+          position: formData.position,
+          product: formData.product,
+          referrer: formData.referrer,
+          privacy_agreed: privacyAgreed,
+        }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setSubmitted(true);
+      } else {
+        alert(result.message || '오류가 발생했습니다. 다시 시도해주세요.');
+      }
+    } catch {
+      alert('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const updateField = (field: string, value: string) => {
@@ -284,7 +317,7 @@ function MembershipCorporatePageContent() {
                     </label>
                     <input
                       type="tel"
-                      placeholder="'-' 빼고 숫자만"
+                      placeholder="-를 제외한 숫자만 입력해주세요"
                       value={formData.phone}
                       onChange={(e) => updateField('phone', e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a5a2b]/30 transition-all bg-gray-50 focus:bg-white"
@@ -823,11 +856,12 @@ function MembershipCorporatePageContent() {
               <button
                 type="button"
                 onClick={handleSubmit}
-                className="inline-flex items-center justify-center gap-2 px-12 py-4 rounded-2xl text-white font-bold text-lg shadow-lg transition-all hover:opacity-90 hover:shadow-xl hover:-translate-y-0.5 cursor-pointer"
+                disabled={submitting}
+                className="inline-flex items-center justify-center gap-2 px-12 py-4 rounded-2xl text-white font-bold text-lg shadow-lg transition-all hover:opacity-90 hover:shadow-xl hover:-translate-y-0.5 cursor-pointer disabled:opacity-50"
                 style={{ backgroundColor: BRAND_COLOR }}
               >
                 <FileText className="w-5 h-5" />
-                가입증서 신청
+                {submitting ? '신청 중...' : '가입증서 신청'}
               </button>
               <p className="text-xs text-gray-400 mt-4">
                 신청 후 담당자가 확인하여 연락드립니다.
