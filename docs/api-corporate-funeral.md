@@ -18,11 +18,11 @@
 
 기업상조 랜딩 페이지(`corporate-funeral.tsx`)에서 수집하는 폼 데이터를 서버 API + DB로 연동한다.
 
-| # | 기능 | 설명 |
-|---|------|------|
-| 1 | 기업상조 상담신청 | 랜딩 페이지 하단 상담 폼 (상품, 이름, 연락처, 지역, 상담시간) |
-| 2 | 후불제 기업상조 가입신청서 | 기업 회원 가입 신청 (membership/corporate) |
-| 3 | 기업상조 제안서 신청 | 기업 제안서 다운로드 + 담당자 정보 수집 (ProposalModal) |
+| #   | 기능                       | 설명                                                          |
+| --- | -------------------------- | ------------------------------------------------------------- |
+| 1   | 기업상조 상담신청          | 랜딩 페이지 하단 상담 폼 (상품, 이름, 연락처, 지역, 상담시간) |
+| 2   | 후불제 기업상조 가입신청서 | 기업 회원 가입 신청 (membership/corporate)                    |
+| 3   | 기업상조 제안서 신청       | 기업 제안서 다운로드 + 담당자 정보 수집 (ProposalModal)       |
 
 ---
 
@@ -134,9 +134,9 @@ ALTER TABLE corporate_proposal_requests ENABLE ROW LEVEL SECURITY;
 
 ### 3-1. 기업상조 상담신청 API
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| POST | `/api/v1/corporate-funeral/consultation` | 기업상조 상담 신청 생성 |
+| Method | Endpoint                                 | 설명                   |
+| ------ | ---------------------------------------- | ---------------------- |
+| POST   | `/api/v1/corporate-funeral/consultation` | 기업상조 상담신청 생성 |
 
 **Request Body:**
 
@@ -162,9 +162,9 @@ ALTER TABLE corporate_proposal_requests ENABLE ROW LEVEL SECURITY;
 
 ### 3-2. 후불제 기업상조 가입신청서 API
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| POST | `/api/v1/corporate-funeral/membership` | 기업상조 가입 신청 생성 |
+| Method | Endpoint                               | 설명                    |
+| ------ | -------------------------------------- | ----------------------- |
+| POST   | `/api/v1/corporate-funeral/membership` | 기업상조 가입 신청 생성 |
 
 **Request Body:**
 
@@ -196,9 +196,9 @@ ALTER TABLE corporate_proposal_requests ENABLE ROW LEVEL SECURITY;
 
 ### 3-3. 기업상조 제안서 신청 API
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| POST | `/api/v1/corporate-funeral/proposal` | 기업 제안서 신청 생성 |
+| Method | Endpoint                             | 설명                  |
+| ------ | ------------------------------------ | --------------------- |
+| POST   | `/api/v1/corporate-funeral/proposal` | 기업 제안서 신청 생성 |
 
 **Request Body:**
 
@@ -290,8 +290,8 @@ src/
 
 기존 일반상조(`gf_`) 패턴을 따라 기업상조는 `cf_` prefix를 사용한다.
 
-| 테이블 | Prefix | 용도 |
-|--------|--------|------|
-| `cf_consultation_requests` | `cf_` | 기업상조 상담신청 |
-| `cf_membership_applications` | `cf_` | 기업상조 가입신청서 |
-| `corporate_proposal_requests` | — | 기업 제안서 신청 (공통) |
+| 테이블                        | Prefix | 용도                    |
+| ----------------------------- | ------ | ----------------------- |
+| `cf_consultation_requests`    | `cf_`  | 기업상조 상담신청       |
+| `cf_membership_applications`  | `cf_`  | 기업상조 가입신청서     |
+| `corporate_proposal_requests` | —      | 기업 제안서 신청 (공통) |

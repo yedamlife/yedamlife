@@ -16,17 +16,17 @@
 
 ## 1. 개요
 
-사후행정케어 랜딩 페이지(`post-care.tsx`)에서 수집하는 상담 신청 데이터를 서버 API + DB로 연동한다.
+사후행정케어 랜딩 페이지(`post-care.tsx`)에서 수집하는 상담신청 데이터를 서버 API + DB로 연동한다.
 
-| # | 기능 | 설명 |
-|---|------|------|
-| 1 | 상담 신청 | 사후행정케어 상담 모달 폼 (성함, 연락처, 지역, 상담유형, 상담내용, 약관동의) |
+| #   | 기능     | 설명                                                                         |
+| --- | -------- | ---------------------------------------------------------------------------- |
+| 1   | 상담신청 | 사후행정케어 상담 모달 폼 (성함, 연락처, 지역, 상담유형, 상담내용, 약관동의) |
 
 ---
 
 ## 2. DB 테이블 설계
 
-### 2-1. 상담 신청 내역 (`pc_consultation_requests`)
+### 2-1. 상담신청 내역 (`pc_consultation_requests`)
 
 > 사후행정케어 상담 모달 폼 데이터
 
@@ -70,11 +70,11 @@ ALTER TABLE pc_consultation_requests ENABLE ROW LEVEL SECURITY;
 
 ### Base Path: `/api/v1/post-care`
 
-### 3-1. 상담 신청 API
+### 3-1. 상담신청 API
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| POST | `/api/v1/post-care/consultation` | 사후행정케어 상담 신청 생성 |
+| Method | Endpoint                         | 설명                       |
+| ------ | -------------------------------- | -------------------------- |
+| POST   | `/api/v1/post-care/consultation` | 사후행정케어 상담신청 생성 |
 
 **Request Body:**
 
@@ -95,6 +95,7 @@ ALTER TABLE pc_consultation_requests ENABLE ROW LEVEL SECURITY;
 **선택 필드:** `region`, `message`
 
 **`service_type` 허용 값:**
+
 - `심리 상담`
 - `세무 상담`
 - `상속 절차`
@@ -149,7 +150,7 @@ ALTER TABLE pc_consultation_requests ENABLE ROW LEVEL SECURITY;
 
 ### Phase 2: API 구현
 
-- [ ] `src/app/api/v1/post-care/consultation/route.ts` - 사후행정케어 상담 신청 API
+- [ ] `src/app/api/v1/post-care/consultation/route.ts` - 사후행정케어 상담신청 API
 
 ### Phase 3: 프론트엔드 연동
 
@@ -165,7 +166,7 @@ src/
 │   └── api/
 │       └── v1/
 │           └── post-care/
-│               └── consultation/route.ts   -- 사후행정케어 상담 신청
+│               └── consultation/route.ts   -- 사후행정케어 상담신청
 └── components/
     └── template/
         └── YedamLife/
@@ -176,6 +177,6 @@ src/
 
 기존 패턴을 따라 사후행정케어는 `pc_` prefix를 사용한다.
 
-| 테이블 | Prefix | 용도 |
-|--------|--------|------|
-| `pc_consultation_requests` | `pc_` | 사후행정케어 상담 신청 |
+| 테이블                     | Prefix | 용도                  |
+| -------------------------- | ------ | --------------------- |
+| `pc_consultation_requests` | `pc_`  | 사후행정케어 상담신청 |

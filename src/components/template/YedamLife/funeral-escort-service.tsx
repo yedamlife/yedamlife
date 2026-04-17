@@ -304,7 +304,7 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white/15 text-white text-base font-bold rounded-xl border border-white/30 hover:bg-white/25 transition-colors backdrop-blur-sm cursor-pointer"
                 >
                   <Phone className="w-5 h-5" />
-                  빠른 상담신청
+                  전화상담
                 </a>
               </div>
             </div>
@@ -795,7 +795,7 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
             >
               <Phone className="w-5 h-5" />
-              빠른 상담신청
+              전화상담
             </a>
           </>
         }
@@ -832,36 +832,27 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
         </a>
       </div>
 
-      {/* ── 모바일 플로팅 버튼 (sm 미만) ── */}
-      <div className="sm:hidden fixed right-3 bottom-5 z-50 flex flex-col items-end gap-2">
-        <button
-          onClick={() => setShowReservation(true)}
-          className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full shadow-lg cursor-pointer"
-          style={{
-            backgroundColor: BRAND_COLOR_LIGHT,
-            color: BRAND_COLOR,
-          }}
-        >
-          <span className="text-[10px] font-bold">간편예약</span>
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
+      {/* ── 모바일 하단 고정 바 (sm 미만) ── */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#222] safe-area-bottom">
+        <div className="flex items-center divide-x divide-white/20">
+          <a
+            href="tel:1660-0959"
+            className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
-            <ScrollText className="w-4 h-4" />
-          </div>
-        </button>
-        <a
-          href="tel:1660-0959"
-          className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full bg-white shadow-lg border border-gray-200 cursor-pointer"
-        >
-          <span className="text-[10px] font-bold text-gray-700">
-            빠른 상담신청
-          </span>
-          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-            <Phone className="w-4 h-4 text-gray-700" />
-          </div>
-        </a>
+            <Phone className="w-5 h-5" />
+            <span className="text-base font-bold">전화상담</span>
+          </a>
+          <button
+            onClick={() => setShowReservation(true)}
+            className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
+          >
+            <ScrollText className="w-5 h-5" />
+            <span className="text-base font-bold">간편예약</span>
+          </button>
+        </div>
       </div>
+      {/* 모바일 하단 고정 바 높이만큼 여백 */}
+      <div className="sm:hidden h-16" />
     </>
   );
 }

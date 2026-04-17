@@ -1,7 +1,15 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Phone, Plus, ChevronDown, ClipboardList, ScrollText } from 'lucide-react';
+import {
+  Phone,
+  Plus,
+  ChevronDown,
+  ClipboardList,
+  ScrollText,
+  X,
+  Search,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import {
   BRAND_COLOR,
@@ -734,6 +742,57 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
   });
 
   const [estimateSubmitting, setEstimateSubmitting] = useState(false);
+  const [showPostcode, setShowPostcode] = useState(false);
+  const postcodeRef = useRef<HTMLDivElement>(null);
+
+  const openDaumSearch = () => {
+    const run = () => {
+      const daum = (window as unknown as Record<string, unknown>).daum as
+        | {
+            Postcode: new (opts: {
+              oncomplete: (data: {
+                address: string;
+                buildingName: string;
+              }) => void;
+              onclose: () => void;
+              width: string;
+              height: string;
+            }) => { embed: (el: HTMLElement) => void };
+          }
+        | undefined;
+
+      if (!daum?.Postcode || !postcodeRef.current) return;
+
+      postcodeRef.current.innerHTML = '';
+      setShowPostcode(true);
+
+      new daum.Postcode({
+        width: '100%',
+        height: '100%',
+        oncomplete: (data) => {
+          const addr = data.buildingName
+            ? `${data.address} (${data.buildingName})`
+            : data.address;
+          setEstimateForm((p) => ({ ...p, address: addr }));
+          setShowPostcode(false);
+        },
+        onclose: () => {
+          setShowPostcode(false);
+        },
+      }).embed(postcodeRef.current);
+    };
+
+    if ((window as unknown as Record<string, unknown>).daum) {
+      run();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src =
+      '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
+    script.onload = run;
+    document.head.appendChild(script);
+  };
 
   const handleEstimateSubmit = async () => {
     if (!estimateForm.name || !estimateForm.phone) {
@@ -767,7 +826,9 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
         throw new Error('API error');
       }
 
-      toast.success('견적 상담 신청이 완료되었습니다.\n담당자가 빠른 시일 내에 연락드리겠습니다.');
+      toast.success(
+        '견적 상담신청이 완료되었습니다.\n담당자가 빠른 시일 내에 연락드리겠습니다.',
+      );
       setShowEstimateModal(false);
       setEstimateForm({
         name: '',
@@ -1243,88 +1304,28 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                     </div>
                   </>
                 ) : (
-                <div className="relative">
-                  {/* PC: 가로 한 줄 */}
-                  <div className="hidden sm:grid sm:grid-cols-5 sm:gap-0">
-                    {svc.process.map((p, idx) => {
-                      const hasImage = 'image' in p && p.image;
-                      return (
-                        <div key={p.step} className="text-center relative">
-                          {/* 연결선: 첫 번째 아이템 제외, 원형 중앙 높이에 맞춤 */}
-                          {idx > 0 && (
-                            <div
-                              className="absolute h-px right-1/2"
-                              style={{
-                                backgroundColor: BRAND_COLOR,
-                                top: hasImage ? '56px' : '5px',
-                                left: '-50%',
-                              }}
-                            />
-                          )}
-                          {hasImage ? (
-                            <>
-                              <div
-                                className={`w-28 h-28 rounded-full mx-auto mb-3 overflow-hidden relative z-10 ${svc.id === 'incineration' ? 'bg-white p-6' : 'bg-gray-100'}`}
-                              >
-                                <img
-                                  src={p.image}
-                                  alt={p.title}
-                                  className={`w-full h-full ${svc.id === 'incineration' ? 'object-contain' : 'object-cover'}`}
-                                />
-                              </div>
-                              <p className="text-xs text-gray-400 mb-1">
-                                {p.step}
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <div
-                                className="w-2.5 h-2.5 rounded-full mx-auto mb-3 relative z-10"
-                                style={{ backgroundColor: BRAND_COLOR }}
-                              />
-                              <p className="text-sm font-bold text-gray-900 mb-1.5">
-                                {p.step}
-                              </p>
-                            </>
-                          )}
-                          <p className="text-xs text-gray-600 font-medium whitespace-pre-line leading-snug">
-                            {p.title}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* 모바일: 2열 지그재그 (선 없이) */}
-                  <div className="sm:hidden">
-                    <div
-                      className="grid grid-cols-2 gap-y-8"
-                      style={{
-                        gridTemplateAreas: `
-                          'item1 item2'
-                          'item3 item4'
-                          'item5 .'
-                        `,
-                      }}
-                    >
+                  <div className="relative">
+                    {/* PC: 가로 한 줄 */}
+                    <div className="hidden sm:grid sm:grid-cols-5 sm:gap-0">
                       {svc.process.map((p, idx) => {
-                        const gridAreas = [
-                          'item1',
-                          'item2',
-                          'item3',
-                          'item4',
-                          'item5',
-                        ];
+                        const hasImage = 'image' in p && p.image;
                         return (
-                          <div
-                            key={p.step}
-                            className="text-center"
-                            style={{ gridArea: gridAreas[idx] }}
-                          >
-                            {'image' in p && p.image ? (
+                          <div key={p.step} className="text-center relative">
+                            {/* 연결선: 첫 번째 아이템 제외, 원형 중앙 높이에 맞춤 */}
+                            {idx > 0 && (
+                              <div
+                                className="absolute h-px right-1/2"
+                                style={{
+                                  backgroundColor: BRAND_COLOR,
+                                  top: hasImage ? '56px' : '5px',
+                                  left: '-50%',
+                                }}
+                              />
+                            )}
+                            {hasImage ? (
                               <>
                                 <div
-                                  className={`w-14 h-14 rounded-full mx-auto mb-2 overflow-hidden ${svc.id === 'incineration' ? 'bg-white p-3' : 'bg-gray-100'}`}
+                                  className={`w-28 h-28 rounded-full mx-auto mb-3 overflow-hidden relative z-10 ${svc.id === 'incineration' ? 'bg-white p-6' : 'bg-gray-100'}`}
                                 >
                                   <img
                                     src={p.image}
@@ -1332,17 +1333,20 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                                     className={`w-full h-full ${svc.id === 'incineration' ? 'object-contain' : 'object-cover'}`}
                                   />
                                 </div>
-                                <p className="text-xs text-gray-400 mb-0.5">
+                                <p className="text-xs text-gray-400 mb-1">
                                   {p.step}
                                 </p>
                               </>
                             ) : (
-                              <div
-                                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white mx-auto mb-2"
-                                style={{ backgroundColor: BRAND_COLOR }}
-                              >
-                                {p.step}
-                              </div>
+                              <>
+                                <div
+                                  className="w-2.5 h-2.5 rounded-full mx-auto mb-3 relative z-10"
+                                  style={{ backgroundColor: BRAND_COLOR }}
+                                />
+                                <p className="text-sm font-bold text-gray-900 mb-1.5">
+                                  {p.step}
+                                </p>
+                              </>
                             )}
                             <p className="text-xs text-gray-600 font-medium whitespace-pre-line leading-snug">
                               {p.title}
@@ -1351,8 +1355,65 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                         );
                       })}
                     </div>
+
+                    {/* 모바일: 2열 지그재그 (선 없이) */}
+                    <div className="sm:hidden">
+                      <div
+                        className="grid grid-cols-2 gap-y-8"
+                        style={{
+                          gridTemplateAreas: `
+                          'item1 item2'
+                          'item3 item4'
+                          'item5 .'
+                        `,
+                        }}
+                      >
+                        {svc.process.map((p, idx) => {
+                          const gridAreas = [
+                            'item1',
+                            'item2',
+                            'item3',
+                            'item4',
+                            'item5',
+                          ];
+                          return (
+                            <div
+                              key={p.step}
+                              className="text-center"
+                              style={{ gridArea: gridAreas[idx] }}
+                            >
+                              {'image' in p && p.image ? (
+                                <>
+                                  <div
+                                    className={`w-14 h-14 rounded-full mx-auto mb-2 overflow-hidden ${svc.id === 'incineration' ? 'bg-white p-3' : 'bg-gray-100'}`}
+                                  >
+                                    <img
+                                      src={p.image}
+                                      alt={p.title}
+                                      className={`w-full h-full ${svc.id === 'incineration' ? 'object-contain' : 'object-cover'}`}
+                                    />
+                                  </div>
+                                  <p className="text-xs text-gray-400 mb-0.5">
+                                    {p.step}
+                                  </p>
+                                </>
+                              ) : (
+                                <div
+                                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white mx-auto mb-2"
+                                  style={{ backgroundColor: BRAND_COLOR }}
+                                >
+                                  {p.step}
+                                </div>
+                              )}
+                              <p className="text-xs text-gray-600 font-medium whitespace-pre-line leading-snug">
+                                {p.title}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
-                </div>
                 )}
               </div>
             )}
@@ -1677,36 +1738,27 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
         </a>
       </div>
 
-      {/* ── 모바일 플로팅 버튼 (sm 미만) ── */}
-      <div className="sm:hidden fixed right-3 bottom-5 z-50 flex flex-col items-end gap-2">
-        <button
-          onClick={() => setShowEstimateModal(true)}
-          className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full shadow-lg cursor-pointer"
-          style={{
-            backgroundColor: BRAND_COLOR_LIGHT,
-            color: BRAND_COLOR,
-          }}
-        >
-          <span className="text-[10px] font-bold">견적상담</span>
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
+      {/* ── 모바일 하단 고정 바 (sm 미만) ── */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#222] safe-area-bottom">
+        <div className="flex items-center divide-x divide-white/20">
+          <a
+            href="tel:1899-1477"
+            className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
-            <ScrollText className="w-4 h-4" />
-          </div>
-        </button>
-        <a
-          href="tel:1899-1477"
-          className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full bg-white shadow-lg border border-gray-200 cursor-pointer"
-        >
-          <span className="text-[10px] font-bold text-gray-700">
-            빠른 상담신청
-          </span>
-          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-            <Phone className="w-4 h-4 text-gray-700" />
-          </div>
-        </a>
+            <Phone className="w-5 h-5" />
+            <span className="text-base font-bold">전화 상담</span>
+          </a>
+          <button
+            onClick={() => setShowEstimateModal(true)}
+            className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
+          >
+            <ScrollText className="w-5 h-5" />
+            <span className="text-base font-bold">상담신청</span>
+          </button>
+        </div>
       </div>
+      {/* 모바일 하단 고정 바 높이만큼 여백 */}
+      <div className="sm:hidden h-16" />
 
       {/* ── 견적 상담 모달 ── */}
       {showEstimateModal && (
@@ -1720,7 +1772,7 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
           >
             <div className="sticky top-0 z-10 px-6 py-4 flex items-center justify-between bg-gray-100 rounded-t-2xl">
               <span className="font-bold text-gray-800">
-                빠른 견적 상담 신청
+                빠른 견적 상담신청
               </span>
               <button
                 onClick={() => setShowEstimateModal(false)}
@@ -1768,19 +1820,28 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                 <label className="block text-sm font-bold text-gray-900 mb-1.5">
                   주소
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="기본주소"
-                    value={estimateForm.address}
-                    onChange={(e) =>
-                      setEstimateForm((p) => ({
-                        ...p,
-                        address: e.target.value,
-                      }))
-                    }
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a5a2b]/30 bg-gray-50 focus:bg-white transition-all"
-                  />
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={openDaumSearch}
+                      className="shrink-0 px-5 py-3 rounded-xl text-sm font-semibold cursor-pointer hover:opacity-90 transition-colors"
+                      style={{
+                        backgroundColor: BRAND_COLOR_LIGHT,
+                        color: BRAND_COLOR,
+                      }}
+                    >
+                      <Search className="w-4 h-4 inline-block mr-1" />
+                      주소 검색
+                    </button>
+                    <input
+                      type="text"
+                      placeholder="주소 검색 버튼을 눌러주세요"
+                      value={estimateForm.address}
+                      readOnly
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none bg-gray-50 cursor-default"
+                    />
+                  </div>
                   <input
                     type="text"
                     placeholder="상세주소"
@@ -1836,7 +1897,7 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                         <SelectTrigger className="w-full rounded-xl border-gray-200 bg-white text-sm">
                           <SelectValue placeholder="평수 선택" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-200">
                           {areaOptions.map((o) => (
                             <SelectItem key={o} value={o}>
                               {o}
@@ -1858,7 +1919,7 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                         <SelectTrigger className="w-full rounded-xl border-gray-200 bg-white text-sm">
                           <SelectValue placeholder="층수 선택" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-200">
                           {floorOptions.map((o) => (
                             <SelectItem key={o} value={o}>
                               {o}
@@ -1880,7 +1941,7 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
                         <SelectTrigger className="w-full rounded-xl border-gray-200 bg-white text-sm">
                           <SelectValue placeholder="주거형태 선택" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-200">
                           {housingOptions.map((o) => (
                             <SelectItem key={o} value={o}>
                               {o}
@@ -1982,9 +2043,7 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
           <>
             <button
               onClick={() =>
-                window.dispatchEvent(
-                  new CustomEvent('open-estimate-modal'),
-                )
+                window.dispatchEvent(new CustomEvent('open-estimate-modal'))
               }
               className="relative w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl transition-colors shadow-lg cursor-pointer hover:opacity-90 overflow-hidden"
               style={{
@@ -2009,11 +2068,34 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
             >
               <Phone className="w-5 h-5" />
-              빠른 상담신청
+              전화상담
             </a>
           </>
         }
       />
+      {/* 주소 검색 팝업 (모달 위에 띄움) */}
+      <div
+        className="fixed inset-0 z-200 flex items-center justify-center bg-black/40"
+        style={{ display: showPostcode ? 'flex' : 'none' }}
+        onClick={() => setShowPostcode(false)}
+      >
+        <div
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden flex flex-col"
+          style={{ height: '500px' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-6 py-3 flex items-center justify-between border-b border-gray-200 shrink-0">
+            <span className="font-bold text-sm text-gray-800">주소 검색</span>
+            <button
+              onClick={() => setShowPostcode(false)}
+              className="p-1 hover:bg-black/5 rounded-lg cursor-pointer transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+          </div>
+          <div ref={postcodeRef} className="flex-1" />
+        </div>
+      </div>
     </>
   );
 }

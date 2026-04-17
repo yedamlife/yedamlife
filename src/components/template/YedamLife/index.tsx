@@ -83,7 +83,6 @@ export function YedamLife({
   );
   const headerRef = useRef<HTMLElement>(null);
   const inquirySectionRef = useRef<HTMLDivElement>(null);
-  const [showFixedInquiryTab, setShowFixedInquiryTab] = useState(false);
   const [isFloatingOpen, setIsFloatingOpen] = useState(false);
 
   // 브라우저 타이틀 동기화
@@ -96,28 +95,6 @@ export function YedamLife({
     }
   }, [activeCategoryIdx]);
 
-  // 문의 탭 고정 표시 로직
-  useEffect(() => {
-    const inquirySection = inquirySectionRef.current;
-    const header = headerRef.current;
-    if (!inquirySection || !header || activeCategoryIdx !== 0) {
-      setShowFixedInquiryTab(false);
-      return;
-    }
-
-    const onScroll = () => {
-      const headerBottom = header.getBoundingClientRect().bottom;
-      const sectionRect = inquirySection.getBoundingClientRect();
-      const shouldShow =
-        sectionRect.top <= headerBottom &&
-        sectionRect.bottom > headerBottom + 50;
-      setShowFixedInquiryTab(shouldShow);
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [activeCategoryIdx]);
 
   // 상단 배너 자동 로테이션
   useEffect(() => {
@@ -590,81 +567,20 @@ export function YedamLife({
 
         {activeCategoryIdx === 5 && <PostCare />}
 
-        {/* ── 고정 문의 탭 (스크롤 시 fixed) ── */}
-        {showFixedInquiryTab && !hideHeader && (
-          <div
-            className="fixed left-0 right-0 bg-white z-45"
-            style={{
-              top: headerRef.current
-                ? `${headerRef.current.getBoundingClientRect().height + (embedded ? 56 : 0)}px`
-                : embedded
-                  ? '166px'
-                  : '110px',
-            }}
-          >
-            <div className="max-w-6xl mx-auto px-4 sm:px-6">
-              <div className="flex items-center gap-0 border-b border-gray-200">
-                <button
-                  onClick={() => {
-                    setInquiryMainTab('products');
-                    setTimeout(() => {
-                      const el = document.getElementById('inquiry');
-                      if (el) {
-                        const headerH =
-                          headerRef.current?.getBoundingClientRect().height ??
-                          110;
-                        const top =
-                          el.getBoundingClientRect().top +
-                          window.scrollY -
-                          headerH -
-                          8;
-                        window.scrollTo({ top, behavior: 'smooth' });
-                      }
-                    }, 50);
-                  }}
-                  className={`flex-1 py-3 text-sm sm:text-base font-bold transition-colors cursor-pointer border-b-2 -mb-px ${
-                    inquiryMainTab === 'products'
-                      ? 'text-gray-900 border-gray-900'
-                      : 'text-gray-400 border-transparent hover:text-gray-600'
-                  }`}
-                >
-                  장례상품 상담신청
-                </button>
-                <button
-                  onClick={() => {
-                    setInquiryMainTab('design');
-                    setTimeout(() => {
-                      const el = document.getElementById('inquiry');
-                      if (el) {
-                        const headerH =
-                          headerRef.current?.getBoundingClientRect().height ??
-                          110;
-                        const top =
-                          el.getBoundingClientRect().top +
-                          window.scrollY -
-                          headerH -
-                          8;
-                        window.scrollTo({ top, behavior: 'smooth' });
-                      }
-                    }, 50);
-                  }}
-                  className={`flex-1 py-3 text-sm sm:text-base font-bold transition-colors cursor-pointer border-b-2 -mb-px ${
-                    inquiryMainTab === 'design'
-                      ? 'text-gray-900 border-gray-900'
-                      : 'text-gray-400 border-transparent hover:text-gray-600'
-                  }`}
-                >
-                  다이렉트 장례설계
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* ── PC 우측 플로팅 사이드바 (sm 이상) ── */}
         {(activeCategoryIdx === 0 || activeCategoryIdx === 1) &&
           !hideHeader && (
             <div className="hidden sm:flex fixed right-4 bottom-6 z-50 flex-col gap-2">
+              <a
+                href="tel:1660-0959"
+                className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
+              >
+                <Phone className="w-5 h-5 text-gray-700" />
+                <span className="text-[9px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
+                  전화상담
+                </span>
+              </a>
               <button
                 onClick={() => {
                   if (activeCategoryIdx === 0) {
@@ -707,17 +623,7 @@ export function YedamLife({
                   </span>
                 </button>
               )}
-              <a
-                href="tel:1660-0959"
-                className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
-              >
-                <Phone className="w-5 h-5 text-gray-700" />
-                <span className="text-[9px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
-                  24시
-                  <br />
-                  긴급출동
-                </span>
-              </a>
+
               <a
                 href="https://pf.kakao.com/_예담라이프"
                 target="_blank"
@@ -748,83 +654,38 @@ export function YedamLife({
             </div>
           )}
 
-        {/* ── 모바일 FAB (sm 미만) ── */}
+        {/* ── 모바일 하단 고정 바 (sm 미만) ── */}
         {(activeCategoryIdx === 0 || activeCategoryIdx === 1) &&
           !hideHeader && (
-            <div className="sm:hidden fixed right-3 bottom-5 z-50 flex flex-col items-end gap-1.5">
-              {/* 펼쳐지는 버튼들 */}
-              <div
-                className={`flex flex-col items-end gap-1.5 transition-all duration-300 ${
-                  isFloatingOpen
-                    ? 'opacity-100 translate-y-0 pointer-events-auto'
-                    : 'opacity-0 translate-y-4 pointer-events-none'
-                }`}
-              >
-                <a
-                  href={googleFormUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full shadow-lg cursor-pointer"
-                  style={{
-                    backgroundColor: BRAND_COLOR_LIGHT,
-                    color: BRAND_COLOR,
-                  }}
-                >
-                  <span className="text-[10px] font-bold">상담신청</span>
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
-                  >
-                    <ScrollText className="w-4 h-4" />
-                  </div>
-                </a>
-                {activeCategoryIdx === 0 && (
-                  <button
-                    onClick={() => {
-                      setIsFloatingOpen(false);
-                      setInquiryMainTab('design');
-                      setTimeout(() => {
-                        inquirySectionRef.current?.scrollIntoView({
-                          behavior: 'smooth',
-                        });
-                      }, 50);
-                    }}
-                    className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full bg-white shadow-lg border border-gray-200 cursor-pointer"
-                  >
-                    <span className="text-[10px] font-bold text-gray-700">
-                      장례설계
-                    </span>
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                      <PenLine className="w-4 h-4 text-gray-700" />
-                    </div>
-                  </button>
-                )}
+            <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#222] safe-area-bottom">
+              <div className="flex items-center divide-x divide-white/20">
                 <a
                   href="tel:1660-0959"
-                  className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full bg-white shadow-lg border border-gray-200 cursor-pointer"
+                  className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
                 >
-                  <span className="text-[10px] font-bold text-gray-700">
-                    24시 긴급출동
-                  </span>
-                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Phone className="w-4 h-4 text-gray-700" />
-                  </div>
+                  <Phone className="w-5 h-5" />
+                  <span className="text-base font-bold">전화상담</span>
                 </a>
-                <a
-                  href="https://pf.kakao.com/_예담라이프"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full bg-[#FEE500] shadow-lg cursor-pointer"
+                <button
+                  onClick={() => {
+                    if (activeCategoryIdx === 0) {
+                      setInquiryMainTab('products');
+                      setTimeout(() => {
+                        document
+                          .getElementById('inquiry')
+                          ?.scrollIntoView({ behavior: 'smooth' });
+                      }, 50);
+                    } else {
+                      document
+                        .getElementById('sec-corp-inquiry')
+                        ?.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
                 >
-                  <span className="text-[10px] font-bold text-[#3C1E1E]">
-                    친구추가
-                  </span>
-                  <div className="w-8 h-8 rounded-full bg-[#F5DC00] flex items-center justify-center">
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#3C1E1E">
-                      <path d="M12 3C6.48 3 2 6.54 2 10.86c0 2.78 1.86 5.22 4.65 6.6l-.95 3.53c-.08.3.25.55.52.39l4.2-2.8c.51.07 1.04.1 1.58.1 5.52 0 10-3.54 10-7.86S17.52 3 12 3z" />
-                    </svg>
-                  </div>
-                </a>
+                  <ScrollText className="w-5 h-5" />
+                  <span className="text-base font-bold">상담신청</span>
+                </button>
                 <a
                   href={buildHref(
                     activeCategoryIdx === 0
@@ -833,39 +694,18 @@ export function YedamLife({
                   )}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full shadow-lg cursor-pointer text-white"
-                  style={{ backgroundColor: '#b8964e' }}
+                  className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
                 >
-                  <span className="text-[10px] font-bold">가입신청</span>
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
-                  >
-                    <FileText className="w-4 h-4" />
-                  </div>
+                  <FileText className="w-5 h-5" />
+                  <span className="text-base font-bold">가입 신청</span>
                 </a>
               </div>
-
-              {/* FAB 토글 버튼 */}
-              <button
-                onClick={() => setIsFloatingOpen(!isFloatingOpen)}
-                className="w-10 h-10 rounded-full shadow-xl flex items-center justify-center cursor-pointer transition-all duration-300"
-                style={{
-                  backgroundColor: '#333',
-                  color: '#fff',
-                  transform: isFloatingOpen ? 'rotate(45deg)' : 'rotate(0deg)',
-                }}
-              >
-                {isFloatingOpen ? (
-                  <Plus className="w-5 h-5" />
-                ) : (
-                  <MessageCircle className="w-5 h-5" />
-                )}
-              </button>
             </div>
           )}
 
         <YedamFooter />
+        {/* 모바일 하단 고정 바 높이만큼 여백 */}
+        <div className="sm:hidden h-16" />
       </div>
     </>
   );

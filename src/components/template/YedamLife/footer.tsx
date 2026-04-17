@@ -125,7 +125,7 @@ export function YedamFooter() {
                     이용 목적이 변경되는 경우에는 별도의 동의를 받는 등 필요한
                     조치를 이행할 예정입니다.
                   </p>
-                  <p>- 상담 신청 및 서비스 문의 처리</p>
+                  <p>- 상담신청 및 서비스 문의 처리</p>
                   <p>- 장례 서비스 안내 및 상담 연락</p>
                   <p>- 멤버십 가입 및 관리</p>
                   <p className="font-bold text-gray-800 mt-6 mb-2">

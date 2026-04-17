@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Phone, FileText } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
@@ -32,7 +33,7 @@ function MembershipCertificateContent() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !phone.trim()) {
-      alert('이름과 연락처를 입력해주세요.');
+      toast.warning('이름과 연락처를 입력해주세요.');
       return;
     }
     const params = new URLSearchParams({

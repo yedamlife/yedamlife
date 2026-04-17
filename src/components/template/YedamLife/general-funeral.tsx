@@ -16,6 +16,7 @@ import {
   Info,
   ScrollText,
   PenLine,
+  X,
 } from 'lucide-react';
 import {
   Select,
@@ -58,8 +59,8 @@ const PRODUCT_LABEL_IMAGES: Record<string, { src: string; alt: string }[]> = {
   장례지도사: [
     { src: `${PRODUCT_IMG_BASE}/funeral_director.avif`, alt: '장례지도사' },
   ],
-  장례관리사: [
-    { src: `${PRODUCT_IMG_BASE}/funeral_manager.avif`, alt: '장례관리사' },
+  '접객 도우미': [
+    { src: `${PRODUCT_IMG_BASE}/funeral_manager2.png`, alt: '접객 도우미' },
   ],
   입관지도사: [
     {
@@ -74,6 +75,10 @@ const PRODUCT_LABEL_IMAGES: Record<string, { src: string; alt: string }[]> = {
     },
   ],
   앰뷸런스: [{ src: `${PRODUCT_IMG_BASE}/ambulance.avif`, alt: '앰뷸런스' }],
+  장의버스: [
+    { src: `${PRODUCT_IMG_BASE}/funeral_bus-v2.avif`, alt: '장의버스' },
+  ],
+  리무진: [{ src: `${PRODUCT_IMG_BASE}/limousine-v2.avif`, alt: '리무진' }],
   '장의버스 / 리무진': [
     { src: `${PRODUCT_IMG_BASE}/funeral_bus-v2.avif`, alt: '장의버스' },
     { src: `${PRODUCT_IMG_BASE}/limousine-v2.avif`, alt: '리무진' },
@@ -97,6 +102,10 @@ const PRODUCT_LABEL_IMAGES: Record<string, { src: string; alt: string }[]> = {
   ],
   유골함: [
     { src: `${PRODUCT_IMG_BASE}/cremation_urn_converted.avif`, alt: '유골함' },
+  ],
+  '유골함/횡대(매장시)': [
+    { src: `${PRODUCT_IMG_BASE}/cremation_urn_converted.avif`, alt: '유골함' },
+    { src: `${PRODUCT_IMG_BASE}/burial_boards_converted.avif`, alt: '횡대' },
   ],
   입관용품: [
     { src: `${PRODUCT_IMG_BASE}/encoffinment_supplies.avif`, alt: '입관용품' },
@@ -161,7 +170,7 @@ export function GeneralFuneral({
   embedded,
   headerRef,
 }: GeneralFuneralProps) {
-  // 상담 신청 폼 state
+  // 상담신청 폼 state
   const [consultForm, setConsultForm] = useState({
     product: '',
     name: '',
@@ -171,6 +180,12 @@ export function GeneralFuneral({
     privacyAgreed: false,
   });
   const [consultSubmitting, setConsultSubmitting] = useState(false);
+  const [showConsultModal, setShowConsultModal] = useState(false);
+
+  // 다이렉트 장례설계 폼 state
+  const [directName, setDirectName] = useState('');
+  const [directPhone, setDirectPhone] = useState('');
+  const [directSubmitting, setDirectSubmitting] = useState(false);
 
   // 모바일 캐러셀: 확장 배열 [last, ...all, first] → 인덱스 1부터 시작
   const [carouselInternalIdx, setCarouselInternalIdx] = useState(1);
@@ -303,6 +318,23 @@ export function GeneralFuneral({
   // 주요정보 안내사항 토글
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
+  // A/B 뷰 전환: card(신규) / table(기존)
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.metaKey && e.key === 'a') {
+        e.preventDefault();
+        setViewMode('card');
+      }
+      if (e.metaKey && e.key === 'b') {
+        e.preventDefault();
+        setViewMode('table');
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   // 주요정보 안내사항 데이터 (전 상품 공통)
   const noticeItems: { category: string; items: string[] }[] = [
@@ -439,20 +471,13 @@ export function GeneralFuneral({
                 </span>
               </p>
               <div className="flex flex-row flex-wrap items-center justify-center gap-3">
-                <a
-                  href="#inquiry"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setInquiryMainTab('products');
-                    document
-                      .getElementById('inquiry')
-                      ?.scrollIntoView({ behavior: 'smooth' });
-                  }}
+                <button
+                  onClick={() => setShowConsultModal(true)}
                   className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-white text-gray-900 text-sm sm:text-base font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg cursor-pointer"
                 >
                   <ScrollText className="w-4 h-4 sm:w-5 sm:h-5" />
                   장례상품 상담신청
-                </a>
+                </button>
                 <a
                   href="#inquiry"
                   onClick={(e) => {
@@ -1015,13 +1040,614 @@ export function GeneralFuneral({
         </div>
       </section>
 
+      {/* ── 11. 장례상품 안내 ── */}
+      <div ref={inquirySectionRef}>
+        <section id="inquiry" className="mt-16 py-16 sm:py-24 bg-gray-50">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                예담라이프 장례상품 안내
+              </h2>
+              <p className="text-sm sm:text-base text-gray-500 mt-3">
+                가족의 마음을 담아 정성스럽게 예담라이프가 준비해드립니다
+              </p>
+            </div>
+
+            {/* Sticky 탭 */}
+            <div className="sticky top-0 z-20 bg-gray-50 pt-2 pb-4">
+              <div
+                className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap"
+              >
+                <button
+                  onClick={() => setProductInquiryTab('all')}
+                  className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${productInquiryTab === 'all' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                  전체비교
+                </button>
+                {funeralProducts.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => setProductInquiryTab(p.id)}
+                    className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${productInquiryTab === p.id ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    {p.name} {p.subtitle}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ===== 카드 UI (신규 — 기본 표시) ===== */}
+            {viewMode === 'card' && (
+              <div className="mt-8">
+                {/* 전체비교 탭 — 카드 그리드 */}
+                {productInquiryTab === 'all' && (
+                  <div>
+                    {comparisonData.map((section) => (
+                      <div key={section.category} className="mb-10 max-w-3xl mx-auto">
+                        <div
+                          className="w-8 h-1 rounded-full mb-3"
+                          style={{ backgroundColor: BRAND_COLOR }}
+                        />
+                        <h3 className="text-lg sm:text-xl font-extrabold text-gray-900 mb-5">
+                          {section.category.replace(/\n/g, ' ')}
+                        </h3>
+                        <div className="grid grid-cols-3 sm:grid-cols-5 gap-x-4 sm:gap-x-6 gap-y-6 justify-items-center">
+                          {section.items.map((item) => {
+                            const images = PRODUCT_LABEL_IMAGES[item.label];
+                            const allSame =
+                              item.values[0] &&
+                              item.values.every(
+                                (v) => v === item.values[0] || v === '',
+                              );
+                            return (
+                              <div key={item.label} className="flex flex-col items-center text-center w-full">
+                                {/* 정사각형 이미지 */}
+                                {images ? (
+                                  <div className="w-full aspect-square rounded-lg overflow-hidden bg-gray-50 cursor-pointer"
+                                    onClick={() =>
+                                      setLightboxSrc(images[0].src)
+                                    }
+                                  >
+                                    <img
+                                      src={images[0].src}
+                                      alt={images[0].alt}
+                                      className="w-full h-full object-cover hover:scale-105 transition-transform"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="w-full aspect-square rounded-lg bg-gray-100 flex items-center justify-center">
+                                    <span className="text-2xl text-gray-300">
+                                      {section.category.includes('인력')
+                                        ? '👤'
+                                        : section.category.includes('차량')
+                                          ? '🚐'
+                                          : section.category.includes('상복')
+                                            ? '👔'
+                                            : '📦'}
+                                    </span>
+                                  </div>
+                                )}
+                                {/* 텍스트 정보 */}
+                                <div className="mt-2 w-full min-w-0">
+                                  <h4 className="text-sm font-bold text-gray-900">
+                                    {item.label}
+                                  </h4>
+                                  {'sub' in item && item.sub && (
+                                    <p className="text-xs text-gray-400">
+                                      {item.sub}
+                                    </p>
+                                  )}
+                                  {allSame ? (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      전 상품 동일 · {item.values[0]}
+                                    </p>
+                                  ) : (
+                                    <ul className="mt-1 space-y-1.5">
+                                      {funeralProducts.map((p, idx) => (
+                                        <li
+                                          key={p.id}
+                                          className="flex items-center justify-between gap-3 text-xs"
+                                        >
+                                          <span className="text-gray-400 whitespace-nowrap shrink-0">
+                                            {p.name}
+                                          </span>
+                                          <span
+                                            className={`font-bold text-right ${item.values[idx] && item.values[idx] !== '-' ? 'text-gray-900' : 'text-gray-300'}`}
+                                          >
+                                            {item.values[idx] || '-'}
+                                          </span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 상품별 탭 — 카드 그리드 */}
+                {productInquiryTab !== 'all' &&
+                  (() => {
+                    const product = funeralProducts.find(
+                      (p) => p.id === productInquiryTab,
+                    );
+                    const detail = productDetails[productInquiryTab];
+                    if (!product || !detail) return null;
+                    return (
+                      <div className="max-w-3xl mx-auto">
+                        {/* 추천 대상 */}
+                        <div className="mb-10">
+                          <div
+                            className="w-8 h-1 rounded-full mb-3"
+                            style={{ backgroundColor: BRAND_COLOR }}
+                          />
+                          <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-snug mb-4">
+                            {product.subtitle
+                              ? `${product.name.replace('예담 ', '무빈소 ')} 이용,`
+                              : `${product.name},`}
+                            <br />
+                            다음과 같은 분께 추천드립니다.
+                          </h3>
+                          <ul className="space-y-2">
+                            {detail.recommendations.map((rec, i) => (
+                              <li
+                                key={i}
+                                className="flex items-start gap-2 text-sm text-gray-600"
+                              >
+                                <span className="text-gray-400 shrink-0 mt-0.5">
+                                  ·
+                                </span>
+                                <span>{rec}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* 카테고리별 이미지 카드 그리드 */}
+                        {detail.tableRows.map((section) => {
+                          const filtered = section.items.filter(
+                            (item) =>
+                              item.value &&
+                              item.value !== '-' &&
+                              item.value !== 'x',
+                          );
+                          if (filtered.length === 0) return null;
+                          return (
+                            <div
+                              key={section.category}
+                              className="mb-10"
+                            >
+                              <div
+                                className="w-8 h-1 rounded-full mb-3"
+                                style={{ backgroundColor: BRAND_COLOR }}
+                              />
+                              <h3 className="text-lg sm:text-xl font-extrabold text-gray-900 mb-5">
+                                {section.category.replace(/\n/g, ' ')}
+                              </h3>
+                              <div className="grid grid-cols-3 sm:grid-cols-5 gap-x-4 sm:gap-x-6 gap-y-6 justify-items-center">
+                                {filtered.map((item) => {
+                                  const images =
+                                    PRODUCT_LABEL_IMAGES[item.label];
+                                  return (
+                                    <div key={item.label} className="flex flex-col items-center text-center w-full">
+                                      {images ? (
+                                        <div className="w-full aspect-square rounded-lg overflow-hidden bg-gray-50 cursor-pointer"
+                                          onClick={() =>
+                                            setLightboxSrc(images[0].src)
+                                          }
+                                        >
+                                          <img
+                                            src={images[0].src}
+                                            alt={images[0].alt}
+                                            className="w-full h-full object-cover hover:scale-105 transition-transform"
+                                          />
+                                        </div>
+                                      ) : (
+                                        <div className="w-full aspect-square rounded-lg bg-gray-100 flex items-center justify-center">
+                                          <span className="text-2xl text-gray-300">
+                                            📦
+                                          </span>
+                                        </div>
+                                      )}
+                                      <div className="mt-2">
+                                        <h4 className="text-sm font-bold text-gray-900">
+                                          {item.label}
+                                        </h4>
+                                        {item.sub && (
+                                          <p className="text-xs text-gray-400">
+                                            {item.sub}
+                                          </p>
+                                        )}
+                                        <p
+                                          className="text-sm font-bold mt-0.5 whitespace-pre-line"
+                                          style={{ color: BRAND_COLOR }}
+                                        >
+                                          {item.value}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        {/* 안내사항 */}
+                        <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
+                          <button
+                            type="button"
+                            className="w-full flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                            onClick={() => setNoticeOpen((prev) => !prev)}
+                          >
+                            <Info className="w-4 h-4 text-red-600 shrink-0" />
+                            <span className="text-sm font-medium text-gray-600">
+                              주요정보 안내사항
+                            </span>
+                            <ChevronDown
+                              className="w-4 h-4 text-gray-400 ml-auto transition-transform"
+                              style={{
+                                transform: noticeOpen
+                                  ? 'rotate(180deg)'
+                                  : 'rotate(0deg)',
+                              }}
+                            />
+                          </button>
+                          {noticeOpen && (
+                            <div className="px-4 py-3">
+                              {noticeItems.map((section) => (
+                                <div
+                                  key={section.category}
+                                  className="mb-3 last:mb-0"
+                                >
+                                  <p className="text-sm font-bold text-gray-700 mb-1">
+                                    {section.category}
+                                  </p>
+                                  {section.items.map((item, idx) => (
+                                    <p
+                                      key={idx}
+                                      className="text-sm text-gray-600 leading-relaxed pl-2"
+                                    >
+                                      · {item}
+                                    </p>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+              </div>
+            )}
+
+            {/* ===== 테이블 UI (기존 — Cmd+B로 전환) ===== */}
+            {viewMode === 'table' && (
+              <>
+                {/* 전체 비교표 탭 */}
+                {productInquiryTab === 'all' && (
+                  <div>
+                    <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                      <table className="min-w-[700px] w-full border-collapse text-sm">
+                        <thead>
+                          <tr>
+                            <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-24">
+                              항목
+                            </th>
+                            <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-56">
+                              내용
+                            </th>
+                            {funeralProducts.map((p) => (
+                              <th
+                                key={p.id}
+                                className="p-3 text-center border border-gray-200 font-bold text-gray-900"
+                                style={{ backgroundColor: '#f5f0eb' }}
+                              >
+                                <div>{p.name}</div>
+                                {p.subtitle && (
+                                  <div className="text-xs font-normal text-gray-500">
+                                    {p.subtitle}
+                                  </div>
+                                )}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {comparisonData.map((section) =>
+                            section.items.map((item, itemIdx) => (
+                              <tr
+                                key={`${section.category}-${item.label}`}
+                                className="hover:bg-gray-50"
+                              >
+                                {itemIdx === 0 && (
+                                  <td
+                                    className="p-3 border border-gray-200 font-bold text-gray-700 whitespace-pre-line align-middle"
+                                    rowSpan={section.items.length}
+                                  >
+                                    {section.category}
+                                  </td>
+                                )}
+                                <td className="p-3 border border-gray-200 text-gray-700 text-center">
+                                  <div className="font-medium">
+                                    {item.label}
+                                  </div>
+                                  {'sub' in item && item.sub && (
+                                    <div className="text-xs text-gray-400">
+                                      {item.sub}
+                                    </div>
+                                  )}
+                                  {PRODUCT_LABEL_IMAGES[item.label] && (
+                                    <div className="flex justify-center gap-2 mt-2">
+                                      {PRODUCT_LABEL_IMAGES[item.label].map(
+                                        (img) => (
+                                          <div
+                                            key={img.alt}
+                                            className="w-24 h-24 rounded overflow-hidden cursor-pointer"
+                                            onClick={() =>
+                                              setLightboxSrc(img.src)
+                                            }
+                                          >
+                                            <img
+                                              src={img.src}
+                                              alt={img.alt}
+                                              className="w-full h-full object-cover scale-110"
+                                            />
+                                          </div>
+                                        ),
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                                {item.values[0] && item.values[1] === '' ? (
+                                  <td
+                                    className="p-3 border border-gray-200 text-center text-gray-600 align-middle"
+                                    colSpan={4}
+                                  >
+                                    {item.values[0]}
+                                  </td>
+                                ) : (
+                                  item.values.map((val, vi) => (
+                                    <td
+                                      key={vi}
+                                      className="p-3 border border-gray-200 text-center text-gray-600 whitespace-pre-line align-middle"
+                                    >
+                                      {val || '-'}
+                                    </td>
+                                  ))
+                                )}
+                              </tr>
+                            )),
+                          )}
+                          {/* 가격 행 */}
+                          <tr className="bg-gray-50">
+                            <td
+                              className="p-3 border border-gray-200 font-bold text-gray-700"
+                              colSpan={2}
+                            >
+                              사전가입 시, 할인가
+                            </td>
+                            {funeralProducts.map((p) => (
+                              <td
+                                key={p.id}
+                                className="p-3 border border-gray-200 text-center"
+                              >
+                                <div className="text-xs text-gray-400 line-through">
+                                  {p.originalPrice}
+                                </div>
+                                <div
+                                  className="text-base font-extrabold"
+                                  style={{ color: BRAND_COLOR }}
+                                >
+                                  → {p.discountPrice}
+                                </div>
+                              </td>
+                            ))}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* 상품별 탭 */}
+                {productInquiryTab !== 'all' &&
+                  (() => {
+                    const product = funeralProducts.find(
+                      (p) => p.id === productInquiryTab,
+                    );
+                    const detail = productDetails[productInquiryTab];
+                    if (!product || !detail) return null;
+                    return (
+                      <div>
+                        {/* 추천 대상 */}
+                        <div className="mb-10">
+                          <div className="flex items-start gap-6 flex-col sm:flex-row">
+                            <div className="shrink-0">
+                              <div
+                                className="w-8 h-1 rounded-full mb-3"
+                                style={{ backgroundColor: BRAND_COLOR }}
+                              />
+                              <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-snug">
+                                {product.subtitle
+                                  ? `${product.name.replace('예담 ', '무빈소 ')} 이용,`
+                                  : `${product.name},`}
+                                <br />
+                                다음과 같은 분께 추천드립니다.
+                              </h3>
+                            </div>
+                            <ul className="space-y-2 pt-1">
+                              {detail.recommendations.map((rec, i) => (
+                                <li
+                                  key={i}
+                                  className="flex items-start gap-2 text-sm text-gray-600"
+                                >
+                                  <span className="text-gray-400 shrink-0 mt-0.5">
+                                    ·
+                                  </span>
+                                  <span>{rec}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* 상품 정보 테이블 */}
+                        <div className="mb-10">
+                          <div
+                            className="w-8 h-1 rounded-full mb-3"
+                            style={{ backgroundColor: BRAND_COLOR }}
+                          />
+                          <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-6">
+                            {product.name} {product.subtitle} 상품정보
+                          </h3>
+
+                          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                            <table className="min-w-[500px] w-full border-collapse text-sm">
+                              <thead>
+                                <tr>
+                                  <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700 w-24">
+                                    구분
+                                  </th>
+                                  <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700">
+                                    필수항목
+                                  </th>
+                                  <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700">
+                                    내용
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {detail.tableRows.map((section) => {
+                                  const filtered = section.items.filter(
+                                    (item) =>
+                                      item.value &&
+                                      item.value !== '-' &&
+                                      item.value !== 'x',
+                                  );
+                                  if (filtered.length === 0) return null;
+                                  return filtered.map((item, itemIdx) => (
+                                    <tr
+                                      key={`${section.category}-${item.label}-${itemIdx}`}
+                                      className="border-b border-gray-200"
+                                    >
+                                      {itemIdx === 0 && (
+                                        <td
+                                          className="p-3 text-center font-bold text-gray-700 whitespace-pre-line align-middle border-r border-gray-200 w-24"
+                                          rowSpan={filtered.length}
+                                        >
+                                          {section.category}
+                                        </td>
+                                      )}
+                                      <td className="p-3 text-center text-gray-700 align-middle border-r border-gray-200">
+                                        <div className="font-medium">
+                                          {item.label}
+                                        </div>
+                                        {item.sub && (
+                                          <div className="text-xs text-gray-400 whitespace-pre-line">
+                                            {item.sub}
+                                          </div>
+                                        )}
+                                        {PRODUCT_LABEL_IMAGES[item.label] && (
+                                          <div className="flex justify-center gap-2 mt-2">
+                                            {PRODUCT_LABEL_IMAGES[
+                                              item.label
+                                            ].map((img) => (
+                                              <div
+                                                key={img.alt}
+                                                className="w-24 h-24 rounded overflow-hidden cursor-pointer"
+                                                onClick={() =>
+                                                  setLightboxSrc(img.src)
+                                                }
+                                              >
+                                                <img
+                                                  src={img.src}
+                                                  alt={img.alt}
+                                                  className="w-full h-full object-cover scale-110"
+                                                />
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="p-3 text-center text-gray-900 font-medium align-middle whitespace-pre-line">
+                                        {item.value || '-'}
+                                      </td>
+                                    </tr>
+                                  ));
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {/* 주요정보 안내사항 - 접기/펼치기 */}
+                          <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
+                            <button
+                              type="button"
+                              className="w-full flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                              onClick={() => setNoticeOpen((prev) => !prev)}
+                            >
+                              <Info className="w-4 h-4 text-red-600 shrink-0" />
+                              <span className="text-sm font-medium text-gray-600">
+                                주요정보 안내사항
+                              </span>
+                              <ChevronDown
+                                className="w-4 h-4 text-gray-400 ml-auto transition-transform"
+                                style={{
+                                  transform: noticeOpen
+                                    ? 'rotate(180deg)'
+                                    : 'rotate(0deg)',
+                                }}
+                              />
+                            </button>
+                            {noticeOpen && (
+                              <div className="overflow-x-auto">
+                                <table className="w-full border-collapse text-sm">
+                                  <tbody>
+                                    {noticeItems.map((section) =>
+                                      section.items.map((item, idx) => (
+                                        <tr
+                                          key={`${section.category}-${idx}`}
+                                          className="border-t border-gray-200"
+                                        >
+                                          {idx === 0 && (
+                                            <td
+                                              className="p-3 sm:p-4 text-center font-bold text-gray-700 align-middle border-r border-gray-200 w-20 sm:w-28 bg-gray-50 whitespace-nowrap"
+                                              rowSpan={section.items.length}
+                                            >
+                                              {section.category}
+                                            </td>
+                                          )}
+                                          <td className="p-3 sm:p-4 text-gray-600 align-middle leading-relaxed">
+                                            · {item}
+                                          </td>
+                                        </tr>
+                                      )),
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+              </>
+            )}
+          </div>
+        </section>
+      </div>
       {/* ── 3. 제공 서비스 (사전가입 시 제공) ── */}
       <section
         id="sec-services"
-        className="py-16 sm:py-24 overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%)',
-        }}
+        className="py-16 sm:py-24 overflow-hidden bg-white"
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           {/* 통합 타이틀 */}
@@ -1354,7 +1980,7 @@ export function GeneralFuneral({
       {/* ── 4. 멤버십 제휴할인 ── */}
       <MembershipSection
         id="sec-membership"
-        background="bg-white"
+        background="bg-gray-50"
         ctaHref={membershipHref}
         ctaLabel="후불제 상조 가입신청"
       />
@@ -1362,10 +1988,7 @@ export function GeneralFuneral({
       {/* ── 6. 후기 ── */}
       <section
         id="reviews"
-        className="py-16 sm:py-24 overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%)',
-        }}
+        className="py-16 sm:py-24 overflow-hidden bg-white"
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
@@ -1416,7 +2039,7 @@ export function GeneralFuneral({
       {/* ── 8. 주요 고객사 ── */}
       <section
         id="sec-clients"
-        className="py-16 sm:py-20 bg-white overflow-hidden"
+        className="py-16 sm:py-20 bg-gray-50 overflow-hidden"
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
@@ -1508,10 +2131,7 @@ export function GeneralFuneral({
 
       <section
         id="sec-emergency"
-        className="py-12 sm:py-16 overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%)',
-        }}
+        className="py-12 sm:py-16 overflow-hidden bg-white"
       >
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
@@ -1566,554 +2186,11 @@ export function GeneralFuneral({
         </div>
       </section>
 
-      {/* ── 11. 장례상품 문의신청 & 장례설계 문의신청 ── */}
-      <div ref={inquirySectionRef}>
-        <div id="inquiry" className="mt-16 bg-white">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="flex items-center gap-0 border-b border-gray-200">
-              <button
-                onClick={() => {
-                  setInquiryMainTab('products');
-                  setTimeout(() => {
-                    const el = document.getElementById('inquiry');
-                    if (el) {
-                      const headerH =
-                        headerRef.current?.getBoundingClientRect().height ??
-                        110;
-                      const top =
-                        el.getBoundingClientRect().top +
-                        window.scrollY -
-                        headerH -
-                        8;
-                      window.scrollTo({ top, behavior: 'smooth' });
-                    }
-                  }, 50);
-                }}
-                className={`flex-1 py-3 text-sm sm:text-base font-bold transition-colors cursor-pointer border-b-2 -mb-px ${
-                  inquiryMainTab === 'products'
-                    ? 'text-gray-900 border-gray-900'
-                    : 'text-gray-400 border-transparent hover:text-gray-600'
-                }`}
-              >
-                장례상품 상담신청
-              </button>
-              <button
-                onClick={() => {
-                  setInquiryMainTab('design');
-                  setTimeout(() => {
-                    const el = document.getElementById('inquiry');
-                    if (el) {
-                      const headerH =
-                        headerRef.current?.getBoundingClientRect().height ??
-                        110;
-                      const top =
-                        el.getBoundingClientRect().top +
-                        window.scrollY -
-                        headerH -
-                        8;
-                      window.scrollTo({ top, behavior: 'smooth' });
-                    }
-                  }, 50);
-                }}
-                className={`flex-1 py-3 text-sm sm:text-base font-bold transition-colors cursor-pointer border-b-2 -mb-px ${
-                  inquiryMainTab === 'design'
-                    ? 'text-gray-900 border-gray-900'
-                    : 'text-gray-400 border-transparent hover:text-gray-600'
-                }`}
-              >
-                다이렉트 장례설계
-              </button>
-            </div>
-          </div>
-        </div>
 
-        <section className="py-16 sm:py-24 bg-white">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            {/* 장례상품 탭 내용 */}
-            {inquiryMainTab === 'products' && (
-              <>
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-                    예담라이프 장례상품 안내
-                  </h2>
-                  <p className="text-sm sm:text-base text-gray-500 mt-3">
-                    가족의 마음을 담아 정성스럽게 예담라이프가 준비해드립니다
-                  </p>
-                </div>
-
-                {/* 탭 */}
-                <div
-                  className="flex items-center gap-2 overflow-x-auto pb-4 mb-6"
-                  style={{ scrollbarWidth: 'none' } as React.CSSProperties}
-                >
-                  <button
-                    onClick={() => setProductInquiryTab('all')}
-                    className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${productInquiryTab === 'all' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                  >
-                    전체 상품 비교
-                  </button>
-                  {funeralProducts.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => setProductInquiryTab(p.id)}
-                      className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${productInquiryTab === p.id ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                    >
-                      {p.name} {p.subtitle}
-                    </button>
-                  ))}
-                </div>
-
-                {/* 전체 비교표 탭 */}
-                {productInquiryTab === 'all' && (
-                  <div>
-                    <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                      <table className="min-w-[700px] w-full border-collapse text-sm">
-                        <thead>
-                          <tr>
-                            <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-24">
-                              항목
-                            </th>
-                            <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-56">
-                              내용
-                            </th>
-                            {funeralProducts.map((p) => (
-                              <th
-                                key={p.id}
-                                className="p-3 text-center border border-gray-200 font-bold text-gray-900"
-                                style={{ backgroundColor: '#f5f0eb' }}
-                              >
-                                <div>{p.name}</div>
-                                {p.subtitle && (
-                                  <div className="text-xs font-normal text-gray-500">
-                                    {p.subtitle}
-                                  </div>
-                                )}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {comparisonData.map((section) =>
-                            section.items.map((item, itemIdx) => (
-                              <tr
-                                key={`${section.category}-${item.label}`}
-                                className="hover:bg-gray-50"
-                              >
-                                {itemIdx === 0 && (
-                                  <td
-                                    className="p-3 border border-gray-200 font-bold text-gray-700 whitespace-pre-line align-middle"
-                                    rowSpan={section.items.length}
-                                  >
-                                    {section.category}
-                                  </td>
-                                )}
-                                <td className="p-3 border border-gray-200 text-gray-700 text-center">
-                                  <div className="font-medium">
-                                    {item.label}
-                                  </div>
-                                  {'sub' in item && item.sub && (
-                                    <div className="text-xs text-gray-400">
-                                      {item.sub}
-                                    </div>
-                                  )}
-                                  {PRODUCT_LABEL_IMAGES[item.label] && (
-                                    <div className="flex justify-center gap-2 mt-2">
-                                      {PRODUCT_LABEL_IMAGES[item.label].map(
-                                        (img) => (
-                                          <div
-                                            key={img.alt}
-                                            className="w-24 h-24 rounded overflow-hidden cursor-pointer"
-                                            onClick={() =>
-                                              setLightboxSrc(img.src)
-                                            }
-                                          >
-                                            <img
-                                              src={img.src}
-                                              alt={img.alt}
-                                              className="w-full h-full object-cover scale-110"
-                                            />
-                                          </div>
-                                        ),
-                                      )}
-                                    </div>
-                                  )}
-                                </td>
-                                {item.values[0] && item.values[1] === '' ? (
-                                  <td
-                                    className="p-3 border border-gray-200 text-center text-gray-600 align-middle"
-                                    colSpan={4}
-                                  >
-                                    {item.values[0]}
-                                  </td>
-                                ) : (
-                                  item.values.map((val, vi) => (
-                                    <td
-                                      key={vi}
-                                      className="p-3 border border-gray-200 text-center text-gray-600 whitespace-pre-line align-middle"
-                                    >
-                                      {val || '-'}
-                                    </td>
-                                  ))
-                                )}
-                              </tr>
-                            )),
-                          )}
-                          {/* 가격 행 */}
-                          <tr className="bg-gray-50">
-                            <td
-                              className="p-3 border border-gray-200 font-bold text-gray-700"
-                              colSpan={2}
-                            >
-                              사전가입 시, 할인가
-                            </td>
-                            {funeralProducts.map((p) => (
-                              <td
-                                key={p.id}
-                                className="p-3 border border-gray-200 text-center"
-                              >
-                                <div className="text-xs text-gray-400 line-through">
-                                  {p.originalPrice}
-                                </div>
-                                <div
-                                  className="text-base font-extrabold"
-                                  style={{ color: BRAND_COLOR }}
-                                >
-                                  → {p.discountPrice}
-                                </div>
-                              </td>
-                            ))}
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {/* 상품별 탭 */}
-                {productInquiryTab !== 'all' &&
-                  (() => {
-                    const product = funeralProducts.find(
-                      (p) => p.id === productInquiryTab,
-                    );
-                    const detail = productDetails[productInquiryTab];
-                    if (!product || !detail) return null;
-                    return (
-                      <div>
-                        {/* 추천 대상 */}
-                        <div className="mb-10">
-                          <div className="flex items-start gap-6 flex-col sm:flex-row">
-                            <div className="shrink-0">
-                              <div
-                                className="w-8 h-1 rounded-full mb-3"
-                                style={{ backgroundColor: BRAND_COLOR }}
-                              />
-                              <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-snug">
-                                {product.subtitle
-                                  ? `${product.name.replace('예담 ', '무빈소 ')} 이용,`
-                                  : `${product.name},`}
-                                <br />
-                                다음과 같은 분께 추천드립니다.
-                              </h3>
-                            </div>
-                            <ul className="space-y-2 pt-1">
-                              {detail.recommendations.map((rec, i) => (
-                                <li
-                                  key={i}
-                                  className="flex items-start gap-2 text-sm text-gray-600"
-                                >
-                                  <span className="text-gray-400 shrink-0 mt-0.5">
-                                    ·
-                                  </span>
-                                  <span>{rec}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-
-                        {/* 상품 정보 테이블 */}
-                        <div className="mb-10">
-                          <div
-                            className="w-8 h-1 rounded-full mb-3"
-                            style={{ backgroundColor: BRAND_COLOR }}
-                          />
-                          <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-6">
-                            {product.name} {product.subtitle} 상품정보
-                          </h3>
-
-                          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                            <table className="min-w-[500px] w-full border-collapse text-sm">
-                              <thead>
-                                <tr>
-                                  <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700 w-24">
-                                    구분
-                                  </th>
-                                  <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700">
-                                    필수항목
-                                  </th>
-                                  <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700">
-                                    내용
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {detail.tableRows.map((section) => {
-                                  const filtered = section.items.filter(
-                                    (item) =>
-                                      item.value &&
-                                      item.value !== '-' &&
-                                      item.value !== 'x',
-                                  );
-                                  if (filtered.length === 0) return null;
-                                  return filtered.map((item, itemIdx) => (
-                                    <tr
-                                      key={`${section.category}-${item.label}-${itemIdx}`}
-                                      className="border-b border-gray-200"
-                                    >
-                                      {itemIdx === 0 && (
-                                        <td
-                                          className="p-3 text-center font-bold text-gray-700 whitespace-pre-line align-middle border-r border-gray-200 w-24"
-                                          rowSpan={filtered.length}
-                                        >
-                                          {section.category}
-                                        </td>
-                                      )}
-                                      <td className="p-3 text-center text-gray-700 align-middle border-r border-gray-200">
-                                        <div className="font-medium">
-                                          {item.label}
-                                        </div>
-                                        {item.sub && (
-                                          <div className="text-xs text-gray-400 whitespace-pre-line">
-                                            {item.sub}
-                                          </div>
-                                        )}
-                                        {PRODUCT_LABEL_IMAGES[item.label] && (
-                                          <div className="flex justify-center gap-2 mt-2">
-                                            {PRODUCT_LABEL_IMAGES[
-                                              item.label
-                                            ].map((img) => (
-                                              <div
-                                                key={img.alt}
-                                                className="w-24 h-24 rounded overflow-hidden cursor-pointer"
-                                                onClick={() =>
-                                                  setLightboxSrc(img.src)
-                                                }
-                                              >
-                                                <img
-                                                  src={img.src}
-                                                  alt={img.alt}
-                                                  className="w-full h-full object-cover scale-110"
-                                                />
-                                              </div>
-                                            ))}
-                                          </div>
-                                        )}
-                                      </td>
-                                      <td className="p-3 text-center text-gray-900 font-medium align-middle whitespace-pre-line">
-                                        {item.value || '-'}
-                                      </td>
-                                    </tr>
-                                  ));
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-
-                          {/* 주요정보 안내사항 - 접기/펼치기 */}
-                          <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
-                            <button
-                              type="button"
-                              className="w-full flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                              onClick={() => setNoticeOpen((prev) => !prev)}
-                            >
-                              <Info className="w-4 h-4 text-red-600 shrink-0" />
-                              <span className="text-sm font-medium text-gray-600">
-                                주요정보 안내사항
-                              </span>
-                              <ChevronDown
-                                className="w-4 h-4 text-gray-400 ml-auto transition-transform"
-                                style={{
-                                  transform: noticeOpen
-                                    ? 'rotate(180deg)'
-                                    : 'rotate(0deg)',
-                                }}
-                              />
-                            </button>
-                            {noticeOpen && (
-                              <div className="overflow-x-auto">
-                                <table className="w-full border-collapse text-sm">
-                                  <tbody>
-                                    {noticeItems.map((section) =>
-                                      section.items.map((item, idx) => (
-                                        <tr
-                                          key={`${section.category}-${idx}`}
-                                          className="border-t border-gray-200"
-                                        >
-                                          {idx === 0 && (
-                                            <td
-                                              className="p-3 sm:p-4 text-center font-bold text-gray-700 align-middle border-r border-gray-200 w-20 sm:w-28 bg-gray-50 whitespace-nowrap"
-                                              rowSpan={section.items.length}
-                                            >
-                                              {section.category}
-                                            </td>
-                                          )}
-                                          <td className="p-3 sm:p-4 text-gray-600 align-middle leading-relaxed">
-                                            · {item}
-                                          </td>
-                                        </tr>
-                                      )),
-                                    )}
-                                  </tbody>
-                                </table>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                {/* 공통 문의 폼 */}
-                <div className="mt-8 p-6 bg-gray-50 rounded-2xl border border-gray-200">
-                  <p className="text-sm font-bold text-gray-700 mb-4">
-                    상담 신청
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                    <Select
-                      value={consultForm.product || (productInquiryTab !== 'all' ? productInquiryTab : undefined)}
-                      onValueChange={(v) => setConsultForm((p) => ({ ...p, product: v }))}
-                    >
-                      <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer">
-                        <SelectValue placeholder="상품을 선택해주세요." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {funeralProducts.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.name}
-                            {p.subtitle ? ` (${p.subtitle})` : ''}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <input
-                      type="text"
-                      placeholder="이름"
-                      value={consultForm.name}
-                      onChange={(e) => setConsultForm((p) => ({ ...p, name: e.target.value }))}
-                      className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white"
-                    />
-                    <input
-                      type="tel"
-                      placeholder="-를 제외한 숫자만 입력해주세요"
-                      value={consultForm.phone}
-                      onChange={(e) => setConsultForm((p) => ({ ...p, phone: e.target.value }))}
-                      className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white"
-                    />
-                    <Select
-                      value={consultForm.region}
-                      onValueChange={(v) => setConsultForm((p) => ({ ...p, region: v }))}
-                    >
-                      <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer">
-                        <SelectValue placeholder="시/도 선택해주세요." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[
-                          '서울', '부산', '대구', '인천', '광주', '대전',
-                          '울산', '세종', '경기', '강원', '충북', '충남',
-                          '전북', '전남', '경북', '경남', '제주', '미정',
-                        ].map((v) => (
-                          <SelectItem key={v} value={v}>{v}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <div className="sm:col-span-2">
-                      <Select
-                        value={consultForm.timeSlot}
-                        onValueChange={(v) => setConsultForm((p) => ({ ...p, timeSlot: v }))}
-                      >
-                        <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer w-full">
-                          <SelectValue placeholder="상담시간을 선택해주세요." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[
-                            '00:00~06:00', '06:00~08:00', '08:00~10:00',
-                            '10:00~12:00', '12:00~14:00', '14:00~16:00',
-                            '16:00~18:00', '18:00~20:00', '20:00~22:00',
-                            '22:00~24:00',
-                          ].map((v) => (
-                            <SelectItem key={v} value={v}>{v}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={consultForm.privacyAgreed}
-                        onChange={(e) => setConsultForm((p) => ({ ...p, privacyAgreed: e.target.checked }))}
-                        className="w-4 h-4 rounded cursor-pointer"
-                        style={{ accentColor: BRAND_COLOR }}
-                      />
-                      <span className="text-xs text-gray-500">
-                        개인정보 수집 및 이용 동의
-                      </span>
-                    </label>
-                    <button
-                      disabled={consultSubmitting}
-                      onClick={async () => {
-                        if (!consultForm.name.trim() || !consultForm.phone.trim()) {
-                          toast.warning('이름과 연락처를 입력해주세요.');
-                          return;
-                        }
-                        if (!consultForm.privacyAgreed) {
-                          toast.warning('개인정보 수집 및 이용에 동의해주세요.');
-                          return;
-                        }
-                        setConsultSubmitting(true);
-                        try {
-                          const res = await fetch('/api/v1/general-funeral/consultation', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              funeral_location: consultForm.region || '미정',
-                              expected_guests: '상담 후 결정',
-                              funeral_scale: consultForm.product || '상담 후 결정',
-                              binso_required: '상담 후 결정',
-                              escort_service: '상담 후 결정',
-                              clothing_type: '상담 후 결정',
-                              funeral_gown_required: '상담 후 결정',
-                              additional_service: '상담 후 결정',
-                              contact_number: consultForm.phone,
-                            }),
-                          });
-                          const result = await res.json();
-                          if (result.success) {
-                            toast.success('상담 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.');
-                            setConsultForm({ product: '', name: '', phone: '', region: '', timeSlot: '', privacyAgreed: false });
-                          } else {
-                            toast.error(result.message || '오류가 발생했습니다.');
-                          }
-                        } catch {
-                          toast.error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-                        } finally {
-                          setConsultSubmitting(false);
-                        }
-                      }}
-                      className="px-8 py-3 text-white text-sm font-bold rounded-xl cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50"
-                      style={{ backgroundColor: BRAND_COLOR }}
-                    >
-                      {consultSubmitting ? '신청 중...' : '상담 신청'}
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* 다이렉트 장례설계 탭 내용 */}
-            {inquiryMainTab === 'design' && (
-              <div>
+      {/* ── 13. 다이렉트 장례설계 ── */}
+      <section className="py-16 sm:py-24 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div>
                 <div className="text-center mb-8">
                   <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
                     다이렉트 장례설계
@@ -2233,11 +2310,15 @@ export function GeneralFuneral({
                         <input
                           type="text"
                           placeholder="이름"
+                          value={directName}
+                          onChange={(e) => setDirectName(e.target.value)}
                           className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none"
                         />
                         <input
                           type="tel"
                           placeholder="-를 제외한 숫자만 입력해주세요"
+                          value={directPhone}
+                          onChange={(e) => setDirectPhone(e.target.value)}
                           className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none"
                         />
                       </div>
@@ -2262,24 +2343,71 @@ export function GeneralFuneral({
                           다음
                         </button>
                       ) : (
-                        <a
-                          href={googleFormUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-8 py-3 rounded-xl text-sm font-bold text-white transition-colors cursor-pointer hover:opacity-90 flex-1 text-center block"
+                        <button
+                          disabled={directSubmitting}
+                          onClick={async () => {
+                            if (!directName.trim() || !directPhone.trim()) {
+                              toast.warning('이름과 연락처를 입력해주세요.');
+                              return;
+                            }
+                            setDirectSubmitting(true);
+                            try {
+                              const res = await fetch(
+                                '/api/v1/general-funeral/direct-design',
+                                {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({
+                                    funeral_location: surveyAnswers[0] || '',
+                                    expected_guests: surveyAnswers[1] || '',
+                                    funeral_scale: surveyAnswers[2] || '',
+                                    binso_required: surveyAnswers[3] || '',
+                                    escort_service: surveyAnswers[4] || '',
+                                    clothing_type: surveyAnswers[5] || '',
+                                    funeral_gown_required:
+                                      surveyAnswers[6] || '',
+                                    additional_service: surveyAnswers[7] || '',
+                                    name: directName,
+                                    contact_number: directPhone,
+                                  }),
+                                },
+                              );
+                              const result = await res.json();
+                              if (result.success) {
+                                toast.success(
+                                  '상담신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.',
+                                );
+                                setDirectName('');
+                                setDirectPhone('');
+                                setSurveyStep(0);
+                                setSurveyAnswers({});
+                              } else {
+                                toast.error(
+                                  result.message || '오류가 발생했습니다.',
+                                );
+                              }
+                            } catch {
+                              toast.error(
+                                '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                              );
+                            } finally {
+                              setDirectSubmitting(false);
+                            }
+                          }}
+                          className="px-8 py-3 rounded-xl text-sm font-bold text-white transition-colors cursor-pointer hover:opacity-90 flex-1 text-center disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ backgroundColor: BRAND_COLOR }}
                         >
-                          상담 신청하기
-                        </a>
+                          {directSubmitting ? '신청 중...' : '상담신청하기'}
+                        </button>
                       )}
                     </div>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
-        </section>
-      </div>
+            </div>
+          </section>
 
       {/* ══════════════ CTA ══════════════ */}
       <CtaSection
@@ -2300,6 +2428,14 @@ export function GeneralFuneral({
         }
         buttons={
           <>
+            <button
+              type="button"
+              onClick={() => setShowConsultModal(true)}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
+            >
+              <ScrollText className="w-5 h-5" />
+              상담신청하기
+            </button>
             <a
               href={membershipHref}
               target="_blank"
@@ -2321,13 +2457,6 @@ export function GeneralFuneral({
               />
               <FileText className="relative w-5 h-5" />
               <span className="relative">가입증서 신청하기</span>
-            </a>
-            <a
-              href="tel:1660-0959"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
-            >
-              <Headphones className="w-5 h-5" />
-              전화 상담
             </a>
           </>
         }
@@ -2351,6 +2480,223 @@ export function GeneralFuneral({
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {/* ══════════════ 상담신청 모달 ══════════════ */}
+      {showConsultModal && (
+        <div
+          className="fixed inset-0 z-100 flex items-center justify-center bg-black/50"
+          onClick={() => setShowConsultModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 flex items-center justify-between bg-gray-100 rounded-t-2xl shrink-0">
+              <span className="font-bold text-gray-800">상담신청</span>
+              <button
+                onClick={() => setShowConsultModal(false)}
+                className="p-1 hover:bg-black/5 rounded-lg cursor-pointer transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-1.5">
+                  상품
+                </label>
+                <Select
+                  value={consultForm.product}
+                  onValueChange={(v) =>
+                    setConsultForm((p) => ({ ...p, product: v }))
+                  }
+                >
+                  <SelectTrigger className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white cursor-pointer">
+                    <SelectValue placeholder="상품을 선택해주세요." />
+                  </SelectTrigger>
+                  <SelectContent className="z-200">
+                    {funeralProducts.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                        {p.subtitle ? ` (${p.subtitle})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-1.5">
+                    이름 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="이름을 입력해주세요"
+                    value={consultForm.name}
+                    onChange={(e) =>
+                      setConsultForm((p) => ({ ...p, name: e.target.value }))
+                    }
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-1.5">
+                    연락처 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="-를 제외한 숫자만 입력해주세요"
+                    value={consultForm.phone}
+                    onChange={(e) =>
+                      setConsultForm((p) => ({ ...p, phone: e.target.value }))
+                    }
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-1.5">
+                    지역
+                  </label>
+                  <Select
+                    value={consultForm.region}
+                    onValueChange={(v) =>
+                      setConsultForm((p) => ({ ...p, region: v }))
+                    }
+                  >
+                    <SelectTrigger className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white cursor-pointer">
+                      <SelectValue placeholder="시/도 선택해주세요." />
+                    </SelectTrigger>
+                    <SelectContent className="z-200">
+                      {[
+                        '서울',
+                        '부산',
+                        '대구',
+                        '인천',
+                        '광주',
+                        '대전',
+                        '울산',
+                        '세종',
+                        '경기',
+                        '강원',
+                        '충북',
+                        '충남',
+                        '전북',
+                        '전남',
+                        '경북',
+                        '경남',
+                        '제주',
+                        '미정',
+                      ].map((v) => (
+                        <SelectItem key={v} value={v}>
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-1.5">
+                    상담 희망 시간
+                  </label>
+                  <Select
+                    value={consultForm.timeSlot}
+                    onValueChange={(v) =>
+                      setConsultForm((p) => ({ ...p, timeSlot: v }))
+                    }
+                  >
+                    <SelectTrigger className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white cursor-pointer">
+                      <SelectValue placeholder="상담시간을 선택해주세요." />
+                    </SelectTrigger>
+                    <SelectContent className="z-200">
+                      {[
+                        '00:00~06:00',
+                        '06:00~08:00',
+                        '08:00~10:00',
+                        '10:00~12:00',
+                        '12:00~14:00',
+                        '14:00~16:00',
+                        '16:00~18:00',
+                        '18:00~20:00',
+                        '20:00~22:00',
+                        '22:00~24:00',
+                      ].map((v) => (
+                        <SelectItem key={v} value={v}>
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 shrink-0">
+              <button
+                disabled={consultSubmitting}
+                onClick={async () => {
+                  if (!consultForm.name.trim() || !consultForm.phone.trim()) {
+                    toast.warning('이름과 연락처를 입력해주세요.');
+                    return;
+                  }
+                  setConsultSubmitting(true);
+                  try {
+                    const res = await fetch(
+                      '/api/v1/general-funeral/consultation',
+                      {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          funeral_location: consultForm.region || '미정',
+                          expected_guests: '상담 후 결정',
+                          funeral_scale: consultForm.product || '상담 후 결정',
+                          binso_required: '상담 후 결정',
+                          escort_service: '상담 후 결정',
+                          clothing_type: '상담 후 결정',
+                          funeral_gown_required: '상담 후 결정',
+                          additional_service: '상담 후 결정',
+                          contact_number: consultForm.phone,
+                        }),
+                      },
+                    );
+                    const result = await res.json();
+                    if (result.success) {
+                      toast.success(
+                        '상담신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.',
+                      );
+                      setConsultForm({
+                        product: '',
+                        name: '',
+                        phone: '',
+                        region: '',
+                        timeSlot: '',
+                        privacyAgreed: false,
+                      });
+                      setShowConsultModal(false);
+                    } else {
+                      toast.error(result.message || '오류가 발생했습니다.');
+                    }
+                  } catch {
+                    toast.error(
+                      '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                    );
+                  } finally {
+                    setConsultSubmitting(false);
+                  }
+                }}
+                className="w-full py-4 rounded-xl text-white font-bold text-base cursor-pointer hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundColor: BRAND_COLOR }}
+              >
+                {consultSubmitting ? '신청 중...' : '상담신청하기'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>

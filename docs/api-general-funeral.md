@@ -19,11 +19,11 @@
 
 일반상조 랜딩 페이지(`general-funeral.tsx`)에서 수집하는 폼 데이터를 서버 API + DB로 연동한다.
 
-| # | 기능 | 설명 |
-|---|------|------|
-| 1 | 상담신청 | 다이렉트 장례 설계 설문(9단계) 기반 상담 요청 |
-| 2 | 후불제상조 가입신청서 | 일반 회원 가입 신청 (membership/general) |
-| 3 | 다이렉트 장례 설계 | 장례 운구 서비스 예약 (ReservationModal) |
+| #   | 기능                  | 설명                                          |
+| --- | --------------------- | --------------------------------------------- |
+| 1   | 상담신청              | 다이렉트 장례 설계 설문(9단계) 기반 상담 요청 |
+| 2   | 후불제상조 가입신청서 | 일반 회원 가입 신청 (membership/general)      |
+| 3   | 다이렉트 장례 설계    | 장례 운구 서비스 예약 (ReservationModal)      |
 
 > 기업 제안서 신청은 `corporate_proposal_requests` 공통 테이블을 사용합니다. → [api-corporate-funeral.md](./api-corporate-funeral.md) 참고
 
@@ -31,12 +31,12 @@
 
 ## 2. 기술 스택
 
-| 구분 | 기술 |
-|------|------|
-| Framework | Next.js 16 (App Router) |
-| API | Next.js Route Handlers (`src/app/api/`) |
-| Database | Supabase (PostgreSQL) |
-| ORM/Client | `@supabase/supabase-js` |
+| 구분       | 기술                                    |
+| ---------- | --------------------------------------- |
+| Framework  | Next.js 16 (App Router)                 |
+| API        | Next.js Route Handlers (`src/app/api/`) |
+| Database   | Supabase (PostgreSQL)                   |
+| ORM/Client | `@supabase/supabase-js`                 |
 
 ---
 
@@ -107,45 +107,34 @@ CREATE INDEX idx_gf_membership_phone ON gf_membership_applications(phone);
 CREATE INDEX idx_gf_membership_created_at ON gf_membership_applications(created_at DESC);
 ```
 
-### 3-3. 다이렉트 장례 설계 내역 (`gf_funeral_escort_reservations`)
+### 3-3. 다이렉트 장례 설계 내역 (`gf_direct_requests`)
 
-> 장례 운구 서비스 예약 데이터 (ReservationModal)
+> 9단계 설문 결과 + 연락처를 저장
 
 ```sql
-CREATE TABLE gf_funeral_escort_reservations (
-  id                   BIGSERIAL PRIMARY KEY,
+CREATE TABLE gf_direct_requests (
+  id                    BIGSERIAL PRIMARY KEY,
+  -- 설문 응답
+  funeral_location      VARCHAR(20),   -- 장례 희망 지역 (서울, 경기, ...)
+  expected_guests       VARCHAR(20),   -- 예상 조문객 수 (50명 이하, 50~100명, ...)
+  funeral_scale         VARCHAR(30),   -- 장례 규모 (간소한 장례, 기본 장례, ...)
+  binso_required        VARCHAR(30),   -- 빈소 설치 여부 (빈소 설치, 무빈소, 상담 후 결정)
+  escort_service        VARCHAR(30),   -- 운구 서비스 필요 여부
+  clothing_type         VARCHAR(30),   -- 수의 종류 (예담수의 1~4호, 상담 후 결정)
+  funeral_gown_required VARCHAR(30),   -- 상복 필요 여부
+  additional_service    VARCHAR(30),   -- 부가 서비스 (추모 영상, 유품정리, 49재 등)
   -- 신청자 정보
-  writer_name          VARCHAR(50)   NOT NULL,  -- 신청자명
-  writer_phone         VARCHAR(20)   NOT NULL,  -- 신청자 연락처
-  -- 고인 정보
-  deceased_name        VARCHAR(50)   NOT NULL,  -- 고인명
-  deceased_gender      VARCHAR(10)   NOT NULL,  -- male / female
-  -- 장례식장 정보
-  funeral_hall         VARCHAR(100)  NOT NULL,  -- 장례식장명
-  funeral_hall_address TEXT          NOT NULL,  -- 장례식장 주소
-  room_name            VARCHAR(50),             -- 호실명
-  -- 발인 정보
-  departure_date       DATE          NOT NULL,  -- 발인일자
-  departure_hour       VARCHAR(2)    NOT NULL,  -- 시간 (00~23)
-  departure_minute     VARCHAR(2)    NOT NULL,  -- 분 (00/10/20/30/40/50)
-  -- 장례 방법
-  funeral_method       VARCHAR(20)   NOT NULL,  -- cremation / burial
-  destination_address  TEXT          NOT NULL,  -- 화장장/매장지 주소
-  destination_detail   VARCHAR(200),            -- 상세 주소
-  -- 서비스 옵션
-  clothing             VARCHAR(20)   NOT NULL,  -- suit / guard
-  people               INTEGER       NOT NULL,  -- 운구 인원 (2/4/6/8)
-  price                INTEGER       NOT NULL,  -- 계산된 금액 (원)
+  name                  VARCHAR(50)   NOT NULL,  -- 이름
+  contact_number        VARCHAR(20)   NOT NULL,  -- 연락처
   -- 메타
-  status               VARCHAR(20)   NOT NULL DEFAULT 'pending',  -- pending / confirmed / completed / cancelled
-  created_at           TIMESTAMPTZ   NOT NULL DEFAULT now(),
-  updated_at           TIMESTAMPTZ   NOT NULL DEFAULT now()
+  status                VARCHAR(20)   NOT NULL DEFAULT 'pending',  -- pending / contacted / completed
+  created_at            TIMESTAMPTZ   NOT NULL DEFAULT now(),
+  updated_at            TIMESTAMPTZ   NOT NULL DEFAULT now()
 );
 
 -- 인덱스
-CREATE INDEX idx_gf_escort_status ON gf_funeral_escort_reservations(status);
-CREATE INDEX idx_gf_escort_departure ON gf_funeral_escort_reservations(departure_date);
-CREATE INDEX idx_gf_escort_created_at ON gf_funeral_escort_reservations(created_at DESC);
+CREATE INDEX idx_gf_direct_status ON gf_direct_requests(status);
+CREATE INDEX idx_gf_direct_created_at ON gf_direct_requests(created_at DESC);
 ```
 
 ### RLS (Row Level Security) 정책
@@ -156,7 +145,7 @@ Supabase 환경에서 서버 사이드(`service_role` key)로만 접근하므로
 -- 모든 테이블에 RLS 활성화
 ALTER TABLE gf_consultation_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gf_membership_applications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE gf_funeral_escort_reservations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE gf_direct_requests ENABLE ROW LEVEL SECURITY;
 
 -- service_role만 접근 가능 (Next.js API Route에서 service_role key 사용)
 -- 클라이언트에서 직접 접근 불가
@@ -170,9 +159,9 @@ ALTER TABLE gf_funeral_escort_reservations ENABLE ROW LEVEL SECURITY;
 
 ### 4-1. 상담신청 API
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| POST | `/api/v1/general-funeral/consultation` | 상담 신청 생성 |
+| Method | Endpoint                               | 설명          |
+| ------ | -------------------------------------- | ------------- |
+| POST   | `/api/v1/general-funeral/consultation` | 상담신청 생성 |
 
 **Request Body:**
 
@@ -201,9 +190,9 @@ ALTER TABLE gf_funeral_escort_reservations ENABLE ROW LEVEL SECURITY;
 
 ### 4-2. 후불제상조 가입신청서 API
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| POST | `/api/v1/general-funeral/membership` | 가입 신청 생성 |
+| Method | Endpoint                             | 설명           |
+| ------ | ------------------------------------ | -------------- |
+| POST   | `/api/v1/general-funeral/membership` | 가입 신청 생성 |
 
 **Request Body:**
 
@@ -236,9 +225,9 @@ ALTER TABLE gf_funeral_escort_reservations ENABLE ROW LEVEL SECURITY;
 
 ### 4-3. 다이렉트 장례 설계 API
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| POST | `/api/v1/general-funeral/reservation` | 장례 설계 예약 생성 |
+| Method | Endpoint                                | 설명                |
+| ------ | --------------------------------------- | ------------------- |
+| POST   | `/api/v1/general-funeral/direct-design` | 장례 설계 예약 생성 |
 
 **Request Body:**
 
@@ -312,13 +301,13 @@ ALTER TABLE gf_funeral_escort_reservations ENABLE ROW LEVEL SECURITY;
 
 - [ ] `src/app/api/v1/general-funeral/consultation/route.ts` - 상담신청 API
 - [ ] `src/app/api/v1/general-funeral/membership/route.ts` - 가입신청서 API
-- [ ] `src/app/api/v1/general-funeral/reservation/route.ts` - 다이렉트 장례 설계 API
+- [ ] `src/app/api/v1/general-funeral/direct-design/route.ts` - 다이렉트 장례 설계 API
 
 ### Phase 3: 프론트엔드 연동
 
 - [ ] `general-funeral.tsx` 설문 폼 -> `/api/v1/general-funeral/consultation` 연동
 - [ ] `membership/general/page.tsx` 가입폼 -> `/api/v1/general-funeral/membership` 연동
-- [ ] `reservation-modal.tsx` 예약폼 -> `/api/v1/general-funeral/reservation` 연동
+- [ ] `reservation-modal.tsx` 예약폼 -> `/api/v1/general-funeral/direct-design` 연동
 - [ ] `proposal-modal.tsx` 제안서폼 -> `/api/v1/corporate-funeral/proposal` 연동 (공통 테이블)
 
 ---
@@ -335,13 +324,13 @@ src/
 │           └── general-funeral/          -- 일반상조
 │               ├── consultation/route.ts
 │               ├── membership/route.ts
-│               └── reservation/route.ts
+│               └── direct-design/route.ts
 └── lib/
     └── supabase.ts
 ```
 
 ### 테이블 네이밍 규칙
 
-| 카테고리 | Prefix | 예시 |
-|---------|--------|------|
-| 일반상조 | `gf_` | `gf_consultation_requests` |
+| 카테고리 | Prefix | 예시                       |
+| -------- | ------ | -------------------------- |
+| 일반상조 | `gf_`  | `gf_consultation_requests` |

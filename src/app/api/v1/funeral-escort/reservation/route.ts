@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     }
 
     const { data, error } = await supabase
-      .from('gf_funeral_escort_reservations')
+      .from('fe_reservation_requests')
       .insert({
         writer_name: body.writer_name,
         writer_phone: body.writer_phone,

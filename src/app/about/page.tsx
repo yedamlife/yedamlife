@@ -2,16 +2,7 @@
 
 import { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  Phone,
-  MapPin,
-  Mail,
-  Building2,
-  AlertCircle,
-  MessageCircle,
-  Plus,
-  Download,
-} from 'lucide-react';
+import { Phone, MapPin, Mail, Building2, AlertCircle } from 'lucide-react';
 import { YedamHeader } from '@/components/template/YedamLife/header';
 import { YedamFooter } from '@/components/template/YedamLife/footer';
 import {
@@ -25,8 +16,9 @@ const SUPABASE_BASE =
 
 const scrollSpySections = [
   { id: 'greeting', label: '인사말' },
-  { id: 'mission', label: '미션/비전' },
-  { id: 'ci', label: '사명/CI' },
+  { id: 'iso', label: 'ISO 9001' },
+  { id: 'mission', label: '사회적기업' },
+  { id: 'ci', label: '상표등록증' },
   { id: 'branches', label: '전국본부현황' },
   { id: 'location', label: '오시는길' },
 ];
@@ -45,7 +37,6 @@ function AboutPageContent() {
   const fromUrl = searchParams.get('from') || null;
   const mapRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState('greeting');
-  const [isFabOpen, setIsFabOpen] = useState(false);
 
   // 스크롤 스파이
   useEffect(() => {
@@ -152,138 +143,224 @@ function AboutPageContent() {
               </div>
             </div>
 
-            <div className="text-center mb-16 sm:mb-20">
-              <p className="text-lg sm:text-xl text-gray-600 leading-relaxed">
-                예담라이프는 누구나 한 번쯤 겪게 되는 고인과의 이별 시간에
+            {/* 인사말 본문 */}
+            <div className="max-w-4xl mx-auto space-y-10 text-[15px] sm:text-base text-gray-700 leading-[1.9] text-center">
+              {/* 대표 사진 */}
+              <div>
+                <img
+                  src={`${SUPABASE_BASE}/ceo-profile2.png`}
+                  alt="예담라이프 대표"
+                  className="w-52 sm:w-72 mx-auto object-cover rounded-2xl"
+                />
+              </div>
+
+              <div>
+                <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-6">
+                  준비 없던 장례 길잡이별, 후불제상조 예담라이프
+                </h3>
+                <p>
+                  갑작스러운 이별 앞에서, 가장 먼저 달려가는 후불제 상조입니다.
+                </p>
+                <p className="mt-4">
+                  어느 날 갑자기 찾아온 이별.
+                  <br />
+                  뭐부터 해야 할지 모르겠고, 어디로 연락해야 하는지 조차
+                  막막하실 겁니다.
+                </p>
+                <p className="text-lg sm:text-xl font-bold text-gray-900 mt-6">
+                  그 마음, 저희가 압니다.
+                </p>
+                <p className="mt-4">
+                  예담라이프는 가입 절차도, 선불 납입도, 복잡한 서류도 필요
+                  없습니다.
+                  <br />
+                  전화 한 통이면, 바로 도와드립니다.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-base sm:text-lg font-bold text-gray-900 mb-2">
+                  &ldquo;상조 가입에 둘게 없는데...&rdquo;
+                </p>
+                <p>
+                  아무것도 준비되어 있지 않아도 괜찮습니다.
+                  <br />
+                  예담라이프는 사전 가입이 필요 없는 후불제 상조입니다.
+                  <br />
+                  장례가 필요한 바로 그 시점에 연락 주시면,
+                  <br />
+                  365일 24시간, 전국 어디든 전문장례지도사가 출동합니다.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-base sm:text-lg font-bold text-gray-900 mb-2">
+                  &ldquo;장례비용이 얼마나 드는지도 모르겠어요.&rdquo;
+                </p>
+                <p>
+                  장례 후 정산합니다.
+                  <br />
+                  월 납입금 0원. 가입비 0원.
+                  <br />
+                  수년간 매달 돈을 넣어두실 필요 없습니다.
+                  <br />
+                  이용하신 서비스에 대해서만 정산하면 됩니다.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-base sm:text-lg font-bold text-gray-900 mb-2">
+                  &ldquo;아는 것도 없고, 도와줄 사람도 없는데 혼자 할 수
+                  있을까요?&rdquo;
+                </p>
+                <p>
+                  그럴수록, 더욱 도움이 필요합니다.
+                  <br />
+                  10년 이상 경력의 전문 장례지도사가 처음부터 끝까지 책임지고
+                  도와드립니다.
+                  <br />
+                  담당 장례지도사가 고객 상황에 맞춰 꼭 필요한 요소만 선별하여
+                  장례를 설계하고,
+                  <br />전 과정을 빠짐없이 진행합니다.
+                </p>
+              </div>
+
+              <p>
+                ISO 9001 품질인증을 받은 유일한 후불제 상조로서,
+                <br />
+                국제 기준에 따른 품격있는 서비스를 약속드립니다.
               </p>
-              <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-2">
-                <span style={{ color: BRAND_COLOR_PREMIUM }}>禮(예)</span>를
-                담아 진심으로 모십니다.
-              </p>
-            </div>
 
-            <div className="space-y-16 sm:space-y-24">
-              {/* 1 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-                <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-white">
-                  <img
-                    src={`${SUPABASE_BASE}/gt_img01.png`}
-                    alt="고인을 위한 정성"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                </div>
-                <div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-                    고인을 평안한 안식처로 안내하겠습니다.
-                  </h3>
-                  <div
-                    className="w-10 h-0.5 mb-4"
-                    style={{ backgroundColor: BRAND_COLOR_PREMIUM }}
-                  />
-                  <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                    고인이 가시는 길에 후회와 여한이 없이, 평안의 향기가 가득한
-                    세상에서 행복하시길 바라는 마음을 담아 가시는 길을 정성으로
-                    닦아 드립니다. 장례 기간 동안 근심 없이 보내실 수 있도록
-                    고인에 대한 禮를 갖춰 장례예식에 담고 있습니다.
-                  </p>
-                </div>
+              <div>
+                <p className="text-base sm:text-lg font-bold text-gray-900 mb-2">
+                  &ldquo;장례 기간 동안 제가 뭘 준비 해야 하는 건지.&rdquo;
+                </p>
+                <p>
+                  아무것도 하지 않으셔도 됩니다.
+                  <br />
+                  유족이 해야 할 일은 단 하나,
+                  <br />
+                  고인과의 마지막 시간에 집중하는 것입니다.
+                  <br />
+                  나머지 모든 절차는 예담라이프가
+                  <br />
+                  상주의 마음으로, 예를 다해 모시겠습니다.
+                </p>
               </div>
 
-              {/* 2 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-                <div className="order-2 md:order-1">
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-                    유족의 치유와 안정이 되어 드리겠습니다.
-                  </h3>
-                  <div
-                    className="w-10 h-0.5 mb-4"
-                    style={{ backgroundColor: BRAND_COLOR_PREMIUM }}
-                  />
-                  <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                    한 세대의 마감과 다음 세대의 계승이라는 역사적 사명인
-                    &ldquo;喪吏(예사)&rdquo; 책임자로서 불안하고 당황한 유가족의
-                    마음을 누구보다 깊이 헤아려 드리겠습니다. 갑작스러운 이별
-                    때문에 황망하고 슬픈 마음을 다스리기에도 바쁜 3일의 장례,
-                    유족이 고인과의 이별에만 온전히 집중할 수 있도록
-                    예담라이프가 곁을 든든히 지키겠습니다.
-                  </p>
-                </div>
-                <div className="order-1 md:order-2 aspect-[4/3] rounded-2xl overflow-hidden bg-white">
-                  <img
-                    src={`${SUPABASE_BASE}/gt_img02.png`}
-                    alt="유족 케어"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* 3 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-                <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-white">
-                  <img
-                    src={`${SUPABASE_BASE}/gt_img03.png`}
-                    alt="전문 장례지도사"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                </div>
-                <div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-                    풍부하고 넓은 경험으로 책임지겠습니다.
-                  </h3>
-                  <div
-                    className="w-10 h-0.5 mb-4"
-                    style={{ backgroundColor: BRAND_COLOR_PREMIUM }}
-                  />
-                  <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                    풍부하고 넓은 경험과 지식으로 정성을 담아 장례 예식을 진행해
-                    드릴 것을 약속해 드리며, 10년 이상의 경력을 가진 전문
-                    장례지도사가 직접 고인의 마지막 수의를 입혀 드립니다.
-                  </p>
-                </div>
-              </div>
-
-              {/* 4 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-                <div className="order-2 md:order-1">
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-                    상주의 마음으로 끝까지 함께하겠습니다.
-                  </h3>
-                  <div
-                    className="w-10 h-0.5 mb-4"
-                    style={{ backgroundColor: BRAND_COLOR_PREMIUM }}
-                  />
-                  <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                    내 가족이라는 마음으로 슬픔을 나누고 위로를 전달하겠습니다.
-                    사랑하는 이의 마지막 가시는 길이 세상에서 가장 아름답고
-                    숭고한 시간이 될 수 있도록 예를 담아 모시겠습니다.
-                  </p>
-                </div>
-                <div className="order-1 md:order-2 aspect-[4/3] rounded-2xl overflow-hidden bg-white">
-                  <img
-                    src={`${SUPABASE_BASE}/gt_img04.png`}
-                    alt="정성 담은 장례"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                </div>
+              {/* 예를 담다 섹션 */}
+              <div
+                className="mt-12 sm:mt-16 border-t-2 pt-10 sm:pt-12"
+                style={{ borderColor: BRAND_COLOR }}
+              >
+                <h4
+                  className="text-lg sm:text-xl font-bold mb-4"
+                  style={{ color: BRAND_COLOR }}
+                >
+                  예를 담다. 예담
+                </h4>
+                <p>
+                  예담라이프는 서울특별시 지정 예비사회적기업으로
+                  <br />
+                  이윤보다 사람을 먼저 생각하며 수익금의 일부를 어려운 이웃에게
+                  기부합니다.
+                  <br />
+                  고인의 마지막 가시는 길에 예를 담고,
+                  <br />
+                  남은 가족에게는 위로를 전하는 것
+                  <br />
+                  그것이 예담라이프의 시작이자, 존재의 이유입니다.
+                </p>
               </div>
             </div>
           </div>
         </section>
 
         {/* ══════════════════════════════════════════ */}
-        {/* 2. 미션/비전                                */}
+        {/* 2. ISO 9001 품질인증                          */}
+        {/* ══════════════════════════════════════════ */}
+        <section id="iso" className="py-16 sm:py-24 overflow-hidden bg-white">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+            <div className="mb-12 sm:mb-16">
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">
+                ISO 9001 품질인증
+              </h2>
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+                <span>Home</span>
+                <span>›</span>
+                <span>회사소개</span>
+                <span>›</span>
+                <span className="text-gray-700">ISO 9001</span>
+              </div>
+            </div>
+
+            {/* ISO 소개 */}
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm mb-12">
+              <div className="grid grid-cols-1 md:grid-cols-2">
+                <div className="flex items-center justify-center p-6 sm:p-10">
+                  <img
+                    src={`${SUPABASE_BASE}/iso_mark.png`}
+                    alt="ISO 9001 마크"
+                    className="w-full max-w-[320px]"
+                  />
+                </div>
+                <div className="p-6 sm:p-8 flex flex-col justify-center">
+                  <h4 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                    ISO 소개
+                  </h4>
+                  <p className="text-sm text-gray-400 mb-4">
+                    International Organization for Standardization
+                  </p>
+                  <div className="w-10 h-0.5 bg-gray-300 mb-4" />
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    ISO는 전 세계적으로 통용되는 국제 표준을 개발하고 출판하는
+                    비정부기구입니다. 1947년에 설립되어 스위스 제네바에 본부를
+                    두고 있으며, 전 세계 160여 개국이 회원으로 참여하고
+                    있습니다. ISO는 상품, 서비스, 기술의 국제적 교환을 촉진하며
+                    품질, 안전, 효율성을 높이기 위한 표준을 제공합니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* ISO 9001이란? */}
+            <div className="mb-12">
+              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+                ISO 9001이란?
+              </h3>
+              <div
+                className="w-10 h-0.5 mb-6"
+                style={{ backgroundColor: BRAND_COLOR }}
+              />
+              <div className="text-sm sm:text-base text-gray-600 leading-relaxed space-y-1">
+                <p>
+                  국제표준화기구(ISO)에서 제정한 품질경영시스템(QMS)에 대한 국제
+                  규격으로,
+                </p>
+                <p>
+                  제품과 서비스의 품질을 보증하는데 사용되는 품질경영
+                  체계입니다.
+                </p>
+                <p>
+                  ISO 9001 인증은 제품 및 서비스를 생산하고 제공하는 과정에서
+                  품질경영시스템을 평가하여 인증하는 제도입니다.
+                </p>
+              </div>
+            </div>
+
+            {/* 품질경영시스템 다이어그램 */}
+            <div className="flex justify-center">
+              <img
+                src={`${SUPABASE_BASE}/iso_diagram.png`}
+                alt="품질경영시스템의 지속적 개선 다이어그램"
+                className="w-full max-w-[700px]"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════════════════ */}
+        {/* 3. 사회적기업                                */}
         {/* ══════════════════════════════════════════ */}
         <section
           id="mission"
@@ -292,60 +369,15 @@ function AboutPageContent() {
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
             <div className="mb-12 sm:mb-16">
               <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">
-                미션/비전
+                서울시 예비사회적기업
               </h2>
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <span>Home</span>
                 <span>›</span>
                 <span>회사소개</span>
                 <span>›</span>
-                <span className="text-gray-700">미션/비전</span>
+                <span className="text-gray-700">사회적기업</span>
               </div>
-            </div>
-
-            <div className="text-center mb-16">
-              <p className="text-sm font-medium text-gray-500 mb-2">
-                신뢰와 믿음을 주는 예비사회적기업
-              </p>
-              <h3
-                className="text-2xl sm:text-3xl font-extrabold mb-3"
-                style={{ color: BRAND_COLOR_PREMIUM }}
-              >
-                고객 중심의 맞춤 장례 설계
-              </h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                감동과 신뢰를 주는 인생 라이프 스타일
-                <br />
-                진심으로 禮를 담아 감동을 전해드리는 예담라이프 주식회사
-              </p>
-            </div>
-
-            <div className="bg-gray-50 rounded-2xl p-8 sm:p-12 text-center mb-16">
-              <p className="text-sm text-gray-400 mb-2">
-                &ldquo; 비전선언문 &rdquo;
-              </p>
-              <p className="text-lg font-bold text-gray-900 mb-6">
-                예담라이프는
-              </p>
-              <div className="space-y-2 text-sm sm:text-base text-gray-700 leading-relaxed">
-                <p>하나, 대한민국 대표 후불제 상조기업을 지향한다.</p>
-                <p>
-                  하나, 고객 중심 경영이념으로 고품질 경제성을 갖춘 상조서비스를
-                  제공한다.
-                </p>
-                <p>
-                  하나, 취약계층 고용의 지속적인 일자리제공과 지역사회에 나눔과
-                  봉사를 실천한다.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-center mb-8">
-              <img
-                src={`${SUPABASE_BASE}/vision_img0715.png`}
-                alt="미션 · 경영이념 · 비전"
-                className="w-full max-w-[800px]"
-              />
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
@@ -395,126 +427,23 @@ function AboutPageContent() {
         </section>
 
         {/* ══════════════════════════════════════════ */}
-        {/* 3. 사명/CI                                 */}
+        {/* 3. 상표등록증                               */}
         {/* ══════════════════════════════════════════ */}
         <section id="ci" className="py-16 sm:py-24 overflow-hidden bg-white">
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
             <div className="mb-12 sm:mb-16">
               <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">
-                사명/CI
+                상표등록증
               </h2>
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <span>Home</span>
                 <span>›</span>
                 <span>회사소개</span>
                 <span>›</span>
-                <span className="text-gray-700">사명/CI</span>
+                <span className="text-gray-700">상표등록증</span>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10 mb-12">
-              <img
-                src={`${SUPABASE_BASE}/logotype02.jpg`}
-                alt="예담라이프 로고"
-                className="h-32 sm:h-40 w-auto object-contain"
-              />
-              <div>
-                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
-                  <span style={{ color: BRAND_COLOR_PREMIUM }}>禮(예)</span>를
-                  담아 모시는 예담라이프
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  &ldquo;갑자기 찾아온 헤어짐의 아픔과 슬픔을 3일이라는 짧은
-                  기간
-                  <br className="hidden sm:block" />
-                  고인에 대한 禮를 장례예식에 담습니다&rdquo;
-                </p>
-              </div>
-            </div>
-
-            <div className="border-t border-gray-100 mb-12" />
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-16">
-              <div>
-                <p className="text-sm font-bold text-gray-900 mb-3">심볼마크</p>
-                <div className="aspect-5/3 bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
-                  <img
-                    src={`${SUPABASE_BASE}/logotype01.jpg`}
-                    alt="심볼마크"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-900 mb-3">로고타입</p>
-                <div className="aspect-5/3 bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
-                  <img
-                    src={`${SUPABASE_BASE}/logotype02.jpg`}
-                    alt="로고타입"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-900 mb-3">응용타입</p>
-                <div className="aspect-5/3 bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
-                  <img
-                    src={`${SUPABASE_BASE}/logotype03.jpg`}
-                    alt="응용타입"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <p className="text-sm font-bold text-gray-900 mb-3">전용색상</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-16">
-              <div>
-                <div className="aspect-5/3 bg-black rounded-xl flex items-center justify-center mb-3">
-                  <img
-                    src={`${SUPABASE_BASE}/logotype_white.png`}
-                    alt="GENTLE BLACK"
-                    className="h-10 sm:h-12 w-auto object-contain"
-                  />
-                </div>
-                <p className="text-xs font-bold text-gray-900">GENTLE BLACK</p>
-                <p className="text-xs text-gray-400">
-                  C : 75 M : 68 Y : 67 K : 90
-                </p>
-                <p className="text-xs text-gray-400">#000000</p>
-              </div>
-              <div>
-                <div className="aspect-5/3 bg-white rounded-xl flex items-center justify-center border border-gray-200 mb-3">
-                  <img
-                    src={`${SUPABASE_BASE}/logotype_gry.png`}
-                    alt="PURE WHITE"
-                    className="h-10 sm:h-12 w-auto object-contain"
-                  />
-                </div>
-                <p className="text-xs font-bold text-gray-900">PURE WHITE</p>
-                <p className="text-xs text-gray-400">C : 0 M : 0 Y : 0 K : 0</p>
-                <p className="text-xs text-gray-400">#FFFFFF</p>
-              </div>
-              <div>
-                <div
-                  className="aspect-5/3 rounded-xl flex items-center justify-center mb-3"
-                  style={{ backgroundColor: '#E7CA7B' }}
-                >
-                  <img
-                    src={`${SUPABASE_BASE}/logotype_white.png`}
-                    alt="ANTIQUE GOLD"
-                    className="h-10 sm:h-12 w-auto object-contain"
-                  />
-                </div>
-                <p className="text-xs font-bold text-gray-900">ANTIQUE GOLD</p>
-                <p className="text-xs text-gray-400">
-                  C : 10 M : 18 Y : 61 K : 0
-                </p>
-                <p className="text-xs text-gray-400">#E7CA7B</p>
-              </div>
-            </div>
-
-            <p className="text-sm font-bold text-gray-900 mb-3">상표등록증</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div>
                 <div className="aspect-3/4 rounded-xl overflow-hidden border border-gray-100 mb-3">
@@ -761,72 +690,6 @@ function AboutPageContent() {
             })}
           </div>
         </nav>
-
-        {/* ── 플로팅 채팅 FAB ── */}
-        <div className="fixed right-4 bottom-6 z-50 flex flex-col items-end gap-2">
-          <div
-            className={`flex flex-col items-end gap-2 transition-all duration-300 ${
-              isFabOpen
-                ? 'opacity-100 translate-y-0 pointer-events-auto'
-                : 'opacity-0 translate-y-4 pointer-events-none'
-            }`}
-          >
-            <a
-              href="tel:1660-0959"
-              className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-full bg-white shadow-lg border border-gray-200 cursor-pointer"
-            >
-              <span className="text-xs font-bold text-gray-700">
-                24시 긴급출동
-              </span>
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                <Phone className="w-5 h-5 text-gray-700" />
-              </div>
-            </a>
-            <a
-              href="https://pf.kakao.com/_예담라이프"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-full bg-[#FEE500] shadow-lg cursor-pointer"
-            >
-              <span className="text-xs font-bold text-[#3C1E1E]">
-                카카오 상담
-              </span>
-              <div className="w-10 h-10 rounded-full bg-[#F5DC00] flex items-center justify-center">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#3C1E1E">
-                  <path d="M12 3C6.48 3 2 6.54 2 10.86c0 2.78 1.86 5.22 4.65 6.6l-.95 3.53c-.08.3.25.55.52.39l4.2-2.8c.51.07 1.04.1 1.58.1 5.52 0 10-3.54 10-7.86S17.52 3 12 3z" />
-                </svg>
-              </div>
-            </a>
-            <a
-              href={`${SUPABASE_BASE}/yedam_company_proposal.zip`}
-              download="예담라이프회사소개서_기업상조제안서.zip"
-              className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-full bg-white shadow-lg border border-gray-200 cursor-pointer"
-            >
-              <span className="text-xs font-bold text-gray-700">
-                기업상조 제안서
-              </span>
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                <Download className="w-5 h-5 text-gray-700" />
-              </div>
-            </a>
-          </div>
-
-          <button
-            onClick={() => setIsFabOpen(!isFabOpen)}
-            className="w-14 h-14 rounded-full shadow-xl flex items-center justify-center cursor-pointer transition-all duration-300"
-            style={{
-              backgroundColor: '#333',
-              color: '#fff',
-              transform: isFabOpen ? 'rotate(45deg)' : 'rotate(0deg)',
-            }}
-          >
-            {isFabOpen ? (
-              <Plus className="w-6 h-6" />
-            ) : (
-              <MessageCircle className="w-6 h-6" />
-            )}
-          </button>
-        </div>
 
         <YedamFooter />
       </div>

@@ -1,0 +1,25 @@
+'use client';
+
+import { use } from 'react';
+import { DetailPage } from '@/components/admin/detail-page';
+
+const fields = [
+  { key: 'name', label: '이름' },
+  { key: 'phone', label: '연락처' },
+  { key: 'email', label: '이메일' },
+  { key: 'company_name', label: '회사명' },
+  { key: 'position', label: '직책' },
+];
+
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  return (
+    <DetailPage
+      title="제안서 신청 상세"
+      apiPath="/api/v1/admin/corporate-funeral/proposals"
+      id={id}
+      fields={fields}
+      backHref="/admin/corporate-funeral/proposals"
+    />
+  );
+}

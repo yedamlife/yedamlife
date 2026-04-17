@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     const requiredFields = [
-      'name', 'phone', 'birth_date', 'gender', 'religion',
+      'name', 'phone', 'gender',
       'address', 'company_name', 'product',
     ];
     const missing = requiredFields.filter((f) => !body[f]);
@@ -38,9 +38,7 @@ export async function POST(request: Request) {
       .insert({
         name: body.name,
         phone: body.phone,
-        birth_date: body.birth_date,
         gender: body.gender,
-        religion: body.religion,
         address: body.address,
         address_detail: body.address_detail || null,
         company_name: body.company_name,

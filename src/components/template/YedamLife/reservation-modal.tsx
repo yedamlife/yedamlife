@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, Search, CalendarIcon, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -75,9 +75,15 @@ interface ReservationModalProps {
 
 export function ReservationModal({ open, onClose }: ReservationModalProps) {
   const [form, setForm] = useState<ReservationForm>(INITIAL_FORM);
+  const [showPostcode, setShowPostcode] = useState(false);
+  const postcodeRef = useRef<HTMLDivElement>(null);
+  const postcodeTargetRef = useRef<'funeralHall' | 'destination'>('funeralHall');
 
   useEffect(() => {
-    if (open) setForm(INITIAL_FORM);
+    if (open) {
+      setForm(INITIAL_FORM);
+      setShowPostcode(false);
+    }
   }, [open]);
 
   // body scroll lock
@@ -97,6 +103,8 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
   );
 
   const openDaumSearch = (target: 'funeralHall' | 'destination') => {
+    postcodeTargetRef.current = target;
+
     const run = () => {
       const daum = (window as unknown as Record<string, unknown>).daum as
         | {
@@ -105,24 +113,36 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
                 address: string;
                 buildingName: string;
               }) => void;
-            }) => { open: () => void };
+              onclose: () => void;
+              width: string;
+              height: string;
+            }) => { embed: (el: HTMLElement) => void };
           }
         | undefined;
 
-      if (!daum?.Postcode) return;
+      if (!daum?.Postcode || !postcodeRef.current) return;
+
+      postcodeRef.current.innerHTML = '';
+      setShowPostcode(true);
 
       new daum.Postcode({
+        width: '100%',
+        height: '100%',
         oncomplete: (data) => {
           const addr = data.buildingName
             ? `${data.address} (${data.buildingName})`
             : data.address;
-          if (target === 'funeralHall') {
+          if (postcodeTargetRef.current === 'funeralHall') {
             update('funeralHallAddress', addr);
           } else {
             update('destinationAddress', addr);
           }
+          setShowPostcode(false);
         },
-      }).open();
+        onclose: () => {
+          setShowPostcode(false);
+        },
+      }).embed(postcodeRef.current);
     };
 
     // 스크립트가 이미 로드되어 있으면 바로 실행
@@ -166,7 +186,7 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/v1/general-funeral/reservation', {
+      const res = await fetch('/api/v1/funeral-escort/reservation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -215,7 +235,7 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] flex flex-col"
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
@@ -510,14 +530,12 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
 
         {/* 하단 (고정) */}
         <div className="px-6 py-4 border-t border-gray-100 shrink-0 space-y-3">
-          {price > 0 && (
-            <div className="text-right">
-              <span className="text-2xl font-extrabold text-gray-900">
-                {price.toLocaleString()}
-              </span>
-              <span className="text-sm text-gray-500 ml-1">원</span>
-            </div>
-          )}
+          <div className="text-right">
+            <span className="text-2xl font-extrabold text-gray-900">
+              {price.toLocaleString()}
+            </span>
+            <span className="text-sm text-gray-500 ml-1">원</span>
+          </div>
           <button
             onClick={handleSubmit}
             className="w-full py-3.5 rounded-xl text-white font-bold text-sm cursor-pointer hover:opacity-90 transition-all"
@@ -525,6 +543,30 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
           >
             신청하기
           </button>
+        </div>
+      </div>
+
+      {/* 주소 검색 팝업 (모달 위에 띄움) */}
+      <div
+        className="fixed inset-0 z-200 flex items-center justify-center bg-black/40"
+        style={{ display: showPostcode ? 'flex' : 'none' }}
+        onClick={() => setShowPostcode(false)}
+      >
+        <div
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden flex flex-col"
+          style={{ height: '500px' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-6 py-3 flex items-center justify-between border-b border-gray-200 shrink-0">
+            <span className="font-bold text-sm text-gray-800">주소 검색</span>
+            <button
+              onClick={() => setShowPostcode(false)}
+              className="p-1 hover:bg-black/5 rounded-lg cursor-pointer transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+          </div>
+          <div ref={postcodeRef} className="flex-1" />
         </div>
       </div>
     </div>

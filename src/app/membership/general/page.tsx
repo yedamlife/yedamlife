@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Script from 'next/script';
-import { Gift, Phone, CheckCircle2, FileText, Search } from 'lucide-react';
+import { Gift, Phone, CheckCircle2, FileText, Search, X } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
@@ -87,41 +88,74 @@ function MembershipGeneralPageContent() {
   });
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showPostcode, setShowPostcode] = useState(false);
+  const postcodeRef = useRef<HTMLDivElement>(null);
 
   const today = new Date();
   const formattedDate = `${today.getFullYear()}년 ${String(today.getMonth() + 1).padStart(2, '0')}월 ${String(today.getDate()).padStart(2, '0')}일`;
 
   const openAddressSearch = () => {
-    const daum = (window as unknown as Record<string, unknown>).daum as
-      | {
-          Postcode: new (opts: {
-            oncomplete: (data: {
-              address: string;
-              buildingName: string;
-            }) => void;
-          }) => { open: () => void };
-        }
-      | undefined;
-    if (!daum?.Postcode) return;
-    new daum.Postcode({
-      oncomplete: (data) => {
-        const addr = data.buildingName
-          ? `${data.address} (${data.buildingName})`
-          : data.address;
-        updateField('address', addr);
-      },
-    }).open();
+    const run = () => {
+      const daum = (window as unknown as Record<string, unknown>).daum as
+        | {
+            Postcode: new (opts: {
+              oncomplete: (data: {
+                address: string;
+                buildingName: string;
+              }) => void;
+              onclose: () => void;
+              width: string;
+              height: string;
+            }) => { embed: (el: HTMLElement) => void };
+          }
+        | undefined;
+      if (!daum?.Postcode || !postcodeRef.current) return;
+
+      postcodeRef.current.innerHTML = '';
+      setShowPostcode(true);
+
+      new daum.Postcode({
+        width: '100%',
+        height: '100%',
+        oncomplete: (data) => {
+          const addr = data.buildingName
+            ? `${data.address} (${data.buildingName})`
+            : data.address;
+          updateField('address', addr);
+          setShowPostcode(false);
+        },
+        onclose: () => {
+          setShowPostcode(false);
+        },
+      }).embed(postcodeRef.current);
+    };
+
+    if ((window as unknown as Record<string, unknown>).daum) {
+      run();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
+    script.onload = run;
+    document.head.appendChild(script);
   };
 
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.phone || !formData.product) {
-      alert('필수 항목을 입력해주세요. (회원명, 연락처, 가입상품)');
+    const missing: string[] = [];
+    if (!formData.name) missing.push('회원명');
+    if (!formData.phone) missing.push('연락처');
+    if (!formData.birthDate) missing.push('생년월일');
+    if (!formData.address) missing.push('주소');
+    if (!formData.product) missing.push('가입상품');
+    if (missing.length > 0) {
+      toast.warning(`다음 항목을 입력해주세요: ${missing.join(', ')}`);
       return;
     }
     if (!privacyAgreed) {
-      alert('개인정보 이용·제공·활용 동의가 필요합니다.');
+      toast.warning('개인정보 이용·제공·활용 동의가 필요합니다.');
       return;
     }
 
@@ -150,10 +184,10 @@ function MembershipGeneralPageContent() {
       if (result.success) {
         setSubmitted(true);
       } else {
-        alert(result.message || '오류가 발생했습니다. 다시 시도해주세요.');
+        toast.error(result.message || '오류가 발생했습니다. 다시 시도해주세요.');
       }
     } catch {
-      alert('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      toast.error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSubmitting(false);
     }
@@ -952,6 +986,29 @@ function MembershipGeneralPageContent() {
             </div>
           </div>
         </section>
+      </div>
+      {/* 주소 검색 팝업 */}
+      <div
+        className="fixed inset-0 z-200 flex items-center justify-center bg-black/40"
+        style={{ display: showPostcode ? 'flex' : 'none' }}
+        onClick={() => setShowPostcode(false)}
+      >
+        <div
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden flex flex-col"
+          style={{ height: '500px' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-6 py-3 flex items-center justify-between border-b border-gray-200 shrink-0">
+            <span className="font-bold text-sm text-gray-800">주소 검색</span>
+            <button
+              onClick={() => setShowPostcode(false)}
+              className="p-1 hover:bg-black/5 rounded-lg cursor-pointer transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+          </div>
+          <div ref={postcodeRef} className="flex-1" />
+        </div>
       </div>
     </>
   );

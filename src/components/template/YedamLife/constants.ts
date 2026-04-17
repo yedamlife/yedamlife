@@ -123,7 +123,7 @@ export const categoryTabs = [
     subItems: undefined,
   },
   {
-    label: '인스타플라워',
+    label: '리멤버49',
     href: 'https://www.xn--oi2bo5sikduta837auig.com/',
     external: true,
     subItems: undefined,
@@ -141,8 +141,9 @@ export const topNavItems: {
     href: '/about',
     subItems: [
       { label: '인사말', href: '/about#greeting' },
-      { label: '미션/비전', href: '/about#mission' },
-      { label: '사명/CI', href: '/about#ci' },
+      { label: 'ISO 9001', href: '/about#iso' },
+      { label: '사회적기업', href: '/about#mission' },
+      { label: '상표등록증', href: '/about#ci' },
       { label: '전국본부현황', href: '/about#branches' },
       { label: '오시는길', href: '/about#location' },
     ],
@@ -191,7 +192,7 @@ export const topBanners = [
     textColor: '#374151',
   },
   {
-    text: '지금 상담 신청하고, 최대 지원금 128만원 받기',
+    text: '지금 상담신청하고, 최대 지원금 128만원 받기',
     icon: Sparkles,
     bgColor: '#eef2ff',
     textColor: '#4338ca',
@@ -377,7 +378,7 @@ export const funeralProducts = [
     discountPrice: '230만원',
     features: [
       '장례지도사 1명*3일',
-      '장례관리사 3명',
+      '접객 도우미 3명',
       '입관지도사 1명',
       '예담수의 2호',
       '관(오동)',
@@ -398,7 +399,7 @@ export const funeralProducts = [
     discountPrice: '340만원',
     features: [
       '장례지도사 1명*3일',
-      '장례관리사 4명',
+      '접객 도우미 4명',
       '입관지도사 1명',
       '예담수의 3호',
       '관(오동)',
@@ -420,7 +421,7 @@ export const funeralProducts = [
     discountPrice: '460만원',
     features: [
       '장례지도사 1명*3일',
-      '장례관리사 6명',
+      '접객 도우미 6명',
       '입관지도사 1명',
       '예담수의 4호',
       '관(오동)',
@@ -463,7 +464,7 @@ export const productDetails: Record<
         category: '인력지원',
         items: [
           { label: '장례지도사', value: '1명' },
-          { label: '장례관리사', sub: '(1일 10시간 기준)', value: 'x' },
+          { label: '접객 도우미', sub: '(1일 10시간 기준)', value: 'x' },
           { label: '입관지도사', value: '1명' },
         ],
       },
@@ -471,15 +472,16 @@ export const productDetails: Record<
         category: '장의차량',
         items: [
           { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
-          { label: '장의버스', value: '' },
-          { label: '장의버스 / 장의리무진', value: '버스, 리무진 중 택 1 / 150km' },
+          { label: '장의버스', value: '택1 / 150km' },
+          { label: '리무진', value: '택1 / 150km' },
         ],
       },
       {
         category: '고인용품\n&\n빈소용품',
         items: [
           { label: '수의(화장용)', value: '예담수의 1호' },
-          { label: '관(화장용) / 횡대(매장시)', value: '오동' },
+          { label: '관(화장용)', value: '오동' },
+          { label: '횡대', sub: '(매장시)', value: '오동' },
           { label: '유골함', value: '기본목함' },
           {
             label: '입관용품',
@@ -514,7 +516,7 @@ export const productDetails: Record<
         category: '인력지원',
         items: [
           { label: '장례지도사', value: '1명*3일' },
-          { label: '장례관리사', sub: '(1일 10시간 기준)', value: '3명' },
+          { label: '접객 도우미', sub: '(1일 10시간 기준)', value: '3명' },
           { label: '입관지도사', value: '1명' },
         ],
       },
@@ -522,15 +524,16 @@ export const productDetails: Record<
         category: '장의차량',
         items: [
           { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
-          { label: '장의버스', value: '' },
-          { label: '장의버스 / 장의리무진', value: '버스, 리무진 중 택 1 / 180km' },
+          { label: '장의버스', value: '택1 / 180km' },
+          { label: '리무진', value: '택1 / 180km' },
         ],
       },
       {
         category: '고인용품\n&\n빈소용품',
         items: [
           { label: '수의(화장용)', value: '예담수의 2호' },
-          { label: '관(화장용) / 횡대(매장시)', value: '오동' },
+          { label: '관(화장용)', value: '오동' },
+          { label: '횡대', sub: '(매장시)', value: '오동' },
           { label: '유골함', value: '일반황토함' },
           {
             label: '입관용품',
@@ -566,7 +569,7 @@ export const productDetails: Record<
         category: '인력지원',
         items: [
           { label: '장례지도사', value: '1명*3일' },
-          { label: '장례관리사', sub: '(1일 10시간 기준)', value: '4명' },
+          { label: '접객 도우미', sub: '(1일 10시간 기준)', value: '4명' },
           { label: '입관지도사', value: '1명' },
         ],
       },
@@ -574,15 +577,16 @@ export const productDetails: Record<
         category: '장의차량',
         items: [
           { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
-          { label: '장의버스', value: '' },
-          { label: '장의버스 / 장의리무진', value: '버스&리무진 / 200km' },
+          { label: '장의버스', value: '200km' },
+          { label: '리무진', value: '200km' },
         ],
       },
       {
         category: '고인용품\n&\n빈소용품',
         items: [
           { label: '수의(화장용)', value: '예담수의 3호' },
-          { label: '관(화장용) / 횡대(매장시)', value: '오동' },
+          { label: '관(화장용)', value: '오동' },
+          { label: '횡대', sub: '(매장시)', value: '오동' },
           { label: '유골함', value: '일반황토함' },
           {
             label: '입관용품',
@@ -621,7 +625,7 @@ export const productDetails: Record<
         category: '인력지원',
         items: [
           { label: '장례지도사', value: '1명*3일' },
-          { label: '장례관리사', sub: '(1일 10시간 기준)', value: '6명' },
+          { label: '접객 도우미', sub: '(1일 10시간 기준)', value: '6명' },
           { label: '입관지도사', value: '1명' },
         ],
       },
@@ -629,15 +633,16 @@ export const productDetails: Record<
         category: '장의차량',
         items: [
           { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
-          { label: '장의버스', value: '' },
-          { label: '장의버스 / 장의리무진', value: '버스&리무진 / 300km' },
+          { label: '장의버스', value: '300km' },
+          { label: '리무진', value: '300km' },
         ],
       },
       {
         category: '고인용품\n&\n빈소용품',
         items: [
           { label: '수의(화장용)', value: '예담수의 4호' },
-          { label: '관(화장용) / 횡대(매장시)', value: '오동' },
+          { label: '관(화장용)', value: '오동' },
+          { label: '횡대', sub: '(매장시)', value: '오동' },
           { label: '유골함', value: '고급진공함' },
           {
             label: '입관용품',
@@ -834,7 +839,7 @@ export const comparisonData = [
     items: [
       { label: '장례지도사', values: ['1명', '1명*3일', '1명*3일', '1명*3일'] },
       {
-        label: '장례관리사',
+        label: '접객 도우미',
         sub: '(1일 10시간 기준)',
         values: ['-', '3명', '4명', '6명'],
       },
@@ -849,13 +854,12 @@ export const comparisonData = [
         values: ['사전가입 시 관내 이송 지원 혜택', '', '', ''],
       },
       {
-        label: '장의버스 / 리무진',
-        values: [
-          '버스,리무진 중\n택1 / 150km',
-          '버스,리무진 중\n택1 / 180km',
-          '버스&리무진\n200km',
-          '버스&리무진\n300km',
-        ],
+        label: '장의버스',
+        values: ['택1 / 150km', '택1 / 180km', '200km', '300km'],
+      },
+      {
+        label: '리무진',
+        values: ['택1 / 150km', '택1 / 180km', '200km', '300km'],
       },
     ],
   },
@@ -873,8 +877,13 @@ export const comparisonData = [
       },
       { label: '관(화장용)', values: ['오동', '오동', '오동', '오동'] },
       {
-        label: '유골함/횡대(매장시)',
+        label: '유골함',
         values: ['기본목함', '일반황토함', '일반황토함', '고급진공함'],
+      },
+      {
+        label: '횡대',
+        sub: '(매장시)',
+        values: ['제공', '제공', '제공', '제공'],
       },
       { label: '입관용품', values: ['제공', '제공', '제공', '제공'] },
       { label: '빈소용품', values: ['-', '제공', '제공', '제공'] },
@@ -995,7 +1004,7 @@ export const corpFuneralProducts = [
     ],
     features: [
       '장례지도사 1명*3일',
-      '장례관리사 3명',
+      '접객 도우미 3명',
       '입관상례사 1명',
       '버스, 리무진 중 택1 / 180km',
       '예담수의 1호',
@@ -1019,7 +1028,7 @@ export const corpFuneralProducts = [
     ],
     features: [
       '장례지도사 1명*3일',
-      '장례관리사 4명',
+      '접객 도우미 4명',
       '입관상례사 1명',
       '버스&리무진 / 200km',
       '예담수의 2호',
@@ -1069,7 +1078,7 @@ export const corpComparisonData = [
     category: '인력지원',
     items: [
       { label: '장례지도사', values: ['1명*3일', '1명*3일'] },
-      { label: '장례관리사', sub: '(1일 10시간 기준)', values: ['3명', '4명'] },
+      { label: '접객 도우미', sub: '(1일 10시간 기준)', values: ['3명', '4명'] },
       { label: '입관상례사', values: ['1명', '1명'] },
     ],
   },

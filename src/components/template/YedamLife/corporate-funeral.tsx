@@ -43,26 +43,53 @@ const PRODUCT_IMG_BASE =
   'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/products';
 
 const PRODUCT_LABEL_IMAGES: Record<string, { src: string; alt: string }[]> = {
-  '장례지도사': [{ src: `${PRODUCT_IMG_BASE}/funeral_director.avif`, alt: '장례지도사' }],
-  '장례관리사': [{ src: `${PRODUCT_IMG_BASE}/funeral_manager.avif`, alt: '장례관리사' }],
-  '입관상례사': [{ src: `${PRODUCT_IMG_BASE}/encoffinment_director.avif`, alt: '입관상례사' }],
-  '앰뷸런스': [{ src: `${PRODUCT_IMG_BASE}/ambulance.avif`, alt: '앰뷸런스' }],
+  장례지도사: [
+    { src: `${PRODUCT_IMG_BASE}/funeral_director.avif`, alt: '장례지도사' },
+  ],
+  장례관리사: [
+    { src: `${PRODUCT_IMG_BASE}/funeral_manager.avif`, alt: '장례관리사' },
+  ],
+  입관상례사: [
+    {
+      src: `${PRODUCT_IMG_BASE}/encoffinment_director.avif`,
+      alt: '입관상례사',
+    },
+  ],
+  앰뷸런스: [{ src: `${PRODUCT_IMG_BASE}/ambulance.avif`, alt: '앰뷸런스' }],
   '장의버스 / 리무진': [
     { src: `${PRODUCT_IMG_BASE}/funeral_bus-v2.avif`, alt: '장의버스' },
     { src: `${PRODUCT_IMG_BASE}/limousine-v2.avif`, alt: '리무진' },
   ],
-  '수의(화장용)': [{ src: `${PRODUCT_IMG_BASE}/burial_shroud_converted.avif`, alt: '수의' }],
+  '수의(화장용)': [
+    { src: `${PRODUCT_IMG_BASE}/burial_shroud_converted.avif`, alt: '수의' },
+  ],
   '관(화장용) / 횡대(매장시)': [
     { src: `${PRODUCT_IMG_BASE}/cremation_coffin.avif`, alt: '관' },
     { src: `${PRODUCT_IMG_BASE}/burial_boards_converted.avif`, alt: '횡대' },
   ],
-  '유골함': [{ src: `${PRODUCT_IMG_BASE}/cremation_urn_converted.avif`, alt: '유골함' }],
-  '입관용품': [{ src: `${PRODUCT_IMG_BASE}/encoffinment_supplies.avif`, alt: '입관용품' }],
-  '빈소용품': [{ src: `${PRODUCT_IMG_BASE}/altar_supplies.avif`, alt: '빈소용품' }],
-  '헌화': [{ src: `${PRODUCT_IMG_BASE}/flower_offering.avif`, alt: '헌화' }],
-  '관꽃장식': [{ src: `${PRODUCT_IMG_BASE}/casket_spray.avif`, alt: '관꽃장식' }],
-  '남자상복': [{ src: `${PRODUCT_IMG_BASE}/male_mourning_clothes_converted.avif`, alt: '남자상복' }],
-  '여자상복': [{ src: `${PRODUCT_IMG_BASE}/female_mourning_clothes.avif`, alt: '여자상복' }],
+  유골함: [
+    { src: `${PRODUCT_IMG_BASE}/cremation_urn_converted.avif`, alt: '유골함' },
+  ],
+  입관용품: [
+    { src: `${PRODUCT_IMG_BASE}/encoffinment_supplies.avif`, alt: '입관용품' },
+  ],
+  빈소용품: [
+    { src: `${PRODUCT_IMG_BASE}/altar_supplies.avif`, alt: '빈소용품' },
+  ],
+  헌화: [{ src: `${PRODUCT_IMG_BASE}/flower_offering.avif`, alt: '헌화' }],
+  관꽃장식: [{ src: `${PRODUCT_IMG_BASE}/casket_spray.avif`, alt: '관꽃장식' }],
+  남자상복: [
+    {
+      src: `${PRODUCT_IMG_BASE}/male_mourning_clothes_converted.avif`,
+      alt: '남자상복',
+    },
+  ],
+  여자상복: [
+    {
+      src: `${PRODUCT_IMG_BASE}/female_mourning_clothes.avif`,
+      alt: '여자상복',
+    },
+  ],
 };
 
 import {
@@ -97,7 +124,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
   // 제안서 문의 모달
   const [showProposalModal, setShowProposalModal] = useState(false);
 
-  // 상담 신청 폼 state
+  // 상담신청 폼 state
   const [corpConsultForm, setCorpConsultForm] = useState({
     product: '',
     name: '',
@@ -451,22 +478,26 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
               {
                 title: '맞춤형 복지 설계',
                 desc: '기업 규모·특성에 맞춘\n유연한 복지 플랜 설계',
-                image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80',
+                image:
+                  'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80',
               },
               {
                 title: '임직원 실질 혜택',
                 desc: '임직원과 가족 모두에게\n장례지원 및 복지 혜택 제공',
-                image: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600&q=80',
+                image:
+                  'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600&q=80',
               },
               {
                 title: '전국 서비스망 운영',
                 desc: '전국 어디서나 동일한 품질의\n신속하고 안정적인 지원',
-                image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80',
+                image:
+                  'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80',
               },
               {
                 title: '비용 절감 효과',
                 desc: '단체 계약 통한 합리적 비용으로\n고품질 복지 서비스 제공',
-                image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&q=80',
+                image:
+                  'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&q=80',
               },
             ].map((card) => (
               <div
@@ -1290,7 +1321,11 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
       </section>
 
       {/* ── 9. 기업 멤버십 혜택 ── */}
-      <MembershipSection background="bg-white" ctaHref="/membership/corporate" ctaLabel="기업 상조 가입신청" />
+      <MembershipSection
+        background="bg-white"
+        ctaHref="/membership/corporate"
+        ctaLabel="기업 상조 가입신청"
+      />
 
       {/* ── 10. 장례 복지 혜택 진행과정 (마일스톤) ── */}
       <section
@@ -1739,19 +1774,23 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                                 )}
                                 {PRODUCT_LABEL_IMAGES[item.label] && (
                                   <div className="flex justify-center gap-2 mt-2">
-                                    {PRODUCT_LABEL_IMAGES[item.label].map((img) => (
-                                      <div
-                                        key={img.alt}
-                                        className="w-24 h-24 rounded overflow-hidden cursor-pointer"
-                                        onClick={() => setLightboxSrc(img.src)}
-                                      >
-                                        <img
-                                          src={img.src}
-                                          alt={img.alt}
-                                          className="w-full h-full object-cover scale-110"
-                                        />
-                                      </div>
-                                    ))}
+                                    {PRODUCT_LABEL_IMAGES[item.label].map(
+                                      (img) => (
+                                        <div
+                                          key={img.alt}
+                                          className="w-24 h-24 rounded overflow-hidden cursor-pointer"
+                                          onClick={() =>
+                                            setLightboxSrc(img.src)
+                                          }
+                                        >
+                                          <img
+                                            src={img.src}
+                                            alt={img.alt}
+                                            className="w-full h-full object-cover scale-110"
+                                          />
+                                        </div>
+                                      ),
+                                    )}
                                   </div>
                                 )}
                               </td>
@@ -1818,11 +1857,13 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
 
           {/* 공통 문의 폼 */}
           <div className="mt-8 p-6 bg-gray-50 rounded-2xl border border-gray-200">
-            <p className="text-sm font-bold text-gray-700 mb-4">상담 신청</p>
+            <p className="text-sm font-bold text-gray-700 mb-4">상담신청</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               <Select
                 value={corpConsultForm.product}
-                onValueChange={(v) => setCorpConsultForm((p) => ({ ...p, product: v }))}
+                onValueChange={(v) =>
+                  setCorpConsultForm((p) => ({ ...p, product: v }))
+                }
               >
                 <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer">
                   <SelectValue placeholder="상품을 선택해주세요." />
@@ -1836,49 +1877,82 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                 type="text"
                 placeholder="이름"
                 value={corpConsultForm.name}
-                onChange={(e) => setCorpConsultForm((p) => ({ ...p, name: e.target.value }))}
+                onChange={(e) =>
+                  setCorpConsultForm((p) => ({ ...p, name: e.target.value }))
+                }
                 className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white"
               />
               <input
                 type="tel"
                 placeholder="-를 제외한 숫자만 입력해주세요"
                 value={corpConsultForm.phone}
-                onChange={(e) => setCorpConsultForm((p) => ({ ...p, phone: e.target.value }))}
+                onChange={(e) =>
+                  setCorpConsultForm((p) => ({ ...p, phone: e.target.value }))
+                }
                 className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white"
               />
               <Select
                 value={corpConsultForm.region}
-                onValueChange={(v) => setCorpConsultForm((p) => ({ ...p, region: v }))}
+                onValueChange={(v) =>
+                  setCorpConsultForm((p) => ({ ...p, region: v }))
+                }
               >
                 <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer">
                   <SelectValue placeholder="시/도 선택해주세요." />
                 </SelectTrigger>
                 <SelectContent>
                   {[
-                    '서울', '부산', '대구', '인천', '광주', '대전',
-                    '울산', '세종', '경기', '강원', '충북', '충남',
-                    '전북', '전남', '경북', '경남', '제주', '미정',
+                    '서울',
+                    '부산',
+                    '대구',
+                    '인천',
+                    '광주',
+                    '대전',
+                    '울산',
+                    '세종',
+                    '경기',
+                    '강원',
+                    '충북',
+                    '충남',
+                    '전북',
+                    '전남',
+                    '경북',
+                    '경남',
+                    '제주',
+                    '미정',
                   ].map((v) => (
-                    <SelectItem key={v} value={v}>{v}</SelectItem>
+                    <SelectItem key={v} value={v}>
+                      {v}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <div className="sm:col-span-2">
                 <Select
                   value={corpConsultForm.timeSlot}
-                  onValueChange={(v) => setCorpConsultForm((p) => ({ ...p, timeSlot: v }))}
+                  onValueChange={(v) =>
+                    setCorpConsultForm((p) => ({ ...p, timeSlot: v }))
+                  }
                 >
                   <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer w-full">
                     <SelectValue placeholder="상담시간을 선택해주세요." />
                   </SelectTrigger>
                   <SelectContent>
                     {[
-                      '00:00~06:00', '06:00~08:00', '08:00~10:00',
-                      '10:00~12:00', '12:00~14:00', '14:00~16:00',
-                      '16:00~18:00', '18:00~20:00', '20:00~22:00',
+                      '00:00~06:00',
+                      '06:00~08:00',
+                      '08:00~10:00',
+                      '10:00~12:00',
+                      '12:00~14:00',
+                      '14:00~16:00',
+                      '16:00~18:00',
+                      '18:00~20:00',
+                      '20:00~22:00',
                       '22:00~24:00',
                     ].map((v) => (
-                      <SelectItem key={v} value={v}>{v}</SelectItem>
+                      <SelectItem key={v} value={v}>
+                        {v}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1889,7 +1963,12 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                 <input
                   type="checkbox"
                   checked={corpConsultForm.privacyAgreed}
-                  onChange={(e) => setCorpConsultForm((p) => ({ ...p, privacyAgreed: e.target.checked }))}
+                  onChange={(e) =>
+                    setCorpConsultForm((p) => ({
+                      ...p,
+                      privacyAgreed: e.target.checked,
+                    }))
+                  }
                   className="w-4 h-4 rounded cursor-pointer"
                   style={{ accentColor: BRAND_COLOR }}
                 />
@@ -1904,7 +1983,10 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                     toast.warning('상품을 선택해주세요.');
                     return;
                   }
-                  if (!corpConsultForm.name.trim() || !corpConsultForm.phone.trim()) {
+                  if (
+                    !corpConsultForm.name.trim() ||
+                    !corpConsultForm.phone.trim()
+                  ) {
                     toast.warning('이름과 연락처를 입력해주세요.');
                     return;
                   }
@@ -1914,27 +1996,41 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                   }
                   setCorpConsultSubmitting(true);
                   try {
-                    const res = await fetch('/api/v1/corporate-funeral/consultation', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        product: corpConsultForm.product,
-                        name: corpConsultForm.name,
-                        phone: corpConsultForm.phone,
-                        region: corpConsultForm.region || '미정',
-                        preferred_time: corpConsultForm.timeSlot || '미정',
-                        privacy_agreed: corpConsultForm.privacyAgreed,
-                      }),
-                    });
+                    const res = await fetch(
+                      '/api/v1/corporate-funeral/consultation',
+                      {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          product: corpConsultForm.product,
+                          name: corpConsultForm.name,
+                          phone: corpConsultForm.phone,
+                          region: corpConsultForm.region || '미정',
+                          preferred_time: corpConsultForm.timeSlot || '미정',
+                          privacy_agreed: corpConsultForm.privacyAgreed,
+                        }),
+                      },
+                    );
                     const result = await res.json();
                     if (result.success) {
-                      toast.success('상담 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.');
-                      setCorpConsultForm({ product: '', name: '', phone: '', region: '', timeSlot: '', privacyAgreed: false });
+                      toast.success(
+                        '상담신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.',
+                      );
+                      setCorpConsultForm({
+                        product: '',
+                        name: '',
+                        phone: '',
+                        region: '',
+                        timeSlot: '',
+                        privacyAgreed: false,
+                      });
                     } else {
                       toast.error(result.message || '오류가 발생했습니다.');
                     }
                   } catch {
-                    toast.error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                    toast.error(
+                      '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                    );
                   } finally {
                     setCorpConsultSubmitting(false);
                   }
@@ -1942,7 +2038,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                 className="px-8 py-3 text-white text-sm font-bold rounded-xl cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50"
                 style={{ backgroundColor: BRAND_COLOR }}
               >
-                {corpConsultSubmitting ? '신청 중...' : '상담 신청'}
+                {corpConsultSubmitting ? '신청 중...' : '상담신청'}
               </button>
             </div>
           </div>

@@ -32,6 +32,7 @@ export async function POST(request: Request) {
         district: body.district || null,
         budget: body.budget || null,
         message: body.message || null,
+        product_id: body.product_id || null,
       })
       .select('id')
       .single();

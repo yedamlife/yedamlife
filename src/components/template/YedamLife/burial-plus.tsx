@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Phone, MapPin, X, ScrollText } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Phone, MapPin, X, ScrollText, Loader2, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
+import Link from 'next/link';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { CountUp, CtaSection, MembershipSection } from './components';
 import {
   Select,
@@ -441,230 +443,33 @@ const REGIONS: Record<string, string[]> = {
   제주: ['전체', '제주시', '서귀포시'],
 };
 
-// ── 장지 상품 데이터 ──
-interface BurialProduct {
-  id: string;
-  name: string;
-  region: string;
-  district: string;
-  types: BurialType[];
-  price: string;
-  image: string;
+// ── 장지 상품 데이터 (API) ──
+interface BurialProductRow {
+  id: number;
+  company_name: string;
+  sido_name: string | null;
+  full_address: string | null;
+  categories: string[];
+  photos: Array<{ fileurl_full?: string | null }> | null;
+  thumbnail_url: string | null;
+  min_price: number | null;
+  is_recommended: boolean;
 }
-
-const burialProducts: BurialProduct[] = [
-  {
-    id: 'bp-01',
-    name: '용인봉안당',
-    region: '경기',
-    district: '용인시',
-    types: ['봉안당'],
-    price: '3,000,000',
-    image:
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80',
-  },
-  {
-    id: 'bp-02',
-    name: '분당판교봉안당',
-    region: '경기',
-    district: '성남시',
-    types: ['봉안당'],
-    price: '2,000,000',
-    image:
-      'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=600&q=80',
-  },
-  {
-    id: 'bp-03',
-    name: '동두천공원묘지',
-    region: '경기',
-    district: '동두천시',
-    types: ['수목장', '봉안당', '공원묘지'],
-    price: '4,500,000',
-    image:
-      'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&q=80',
-  },
-  {
-    id: 'bp-04',
-    name: '분당추모공원',
-    region: '경기',
-    district: '광주시',
-    types: ['수목장', '봉안당'],
-    price: '1,500,000',
-    image:
-      'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=80',
-  },
-  {
-    id: 'bp-05',
-    name: '분당공원묘지',
-    region: '경기',
-    district: '광주시',
-    types: ['봉안당', '공원묘지'],
-    price: '2,000,000',
-    image:
-      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80',
-  },
-  {
-    id: 'bp-06',
-    name: '서울추모공원',
-    region: '서울',
-    district: '서초구',
-    types: ['봉안당'],
-    price: '5,000,000',
-    image:
-      'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=600&q=80',
-  },
-  {
-    id: 'bp-07',
-    name: '하늘수목장',
-    region: '경기',
-    district: '양평군',
-    types: ['수목장'],
-    price: '3,500,000',
-    image:
-      'https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=80',
-  },
-  {
-    id: 'bp-08',
-    name: '인천가족공원',
-    region: '인천',
-    district: '서구',
-    types: ['봉안당', '공원묘지'],
-    price: '2,500,000',
-    image:
-      'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&q=80',
-  },
-  {
-    id: 'bp-09',
-    name: '파주추모공원',
-    region: '경기',
-    district: '파주시',
-    types: ['수목장', '봉안당', '공원묘지'],
-    price: '1,800,000',
-    image:
-      'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=600&q=80',
-  },
-  {
-    id: 'bp-10',
-    name: '용인수목장',
-    region: '경기',
-    district: '용인시',
-    types: ['수목장'],
-    price: '4,000,000',
-    image:
-      'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=600&q=80',
-  },
-  {
-    id: 'bp-11',
-    name: '대전추모공원',
-    region: '대전',
-    district: '유성구',
-    types: ['봉안당', '공원묘지'],
-    price: '1,500,000',
-    image:
-      'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=600&q=80',
-  },
-  {
-    id: 'bp-12',
-    name: '부산추모공원',
-    region: '부산',
-    district: '기장군',
-    types: ['봉안당', '수목장'],
-    price: '2,200,000',
-    image:
-      'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=600&q=80',
-  },
-  {
-    id: 'bp-13',
-    name: '춘천공원묘지',
-    region: '강원',
-    district: '춘천시',
-    types: ['공원묘지'],
-    price: '1,200,000',
-    image:
-      'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=600&q=80',
-  },
-  {
-    id: 'bp-14',
-    name: '천안추모공원',
-    region: '충남',
-    district: '천안시',
-    types: ['봉안당', '수목장'],
-    price: '1,800,000',
-    image:
-      'https://images.unsplash.com/photo-1476231682828-37e571bc172f?w=600&q=80',
-  },
-  {
-    id: 'bp-15',
-    name: '광주공원묘지',
-    region: '광주',
-    district: '북구',
-    types: ['공원묘지', '봉안당'],
-    price: '1,600,000',
-    image:
-      'https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?w=600&q=80',
-  },
-  {
-    id: 'bp-16',
-    name: '인천해양장',
-    region: '인천',
-    district: '중구',
-    types: ['해양장'],
-    price: '800,000',
-    image:
-      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80',
-  },
-  {
-    id: 'bp-17',
-    name: '부산해양장',
-    region: '부산',
-    district: '중구',
-    types: ['해양장'],
-    price: '900,000',
-    image:
-      'https://images.unsplash.com/photo-1439405326854-014607f694d7?w=600&q=80',
-  },
-  {
-    id: 'bp-18',
-    name: '제주해양장',
-    region: '제주',
-    district: '제주시',
-    types: ['해양장'],
-    price: '1,200,000',
-    image:
-      'https://images.unsplash.com/photo-1468413253725-0d5181091126?w=600&q=80',
-  },
-  {
-    id: 'bp-19',
-    name: '여수해양장',
-    region: '전남',
-    district: '여수시',
-    types: ['해양장'],
-    price: '850,000',
-    image:
-      'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=600&q=80',
-  },
-  {
-    id: 'bp-20',
-    name: '울산해양장',
-    region: '울산',
-    district: '동구',
-    types: ['해양장'],
-    price: '950,000',
-    image:
-      'https://images.unsplash.com/photo-1484291470158-b8f8d608850d?w=600&q=80',
-  },
-];
 
 // ── 종교 목록 ──
 const RELIGIONS = ['해당 없음', '기독교', '천주교', '불교', '원불교', '기타'];
 
 // ── 상담신청 모달 ──
-function BurialConsultationModal({
+export function BurialConsultationModal({
   open,
   onClose,
+  productId,
+  productName,
 }: {
   open: boolean;
   onClose: () => void;
+  productId?: number | null;
+  productName?: string | null;
 }) {
   const [form, setForm] = useState({
     name: '',
@@ -730,14 +535,19 @@ function BurialConsultationModal({
           district: form.district || null,
           budget: form.budget || null,
           message: form.message || null,
+          product_id: productId || null,
         }),
       });
       const result = await res.json();
       if (result.success) {
-        toast.success('상담 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.');
+        toast.success(
+          '상담신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.',
+        );
         onClose();
       } else {
-        toast.error(result.message || '오류가 발생했습니다. 다시 시도해주세요.');
+        toast.error(
+          result.message || '오류가 발생했습니다. 다시 시도해주세요.',
+        );
       }
     } catch {
       toast.error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
@@ -764,7 +574,7 @@ function BurialConsultationModal({
         <div className="px-6 py-5 shrink-0 border-b border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">상담 신청</h2>
+              <h2 className="text-lg font-bold text-gray-900">상담신청</h2>
               <p className="text-sm text-gray-500 mt-1">
                 소중한 분의 마지막 안식처를 위해 전문 상담을 무료로 제공해
                 드립니다.
@@ -781,6 +591,17 @@ function BurialConsultationModal({
 
         {/* 본문 */}
         <div className="p-6 space-y-5 overflow-y-auto flex-1">
+          {/* 선택 장지 */}
+          {productName && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                선택 장지
+              </label>
+              <div className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm bg-gray-50 text-gray-700">
+                {productName}
+              </div>
+            </div>
+          )}
           {/* 이름 & 연락처 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -940,6 +761,11 @@ function BurialConsultationModal({
 
 // ── 메인 컴포넌트 ──
 export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const initializedRef = useRef(false);
+
   const [selectedType, setSelectedType] = useState<BurialType | '전체'>(
     '봉안당',
   );
@@ -947,19 +773,166 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [showConsultation, setShowConsultation] = useState(false);
 
-  // 필터링
-  const filteredProducts = burialProducts.filter((p) => {
-    if (selectedType !== '전체' && !p.types.includes(selectedType))
-      return false;
-    if (selectedRegion && p.region !== selectedRegion) return false;
-    if (
-      selectedDistrict &&
-      selectedDistrict !== '전체' &&
-      p.district !== selectedDistrict
-    )
-      return false;
-    return true;
-  });
+  const [products, setProducts] = useState<BurialProductRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showResults, setShowResults] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // 섹션 ID 목록 (스크롤 스파이용)
+  const sectionIds = [
+    'sec-burial-hero',
+    'sec-burial-trust',
+    'sec-burial-types',
+    'sec-burial-products',
+    'sec-burial-guide',
+    'sec-burial-membership',
+  ];
+
+  // URL 쿼리 파라미터에서 초기값 복원
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    const qType = searchParams.get('category');
+    const qRegion = searchParams.get('sido');
+    const qDistrict = searchParams.get('sigungu');
+
+    if (qType && ['봉안당', '수목장', '공원묘지', '해양장', '전체'].includes(qType)) {
+      setSelectedType(qType as BurialType | '전체');
+    }
+    if (qRegion) setSelectedRegion(qRegion);
+    if (qDistrict) setSelectedDistrict(qDistrict);
+
+    // hash가 있으면 해당 섹션으로 스크롤, 없으면 쿼리 파라미터가 있으면 상품 섹션으로
+    const hash = window.location.hash.replace('#', '');
+    if (hash) {
+      setTimeout(() => {
+        document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+    } else if (qType || qRegion || qDistrict) {
+      setTimeout(() => {
+        document.getElementById('sec-burial-products')?.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+    }
+  }, [searchParams]);
+
+  // 스크롤 시 URL hash 동기화
+  useEffect(() => {
+    const els = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter(Boolean) as HTMLElement[];
+    if (els.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            if (window.location.hash !== `#${id}`) {
+              history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${id}`);
+            }
+            break;
+          }
+        }
+      },
+      { rootMargin: '-40% 0px -55% 0px' },
+    );
+
+    els.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  // 필터 변경 시 URL 쿼리 파라미터 동기화
+  useEffect(() => {
+    if (!initializedRef.current) return;
+    const params = new URLSearchParams();
+    if (selectedType !== '봉안당') params.set('category', selectedType);
+    if (selectedRegion && selectedRegion !== 'all-regions')
+      params.set('sido', selectedRegion);
+    if (selectedDistrict && selectedDistrict !== '전체')
+      params.set('sigungu', selectedDistrict);
+    const qs = params.toString();
+    const url = qs ? `${pathname}?${qs}` : pathname;
+    router.replace(url, { scroll: false });
+  }, [selectedType, selectedRegion, selectedDistrict, pathname, router]);
+
+  const buildApiQuery = useCallback(
+    (nextCursor: string | null) => {
+      const params = new URLSearchParams({ limit: '10' });
+      if (nextCursor) params.set('cursor', nextCursor);
+      if (selectedType !== '전체') params.set('category', selectedType);
+      if (selectedRegion && selectedRegion !== 'all-regions')
+        params.set('sido', selectedRegion);
+      if (selectedDistrict && selectedDistrict !== '전체')
+        params.set('sigungu', selectedDistrict);
+      return params.toString();
+    },
+    [selectedType, selectedRegion, selectedDistrict],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    setShowResults(false);
+    setProducts([]);
+    setCursor(null);
+    setHasMore(false);
+
+    (async () => {
+      const fetchStart = Date.now();
+      try {
+        const res = await fetch(`/api/v1/burial-plus/products?${buildApiQuery(null)}`);
+        const json = await res.json();
+        if (cancelled) return;
+
+        // AI 검색 연출: 최소 2초 대기
+        const elapsed = Date.now() - fetchStart;
+        const remaining = Math.max(2000 - elapsed, 0);
+        await new Promise((r) => setTimeout(r, remaining));
+        if (cancelled) return;
+
+        if (json.success) {
+          setProducts(json.data);
+          setCursor(json.next_cursor);
+          setHasMore(json.has_more);
+          setTotal(json.total ?? 0);
+        }
+      } catch {
+        if (!cancelled) toast.error('상품 목록을 불러오지 못했습니다.');
+      } finally {
+        if (!cancelled) {
+
+          setLoading(false);
+          // 카드가 fade-in 되도록 약간의 딜레이
+          setTimeout(() => { if (!cancelled) setShowResults(true); }, 50);
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [buildApiQuery]);
+
+  const loadMore = async () => {
+    if (!hasMore || loadingMore || !cursor) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/v1/burial-plus/products?${buildApiQuery(cursor)}`);
+      const json = await res.json();
+      if (json.success) {
+        setProducts((prev) => [...prev, ...json.data]);
+        setCursor(json.next_cursor);
+        setHasMore(json.has_more);
+      }
+    } catch {
+      toast.error('추가 목록을 불러오지 못했습니다.');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   return (
     <>
@@ -1032,7 +1005,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
                 >
                   <Phone className="w-5 h-5" />
-                  빠른 상담신청
+                  전화상담
                 </a>
               </div>
             </div>
@@ -1044,7 +1017,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-6 grid grid-cols-2 sm:grid-cols-4 gap-y-4 divide-x-0 sm:divide-x divide-gray-200">
             {[
               { label: '상담 가능 장지', value: 100, suffix: '+ 곳' },
-              { label: '상담 신청 건수', value: 28050, suffix: '건' },
+              { label: '상담신청 건수', value: 28050, suffix: '건' },
               { label: '계약 체결 건수', value: 25342, suffix: '건' },
               { label: '고객 만족도', value: 98, suffix: '%' },
             ].map((stat) => (
@@ -1065,7 +1038,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
       </section>
 
       {/* ══════════════ 차별점 섹션 ══════════════ */}
-      <section className="py-20 sm:py-28 overflow-hidden bg-white">
+      <section id="sec-burial-trust" className="py-20 sm:py-28 overflow-hidden bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           {/* 헤더 */}
           <div className="text-center mb-14 sm:mb-20">
@@ -1149,6 +1122,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
 
       {/* ══════════════ 장지 유형 카드 ══════════════ */}
       <section
+        id="sec-burial-types"
         className="py-12 sm:py-16 overflow-hidden"
         style={{ backgroundColor: '#fafaf8' }}
       >
@@ -1196,6 +1170,18 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                   <p className="text-[11px] sm:text-xs text-gray-500 leading-relaxed">
                     {bt.desc}
                   </p>
+                  <span
+                    className="mt-3 w-full py-2 rounded-lg text-[11px] sm:text-xs font-medium text-gray-500 bg-gray-100 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isActive) setSelectedType(bt.type);
+                      setTimeout(() => {
+                        document.getElementById('sec-burial-products')?.scrollIntoView({ behavior: 'smooth' });
+                      }, isActive ? 0 : 100);
+                    }}
+                  >
+                    상품 상세 보기 &nbsp;→
+                  </span>
                 </button>
               );
             })}
@@ -1211,7 +1197,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           {/* 필터 바 */}
           <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-8 shadow-sm">
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-row sm:gap-4">
               <Select
                 value={selectedRegion}
                 onValueChange={(v) => {
@@ -1219,7 +1205,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                   setSelectedDistrict('');
                 }}
               >
-                <SelectTrigger className="h-auto px-4 py-3 rounded-xl border-gray-200 bg-white text-sm sm:w-48">
+                <SelectTrigger className="h-auto px-3 py-3 rounded-xl border-gray-200 bg-white text-sm sm:w-48 sm:px-4">
                   <SelectValue placeholder="시/도" />
                 </SelectTrigger>
                 <SelectContent className="z-[100]">
@@ -1233,6 +1219,23 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
               </Select>
 
               <Select
+                value={selectedDistrict}
+                onValueChange={(v) => setSelectedDistrict(v)}
+                disabled={!selectedRegion || selectedRegion === 'all-regions'}
+              >
+                <SelectTrigger className="h-auto px-3 py-3 rounded-xl border-gray-200 bg-white text-sm sm:w-48 sm:px-4">
+                  <SelectValue placeholder="시/군/구" />
+                </SelectTrigger>
+                <SelectContent className="z-[100]">
+                  {(REGIONS[selectedRegion] ?? []).map((d) => (
+                    <SelectItem key={d} value={d}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
                 value={selectedType === '전체' ? 'all-types' : selectedType}
                 onValueChange={(v) =>
                   setSelectedType(
@@ -1240,7 +1243,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                   )
                 }
               >
-                <SelectTrigger className="h-auto px-4 py-3 rounded-xl border-gray-200 bg-white text-sm sm:w-48">
+                <SelectTrigger className="h-auto px-3 py-3 rounded-xl border-gray-200 bg-white text-sm sm:w-48 sm:px-4">
                   <SelectValue placeholder="봉안(납골)당" />
                 </SelectTrigger>
                 <SelectContent className="z-[100]">
@@ -1254,67 +1257,153 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
             </div>
           </div>
 
-          {/* 총 개수 */}
-          <p className="text-sm text-gray-500 mb-6">
-            총{' '}
-            <span className="font-bold" style={{ color: BRAND_COLOR }}>
-              {filteredProducts.length}
-            </span>
-            개
-          </p>
+          {/* 총 개수 + 공유 */}
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-sm text-gray-500">
+              총{' '}
+              <span className="font-bold" style={{ color: BRAND_COLOR }}>
+                {total}
+              </span>
+              개
+            </p>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                toast.success('현재 검색 결과 링크가 복사되었습니다.');
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              공유
+            </button>
+          </div>
 
           {/* 상품 카드 그리드 */}
-          {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5">
-              {filteredProducts.map((product) => (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-24 gap-4">
+              <div className="relative w-10 h-10">
                 <div
-                  key={product.id}
-                  className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
-                  onClick={() => setShowConsultation(true)}
-                >
-                  <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <div className="p-3 sm:p-4">
-                    <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1">
-                      {product.name}
-                    </h3>
-                    <p className="text-xs text-gray-400 mb-2.5 flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      {product.region} {product.district}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {product.types.map((t) => (
-                        <span
-                          key={t}
-                          className="inline-block px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium border"
-                          style={{
-                            color: BRAND_COLOR,
-                            borderColor: BRAND_COLOR_LIGHT,
-                            backgroundColor: BRAND_COLOR_LIGHT,
-                          }}
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                    <p className="text-sm sm:text-base font-extrabold text-gray-900">
-                      {product.price}
-                      <span className="text-xs font-normal text-gray-500">
-                        원~
-                      </span>
-                    </p>
-                  </div>
-                </div>
-              ))}
+                  className="absolute inset-0"
+                  style={{
+                    backgroundColor: '#111827',
+                    animation: 'smoothMorph 3s ease-in-out infinite',
+                  }}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-600">
+                  AI 검색중
+                </span>
+                <span className="inline-flex gap-0.5">
+                  <span className="w-1 h-1 rounded-full bg-gray-400 animate-[aiDot_1.4s_ease-in-out_infinite]" />
+                  <span className="w-1 h-1 rounded-full bg-gray-400 animate-[aiDot_1.4s_ease-in-out_0.2s_infinite]" />
+                  <span className="w-1 h-1 rounded-full bg-gray-400 animate-[aiDot_1.4s_ease-in-out_0.4s_infinite]" />
+                </span>
+              </div>
+              <style jsx>{`
+                @keyframes smoothMorph {
+                  0% { transform: scale(1) rotate(0deg); border-radius: 50%; }
+                  20% { transform: scale(0.9) rotate(72deg); border-radius: 35%; }
+                  40% { transform: scale(1.1) rotate(144deg); border-radius: 15%; }
+                  60% { transform: scale(0.85) rotate(216deg); border-radius: 8%; }
+                  80% { transform: scale(1.05) rotate(288deg); border-radius: 25%; }
+                  100% { transform: scale(1) rotate(360deg); border-radius: 50%; }
+                }
+                @keyframes aiDot {
+                  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+                  40% { opacity: 1; transform: scale(1.2); }
+                }
+              `}</style>
             </div>
+          ) : products.length > 0 ? (
+            <>
+              <div
+                className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5 transition-all duration-500 ${
+                  showResults ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                }`}
+              >
+                {products.map((product) => {
+                  const thumb = product.thumbnail_url || product.photos?.[0]?.fileurl_full;
+                  return (
+                    <Link
+                      key={product.id}
+                      href={`/burial-plus/products/${product.id}`}
+                      className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
+                    >
+                      <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+                        {thumb ? (
+                          <img
+                            src={thumb}
+                            alt={product.company_name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                            이미지 없음
+                          </div>
+                        )}
+                        {product.is_recommended && (
+                          <span
+                            className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold shadow-sm"
+                            style={{ backgroundColor: '#ffffff', color: BRAND_COLOR }}
+                          >
+                            추천
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-3 sm:p-4">
+                        <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1 truncate">
+                          {product.company_name}
+                        </h3>
+                        <p className="text-xs text-gray-400 mb-2.5 flex items-center gap-1 truncate">
+                          <MapPin className="w-3 h-3 shrink-0" />
+                          {product.sido_name ?? ''}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                          {product.categories.map((t) => (
+                            <span
+                              key={t}
+                              className="inline-block px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium border"
+                              style={{
+                                color: BRAND_COLOR,
+                                borderColor: BRAND_COLOR_LIGHT,
+                                backgroundColor: BRAND_COLOR_LIGHT,
+                              }}
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                        {product.min_price != null && product.min_price > 0 ? (
+                          <p className="text-sm sm:text-base font-extrabold text-gray-900">
+                            {product.min_price.toLocaleString()}
+                            <span className="text-xs font-normal text-gray-500">
+                              원~
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-400">가격 문의</p>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+              {hasMore && (
+                <div className="flex justify-center mt-10">
+                  <button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    className="px-8 py-3 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {loadingMore ? '불러오는 중...' : '더보기'}
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-20">
-              <div className="text-4xl mb-4">🔍</div>
               <p className="text-gray-500 text-sm">
                 해당 조건에 맞는 장지가 없습니다.
                 <br />
@@ -1327,6 +1416,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
 
       {/* ══════════════ 이용 안내 ══════════════ */}
       <section
+        id="sec-burial-guide"
         className="py-20 sm:py-28 overflow-hidden"
         style={{ backgroundColor: '#fafaf8' }}
       >
@@ -1403,7 +1493,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                     />
                   </svg>
                 ),
-                title: '장지 상담 신청',
+                title: '장지 상담신청',
                 desc: '24시간 365일 무료 상담\n전문 상담사가 친절하게 안내드립니다.',
               },
               {
@@ -1516,7 +1606,9 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
       </section>
 
       {/* ══════════════ 멤버십 제휴할인 ══════════════ */}
-      <MembershipSection background="bg-white" />
+      <div id="sec-burial-membership">
+        <MembershipSection background="bg-white" />
+      </div>
 
       {/* ══════════════ CTA 섹션 ══════════════ */}
       <CtaSection
@@ -1561,7 +1653,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
               style={{ fontFamily: 'Pretendard, sans-serif' }}
             >
               <Phone className="w-5 h-5" />
-              빠른 상담신청
+              전화상담
             </a>
           </>
         }
@@ -1599,36 +1691,27 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
         </a>
       </div>
 
-      {/* ── 모바일 플로팅 버튼 (sm 미만) ── */}
-      <div className="sm:hidden fixed right-3 bottom-5 z-50 flex flex-col items-end gap-2">
-        <button
-          onClick={() => setShowConsultation(true)}
-          className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full shadow-lg cursor-pointer"
-          style={{
-            backgroundColor: BRAND_COLOR_LIGHT,
-            color: BRAND_COLOR,
-          }}
-        >
-          <span className="text-[10px] font-bold">상담신청</span>
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
+      {/* ── 모바일 하단 고정 바 (sm 미만) ── */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#222] safe-area-bottom">
+        <div className="flex items-center divide-x divide-white/20">
+          <a
+            href="tel:1660-0959"
+            className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
-            <ScrollText className="w-4 h-4" />
-          </div>
-        </button>
-        <a
-          href="tel:1660-0959"
-          className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full bg-white shadow-lg border border-gray-200 cursor-pointer"
-        >
-          <span className="text-[10px] font-bold text-gray-700">
-            빠른 상담신청
-          </span>
-          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-            <Phone className="w-4 h-4 text-gray-700" />
-          </div>
-        </a>
+            <Phone className="w-5 h-5" />
+            <span className="text-base font-bold">전화상담</span>
+          </a>
+          <button
+            onClick={() => setShowConsultation(true)}
+            className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
+          >
+            <ScrollText className="w-5 h-5" />
+            <span className="text-base font-bold">상담신청</span>
+          </button>
+        </div>
       </div>
+      {/* 모바일 하단 고정 바 높이만큼 여백 */}
+      <div className="sm:hidden h-16" />
     </>
   );
 }

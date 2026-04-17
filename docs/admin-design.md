@@ -23,14 +23,14 @@
 
 ### 관리 대상 서비스 (사이드 메뉴)
 
-| # | 서비스 | DB Prefix | 테이블 수 |
-|---|--------|-----------|----------|
-| 1 | 일반상조 (General Funeral) | `gf_` | 3 |
-| 2 | 기업상조 (Corporate Funeral) | `cf_` | 3 |
-| 3 | 유품정리 (Estate Cleanup) | `ec_` | 1 |
-| 4 | 장지+ (Burial Plus) | `bp_` | 1 |
-| 5 | 사후행정케어 (Post Care) | `pc_` | 1 |
-| 6 | 운구의전 (Funeral Escort) | `gf_` | (gf_funeral_escort_reservations 공유) |
+| #   | 서비스                       | DB Prefix | 테이블 수                 |
+| --- | ---------------------------- | --------- | ------------------------- |
+| 1   | 일반상조 (General Funeral)   | `gf_`     | 3                         |
+| 2   | 기업상조 (Corporate Funeral) | `cf_`     | 3                         |
+| 3   | 유품정리 (Estate Cleanup)    | `ec_`     | 1                         |
+| 4   | 장지+ (Burial Plus)          | `bp_`     | 1                         |
+| 5   | 사후행정케어 (Post Care)     | `pc_`     | 1                         |
+| 6   | 운구의전 (Funeral Escort)    | `gf_`     | (gf_direct_requests 공유) |
 
 ---
 
@@ -55,25 +55,41 @@
 
 ### 인증 상세
 
-| 단계 | 설명 |
-|------|------|
-| 1. 진입 | `/admin` 접속 시 미들웨어에서 세션 확인 |
-| 2. 로그인 | Supabase Auth + Google OAuth Provider |
-| 3. 권한 검증 | `admin_users` 테이블에서 이메일 기반 관리자 여부 확인 |
-| 4. 리다이렉트 | 인증 완료 시 `/admin/dashboard`로 이동 |
+| 단계          | 설명                                                  |
+| ------------- | ----------------------------------------------------- |
+| 1. 진입       | `/admin` 접속 시 미들웨어에서 세션 확인               |
+| 2. 로그인     | Supabase Auth + Google OAuth Provider                 |
+| 3. 권한 검증  | `admin_users` 테이블에서 이메일 기반 관리자 여부 확인 |
+| 4. 리다이렉트 | 인증 완료 시 `/admin/dashboard`로 이동                |
+
+### 로컬 개발 환경 (localhost)
+
+```
+[/admin/login 접속]
+    │
+    ▼
+[구글 로그인 버튼 클릭] ──▶ [권한 검증 없이 즉시 세션 생성] ──▶ [/admin/dashboard]
+```
+
+| 항목       | 설명                                                                  |
+| ---------- | --------------------------------------------------------------------- |
+| 적용 조건  | `localhost` 또는 `127.0.0.1` 환경에서만 동작                         |
+| 동작 방식  | 구글 OAuth 실제 인증 과정을 생략하고, 로그인 버튼 클릭 시 바로 접속   |
+| 세션 처리  | 초기 관리자(`dahunee37@gmail.com`)로 mock 세션 생성                   |
+| 운영 환경  | 프로덕션에서는 반드시 실제 Google OAuth + `admin_users` 권한 검증 필요 |
 
 ---
 
 ## 3. 기술 스택
 
-| 구분 | 기술 |
-|------|------|
-| Framework | Next.js 16 (App Router) |
-| Auth | Supabase Auth (Google OAuth) |
-| API | Next.js Route Handlers |
-| Database | Supabase (PostgreSQL) |
-| UI | Tailwind CSS + shadcn/ui (기존 컴포넌트 재활용) |
-| State | React Server Components + Client Components |
+| 구분      | 기술                                            |
+| --------- | ----------------------------------------------- |
+| Framework | Next.js 16 (App Router)                         |
+| Auth      | Supabase Auth (Google OAuth)                    |
+| API       | Next.js Route Handlers                          |
+| Database  | Supabase (PostgreSQL)                           |
+| UI        | Tailwind CSS + shadcn/ui (기존 컴포넌트 재활용) |
+| State     | React Server Components + Client Components     |
 
 ---
 
@@ -118,60 +134,60 @@ ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 
 ### 5-1. 인증 API
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| POST | `/api/v1/admin/auth/login` | 구글 OAuth 로그인 처리 |
-| POST | `/api/v1/admin/auth/logout` | 로그아웃 |
-| GET | `/api/v1/admin/auth/me` | 현재 로그인 사용자 정보 |
-| GET | `/api/v1/admin/auth/callback` | Google OAuth 콜백 |
+| Method | Endpoint                      | 설명                    |
+| ------ | ----------------------------- | ----------------------- |
+| POST   | `/api/v1/admin/auth/login`    | 구글 OAuth 로그인 처리  |
+| POST   | `/api/v1/admin/auth/logout`   | 로그아웃                |
+| GET    | `/api/v1/admin/auth/me`       | 현재 로그인 사용자 정보 |
+| GET    | `/api/v1/admin/auth/callback` | Google OAuth 콜백       |
 
 ### 5-2. 서비스별 CRUD API
 
 모든 서비스에 공통 적용되는 CRUD 패턴:
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| GET | `/api/v1/admin/{service}` | 리스트 조회 (페이지네이션, 검색, 필터) |
-| GET | `/api/v1/admin/{service}/{id}` | 상세 조회 |
-| POST | `/api/v1/admin/{service}` | 생성 |
-| PATCH | `/api/v1/admin/{service}/{id}` | 수정 |
-| DELETE | `/api/v1/admin/{service}/{id}` | 삭제 |
+| Method | Endpoint                       | 설명                                   |
+| ------ | ------------------------------ | -------------------------------------- |
+| GET    | `/api/v1/admin/{service}`      | 리스트 조회 (페이지네이션, 검색, 필터) |
+| GET    | `/api/v1/admin/{service}/{id}` | 상세 조회                              |
+| POST   | `/api/v1/admin/{service}`      | 생성                                   |
+| PATCH  | `/api/v1/admin/{service}/{id}` | 수정                                   |
+| DELETE | `/api/v1/admin/{service}/{id}` | 삭제                                   |
 
 ### 서비스별 엔드포인트 목록
 
 #### 일반상조 (general-funeral)
 
-| Endpoint | 대상 테이블 | 설명 |
-|----------|------------|------|
-| `/api/v1/admin/general-funeral/consultations` | `gf_consultation_requests` | 상담 신청 관리 |
-| `/api/v1/admin/general-funeral/memberships` | `gf_membership_applications` | 가입 신청 관리 |
-| `/api/v1/admin/general-funeral/reservations` | `gf_funeral_escort_reservations` | 장례 설계 예약 관리 |
+| Endpoint                                      | 대상 테이블                  | 설명                |
+| --------------------------------------------- | ---------------------------- | ------------------- |
+| `/api/v1/admin/general-funeral/consultations` | `gf_consultation_requests`   | 상담신청 관리       |
+| `/api/v1/admin/general-funeral/memberships`   | `gf_membership_applications` | 가입 신청 관리      |
+| `/api/v1/admin/general-funeral/reservations`  | `gf_direct_requests`         | 장례 설계 예약 관리 |
 
 #### 기업상조 (corporate-funeral)
 
-| Endpoint | 대상 테이블 | 설명 |
-|----------|------------|------|
-| `/api/v1/admin/corporate-funeral/consultations` | `cf_consultation_requests` | 상담 신청 관리 |
-| `/api/v1/admin/corporate-funeral/memberships` | `cf_membership_applications` | 가입 신청 관리 |
-| `/api/v1/admin/corporate-funeral/proposals` | `corporate_proposal_requests` | 제안서 신청 관리 |
+| Endpoint                                        | 대상 테이블                   | 설명             |
+| ----------------------------------------------- | ----------------------------- | ---------------- |
+| `/api/v1/admin/corporate-funeral/consultations` | `cf_consultation_requests`    | 상담신청 관리    |
+| `/api/v1/admin/corporate-funeral/memberships`   | `cf_membership_applications`  | 가입 신청 관리   |
+| `/api/v1/admin/corporate-funeral/proposals`     | `corporate_proposal_requests` | 제안서 신청 관리 |
 
 #### 유품정리 (estate-cleanup)
 
-| Endpoint | 대상 테이블 | 설명 |
-|----------|------------|------|
+| Endpoint                                 | 대상 테이블            | 설명           |
+| ---------------------------------------- | ---------------------- | -------------- |
 | `/api/v1/admin/estate-cleanup/estimates` | `ec_estimate_requests` | 견적 신청 관리 |
 
 #### 장지+ (burial-plus)
 
-| Endpoint | 대상 테이블 | 설명 |
-|----------|------------|------|
-| `/api/v1/admin/burial-plus/consultations` | `bp_consultation_requests` | 상담 신청 관리 |
+| Endpoint                                  | 대상 테이블                | 설명          |
+| ----------------------------------------- | -------------------------- | ------------- |
+| `/api/v1/admin/burial-plus/consultations` | `bp_consultation_requests` | 상담신청 관리 |
 
 #### 사후행정케어 (post-care)
 
-| Endpoint | 대상 테이블 | 설명 |
-|----------|------------|------|
-| `/api/v1/admin/post-care/consultations` | `pc_consultation_requests` | 상담 신청 관리 |
+| Endpoint                                | 대상 테이블                | 설명          |
+| --------------------------------------- | -------------------------- | ------------- |
+| `/api/v1/admin/post-care/consultations` | `pc_consultation_requests` | 상담신청 관리 |
 
 ### 5-3. 공통 Query Parameters (리스트 조회)
 
@@ -179,14 +195,14 @@ ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 GET /api/v1/admin/{service}/{resource}?page=1&limit=20&search=홍길동&status=pending&sort=created_at&order=desc
 ```
 
-| Parameter | Type | Default | 설명 |
-|-----------|------|---------|------|
-| `page` | number | 1 | 페이지 번호 |
-| `limit` | number | 20 | 페이지당 항목 수 |
-| `search` | string | - | 이름, 이메일, 연락처 등 검색 |
-| `status` | string | - | 상태 필터 (pending, contacted, completed 등) |
-| `sort` | string | created_at | 정렬 기준 컬럼 |
-| `order` | string | desc | 정렬 방향 (asc / desc) |
+| Parameter | Type   | Default    | 설명                                         |
+| --------- | ------ | ---------- | -------------------------------------------- |
+| `page`    | number | 1          | 페이지 번호                                  |
+| `limit`   | number | 20         | 페이지당 항목 수                             |
+| `search`  | string | -          | 이름, 이메일, 연락처 등 검색                 |
+| `status`  | string | -          | 상태 필터 (pending, contacted, completed 등) |
+| `sort`    | string | created_at | 정렬 기준 컬럼                               |
+| `order`   | string | desc       | 정렬 방향 (asc / desc)                       |
 
 ### 5-4. 공통 Response 형식
 
@@ -289,42 +305,42 @@ GET /api/v1/admin/{service}/{resource}?page=1&limit=20&search=홍길동&status=p
 
 예담라이프 어드민에 맞게 아래와 같이 매핑:
 
-| 메뉴명 | 하위 메뉴 | 경로 |
-|--------|----------|------|
-| 대시보드 | - | `/admin/dashboard` |
-| 일반상조 | 상담 신청 | `/admin/general-funeral/consultations` |
-| | 가입 신청 | `/admin/general-funeral/memberships` |
-| | 장례 설계 예약 | `/admin/general-funeral/reservations` |
-| 기업상조 | 상담 신청 | `/admin/corporate-funeral/consultations` |
-| | 가입 신청 | `/admin/corporate-funeral/memberships` |
-| | 제안서 신청 | `/admin/corporate-funeral/proposals` |
-| 유품정리 | 견적 신청 | `/admin/estate-cleanup/estimates` |
-| 장지+ | 상담 신청 | `/admin/burial-plus/consultations` |
-| 사후행정케어 | 상담 신청 | `/admin/post-care/consultations` |
+| 메뉴명       | 하위 메뉴      | 경로                                     |
+| ------------ | -------------- | ---------------------------------------- |
+| 대시보드     | -              | `/admin/dashboard`                       |
+| 일반상조     | 상담신청       | `/admin/general-funeral/consultations`   |
+|              | 가입 신청      | `/admin/general-funeral/memberships`     |
+|              | 장례 설계 예약 | `/admin/general-funeral/reservations`    |
+| 기업상조     | 상담신청       | `/admin/corporate-funeral/consultations` |
+|              | 가입 신청      | `/admin/corporate-funeral/memberships`   |
+|              | 제안서 신청    | `/admin/corporate-funeral/proposals`     |
+| 유품정리     | 견적 신청      | `/admin/estate-cleanup/estimates`        |
+| 장지+        | 상담신청       | `/admin/burial-plus/consultations`       |
+| 사후행정케어 | 상담신청       | `/admin/post-care/consultations`         |
 
 ### 6-3. 통계 카드 섹션
 
 캡처 기준 상단 통계 카드 4개:
 
-| 카드 | 설명 | 색상 |
-|------|------|------|
-| 전체 | 총 데이터 수 | 검정 배경 + 흰 글씨 |
-| 접수 | `status = 'pending'` | 노란 글씨 |
-| 진행중 | `status = 'contacted' or 'confirmed'` | 노란 글씨 |
-| 완료 | `status = 'completed' or 'approved'` | 노란 글씨 |
+| 카드   | 설명                                  | 색상                |
+| ------ | ------------------------------------- | ------------------- |
+| 전체   | 총 데이터 수                          | 검정 배경 + 흰 글씨 |
+| 접수   | `status = 'pending'`                  | 노란 글씨           |
+| 진행중 | `status = 'contacted' or 'confirmed'` | 노란 글씨           |
+| 완료   | `status = 'completed' or 'approved'`  | 노란 글씨           |
 
 ### 6-4. 데이터 테이블 컬럼
 
 서비스별로 컬럼 구성이 다르나, 공통 패턴:
 
-| 컬럼 | 설명 |
-|------|------|
-| 유형 | 서비스/요청 유형 배지 |
-| 문의자 | 이름 + 이메일/연락처 |
-| 상세 정보 | 서비스별 주요 정보 |
-| 상태 | 접수/진행중/완료 (상태 변경 가능) |
-| 접수일 | `created_at` 포맷팅 |
-| 관리 | 더보기 메뉴 (상세보기, 수정, 삭제) |
+| 컬럼      | 설명                               |
+| --------- | ---------------------------------- |
+| 유형      | 서비스/요청 유형 배지              |
+| 문의자    | 이름 + 이메일/연락처               |
+| 상세 정보 | 서비스별 주요 정보                 |
+| 상태      | 접수/진행중/완료 (상태 변경 가능)  |
+| 접수일    | `created_at` 포맷팅                |
+| 관리      | 더보기 메뉴 (상세보기, 수정, 삭제) |
 
 ### 6-5. 상세/수정 화면
 
@@ -349,8 +365,8 @@ src/
 │   │   │   └── page.tsx                    -- 대시보드 (통합 통계)
 │   │   ├── general-funeral/
 │   │   │   ├── consultations/
-│   │   │   │   ├── page.tsx                -- 상담 신청 리스트
-│   │   │   │   └── [id]/page.tsx           -- 상담 신청 상세
+│   │   │   │   ├── page.tsx                -- 상담신청 리스트
+│   │   │   │   └── [id]/page.tsx           -- 상담신청 상세
 │   │   │   ├── memberships/
 │   │   │   │   ├── page.tsx                -- 가입 신청 리스트
 │   │   │   │   └── [id]/page.tsx           -- 가입 신청 상세
