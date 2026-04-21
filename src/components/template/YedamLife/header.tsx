@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Menu, X, Phone, ChevronDown, Plus } from 'lucide-react';
+import { Menu, X, Phone, ChevronDown, Plus, Bell } from 'lucide-react';
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
   GOOGLE_FORM_URL,
   categoryTabs,
   topNavItems,
-  topBanners,
 } from './constants';
 
 interface YedamHeaderProps {
@@ -57,16 +56,45 @@ export function YedamHeader({
   const [openMenuIdx, setOpenMenuIdx] = useState<number | null>(null);
   const [isServiceOpen, setIsServiceOpen] = useState(false);
   const [currentBannerIdx, setCurrentBannerIdx] = useState(0);
+  const [notices, setNotices] = useState<{ id: number; title: string }[]>([]);
   const headerRef = useRef<HTMLElement>(null);
+
+  // 공지사항 fetch
+  useEffect(() => {
+    fetch('/api/v1/notices?limit=5')
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.success) setNotices(j.data);
+      })
+      .catch(() => {});
+  }, []);
+
+  const NOTICE_COLORS = [
+    { bgColor: '#f3f4f6', textColor: '#374151' },
+    { bgColor: '#eef2ff', textColor: '#4338ca' },
+    { bgColor: '#fdf2f8', textColor: '#be185d' },
+    { bgColor: '#fefce8', textColor: '#854d0e' },
+    { bgColor: '#ecfdf5', textColor: '#065f46' },
+  ];
+
+  const allBanners = useMemo(() => {
+    return notices.map((n, i) => ({
+      text: n.title,
+      icon: Bell,
+      noticeId: n.id,
+      ...NOTICE_COLORS[i % NOTICE_COLORS.length],
+    }));
+  }, [notices]);
 
   // 상단 배너 자동 로테이션
   useEffect(() => {
+    if (allBanners.length === 0) return;
     const timer = setInterval(
-      () => setCurrentBannerIdx((prev) => (prev + 1) % topBanners.length),
+      () => setCurrentBannerIdx((prev) => (prev + 1) % allBanners.length),
       4000,
     );
     return () => clearInterval(timer);
-  }, []);
+  }, [allBanners.length]);
 
   const handleNavClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
@@ -91,19 +119,20 @@ export function YedamHeader({
   return (
     <div className="sticky top-0 z-50">
       {/* ── 1단: 상단 로테이션 배너 ── */}
-      <div
+      {allBanners.length > 0 && <div
         className="relative text-center py-2.5 text-sm font-medium overflow-hidden"
         style={{
-          backgroundColor: topBanners[currentBannerIdx].bgColor,
+          backgroundColor: allBanners[currentBannerIdx]?.bgColor ?? '#f3f4f6',
           transition: 'background-color 0.5s ease',
         }}
       >
-        {topBanners.map((banner, idx) => {
+        {allBanners.map((banner, idx) => {
           const Icon = banner.icon;
+          const isNotice = banner.noticeId !== null;
           return (
             <span
-              key={idx}
-              className="inline-flex items-center gap-1.5 transition-all duration-500 ease-in-out"
+              key={`banner-${idx}`}
+              className={`inline-flex items-center gap-1.5 transition-all duration-500 ease-in-out ${isNotice ? 'cursor-pointer' : ''}`}
               style={{
                 color: banner.textColor,
                 opacity: currentBannerIdx === idx ? 1 : 0,
@@ -114,13 +143,18 @@ export function YedamHeader({
                 position: currentBannerIdx === idx ? 'relative' : 'absolute',
                 pointerEvents: currentBannerIdx === idx ? 'auto' : 'none',
               }}
+              onClick={() => {
+                if (isNotice) {
+                  window.location.href = `/notices/${banner.noticeId}`;
+                }
+              }}
             >
               <Icon className="w-4 h-4" />
               {banner.text}
             </span>
           );
         })}
-      </div>
+      </div>}
 
       {/* ── 2단: 헤더 (메인헤더 + 카테고리탭) ── */}
       <header ref={headerRef} className="bg-white border-b border-gray-200">
@@ -211,7 +245,7 @@ export function YedamHeader({
                 <Phone className="w-4 h-4 text-gray-500" />
                 <div className="flex flex-col leading-tight">
                   <span className="text-[11px] text-gray-500">
-                    빠른상담신청
+                    빠른상담 신청
                   </span>
                   <span className="text-[13px] font-extrabold text-gray-900">
                     1660-0959
@@ -473,7 +507,7 @@ export function YedamHeader({
               style={{ backgroundColor: BRAND_COLOR }}
             >
               <Phone className="w-4 h-4" />
-              무료 상담신청
+              무료 상담 신청
             </a>
           </nav>
         </div>

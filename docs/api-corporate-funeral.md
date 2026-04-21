@@ -20,7 +20,7 @@
 
 | #   | 기능                       | 설명                                                          |
 | --- | -------------------------- | ------------------------------------------------------------- |
-| 1   | 기업상조 상담신청          | 랜딩 페이지 하단 상담 폼 (상품, 이름, 연락처, 지역, 상담시간) |
+| 1   | 기업상조 상담 신청         | 랜딩 페이지 하단 상담 폼 (상품, 이름, 연락처, 지역, 상담시간) |
 | 2   | 후불제 기업상조 가입신청서 | 기업 회원 가입 신청 (membership/corporate)                    |
 | 3   | 기업상조 제안서 신청       | 기업 제안서 다운로드 + 담당자 정보 수집 (ProposalModal)       |
 
@@ -28,7 +28,7 @@
 
 ## 2. DB 테이블 설계
 
-### 2-1. 기업상조 상담신청 내역 (`cf_consultation_requests`)
+### 2-1. 기업상조 상담 신청 내역 (`cf_consultation_requests`)
 
 > 기업상조 랜딩 페이지 하단 상담 폼 데이터
 
@@ -132,11 +132,11 @@ ALTER TABLE corporate_proposal_requests ENABLE ROW LEVEL SECURITY;
 
 ### Base Path: `/api/v1/corporate-funeral`
 
-### 3-1. 기업상조 상담신청 API
+### 3-1. 기업상조 상담 신청 API
 
-| Method | Endpoint                                 | 설명                   |
-| ------ | ---------------------------------------- | ---------------------- |
-| POST   | `/api/v1/corporate-funeral/consultation` | 기업상조 상담신청 생성 |
+| Method | Endpoint                                 | 설명                    |
+| ------ | ---------------------------------------- | ----------------------- |
+| POST   | `/api/v1/corporate-funeral/consultation` | 기업상조 상담 신청 생성 |
 
 **Request Body:**
 
@@ -254,7 +254,7 @@ ALTER TABLE corporate_proposal_requests ENABLE ROW LEVEL SECURITY;
 
 ### Phase 2: API 구현
 
-- [ ] `src/app/api/v1/corporate-funeral/consultation/route.ts` - 기업상조 상담신청 API
+- [ ] `src/app/api/v1/corporate-funeral/consultation/route.ts` - 기업상조 상담 신청 API
 - [ ] `src/app/api/v1/corporate-funeral/membership/route.ts` - 기업상조 가입신청서 API
 - [ ] `src/app/api/v1/corporate-funeral/proposal/route.ts` - 기업상조 제안서 신청 API
 
@@ -274,7 +274,7 @@ src/
 │   ├── api/
 │   │   └── v1/
 │   │       └── corporate-funeral/
-│   │           ├── consultation/route.ts   -- 기업상조 상담신청
+│   │           ├── consultation/route.ts   -- 기업상조 상담 신청
 │   │           ├── membership/route.ts     -- 기업상조 가입신청서
 │   │           └── proposal/route.ts       -- 기업상조 제안서 신청
 │   └── membership/
@@ -292,6 +292,6 @@ src/
 
 | 테이블                        | Prefix | 용도                    |
 | ----------------------------- | ------ | ----------------------- |
-| `cf_consultation_requests`    | `cf_`  | 기업상조 상담신청       |
+| `cf_consultation_requests`    | `cf_`  | 기업상조 상담 신청      |
 | `cf_membership_applications`  | `cf_`  | 기업상조 가입신청서     |
 | `corporate_proposal_requests` | —      | 기업 제안서 신청 (공통) |

@@ -10,7 +10,14 @@ import {
   ScrollText,
 } from 'lucide-react';
 import { BRAND_COLOR, BRAND_COLOR_LIGHT } from './constants';
-import { FaqItem, Ticker, CtaSection, MembershipSection } from './components';
+import {
+  FaqItem,
+  Ticker,
+  CtaSection,
+  MembershipSection,
+  ReviewCarousel,
+  ReviewItem,
+} from './components';
 import { ReservationModal } from './reservation-modal';
 
 const SUPABASE_BASE =
@@ -154,7 +161,7 @@ const tips = [
     id: 'consult',
     label: '상담 문의',
     title: '상담',
-    desc: '24시간 전화상담 및 카카오톡 상담 가능\n장례 전문 상담원이 친절하게\n안내해 드립니다.',
+    desc: '24시간 전화 상담 및 카카오톡 상담 가능\n장례 전문 상담원이 친절하게\n안내해 드립니다.',
   },
   {
     id: 'payment',
@@ -164,6 +171,7 @@ const tips = [
   },
 ];
 
+// ── 리뷰 ──
 // ── 파트너 ──
 const partners = Array.from(
   { length: 14 },
@@ -219,6 +227,17 @@ function PartnerRail() {
 }
 
 export function CeremonyService({}: { googleFormUrl?: string }) {
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+
+  useEffect(() => {
+    fetch('/api/v1/reviews?category=escort&limit=6')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) setReviews(json.data);
+      })
+      .catch(() => {});
+  }, []);
+
   const [activeTip, setActiveTip] = useState(0);
   const [showReservation, setShowReservation] = useState(false);
   const [tipDirection, setTipDirection] = useState<'left' | 'right'>('right');
@@ -304,7 +323,7 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white/15 text-white text-base font-bold rounded-xl border border-white/30 hover:bg-white/25 transition-colors backdrop-blur-sm cursor-pointer"
                 >
                   <Phone className="w-5 h-5" />
-                  전화상담
+                  전화 상담
                 </a>
               </div>
             </div>
@@ -537,7 +556,7 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
           <p className="text-center text-sm sm:text-base text-gray-600 mb-12 leading-relaxed">
             오랜 경험과 노하우를 갖춘 전문 장례지도사들이
             <br />
-            24시간 전화상담 및 카톡상담을 통해 친절하게 상담해드립니다.
+            24시간 전화 상담 및 카톡상담을 통해 친절하게 상담해드립니다.
           </p>
           <div className="grid grid-cols-3 gap-x-3 gap-y-6 sm:gap-x-5 sm:gap-y-8">
             {steps.map((step) => (
@@ -717,6 +736,32 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
       {/* ══════════════ 멤버십 제휴할인 ══════════════ */}
       <MembershipSection style={{ backgroundColor: '#fafaf8' }} />
 
+      {/* ══════════════ 후기 ══════════════ */}
+      {reviews.length > 0 && (
+        <section
+          id="sec-ceremony-reviews"
+          className="py-16 sm:py-24 overflow-hidden bg-white"
+        >
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12">
+              <p
+                className="text-sm font-semibold mb-2"
+                style={{ color: BRAND_COLOR }}
+              >
+                REVIEW
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                고객 후기
+              </h2>
+              <p className="text-gray-500 mt-2 text-sm sm:text-base">
+                예담운구의전 서비스를 경험하신 분들의 생생한 후기입니다
+              </p>
+            </div>
+            <ReviewCarousel reviews={reviews} />
+          </div>
+        </section>
+      )}
+
       {/* ══════════════ Q&A ══════════════ */}
       <section
         id="sec-ceremony-faq"
@@ -795,7 +840,7 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
             >
               <Phone className="w-5 h-5" />
-              전화상담
+              전화 상담
             </a>
           </>
         }
@@ -827,7 +872,7 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
           <span className="text-[9px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
             빠른
             <br />
-            상담신청
+            상담 신청
           </span>
         </a>
       </div>
@@ -840,7 +885,7 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
             className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
             <Phone className="w-5 h-5" />
-            <span className="text-base font-bold">전화상담</span>
+            <span className="text-base font-bold">전화 상담</span>
           </a>
           <button
             onClick={() => setShowReservation(true)}

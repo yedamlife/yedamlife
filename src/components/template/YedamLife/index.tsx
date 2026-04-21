@@ -12,6 +12,7 @@ import {
   FileText,
   PenLine,
   ScrollText,
+  Bell,
 } from 'lucide-react';
 import {
   BRAND_COLOR,
@@ -19,7 +20,6 @@ import {
   GOOGLE_FORM_URL,
   categoryTabs,
   topNavItems,
-  topBanners,
 } from './constants';
 import { GeneralFuneral } from './general-funeral';
 import { CorporateFuneral } from './corporate-funeral';
@@ -33,12 +33,16 @@ interface YedamLifeProps {
   hideHeader?: boolean;
   embedded?: boolean;
   initialCategoryIdx?: number;
+  headerOnly?: boolean;
+  onMounted?: () => void;
 }
 
 export function YedamLife({
   hideHeader = false,
   embedded = false,
   initialCategoryIdx = 0,
+  headerOnly = false,
+  onMounted,
 }: YedamLifeProps) {
   const googleFormUrl = GOOGLE_FORM_URL;
   const pathname = usePathname();
@@ -95,24 +99,49 @@ export function YedamLife({
     }
   }, [activeCategoryIdx]);
 
+  // 공지사항 fetch
+  const [notices, setNotices] = useState<{ id: number; title: string }[]>([]);
+  useEffect(() => {
+    if (hideHeader) return;
+    fetch('/api/v1/notices?limit=5')
+      .then((r) => r.json())
+      .then((j) => { if (j.success) setNotices(j.data); })
+      .catch(() => {});
+  }, [hideHeader]);
+
+  const NOTICE_COLORS = [
+    { bgColor: '#f3f4f6', textColor: '#374151' },
+    { bgColor: '#eef2ff', textColor: '#4338ca' },
+    { bgColor: '#fdf2f8', textColor: '#be185d' },
+    { bgColor: '#fefce8', textColor: '#854d0e' },
+    { bgColor: '#ecfdf5', textColor: '#065f46' },
+  ];
+
+  const allBanners = useMemo(() => {
+    return notices.map((n, i) => ({
+      text: n.title,
+      icon: Bell,
+      noticeId: n.id,
+      ...NOTICE_COLORS[i % NOTICE_COLORS.length],
+    }));
+  }, [notices]);
 
   // 상단 배너 자동 로테이션
   useEffect(() => {
-    if (hideHeader) return;
+    if (hideHeader || allBanners.length === 0) return;
     const timer = setInterval(
-      () => setCurrentBannerIdx((prev) => (prev + 1) % topBanners.length),
+      () => setCurrentBannerIdx((prev) => (prev + 1) % allBanners.length),
       4000,
     );
     return () => clearInterval(timer);
-  }, [hideHeader]);
+  }, [hideHeader, allBanners.length]);
 
   const handleCategoryChange = (idx: number) => {
     setActiveCategoryIdx(idx);
     const slug = categoryTabs[idx]?.slug;
-    if (slug && idx !== 0) {
-      router.replace(`/${slug}`, { scroll: false });
-    } else {
-      router.replace('/', { scroll: false });
+    const target = slug && idx !== 0 ? `/${slug}` : '/';
+    if (pathname !== target) {
+      router.push(target, { scroll: false });
     }
   };
 
@@ -192,7 +221,7 @@ export function YedamLife({
       `}</style>
 
       <div
-        className="min-h-screen bg-white"
+        className={headerOnly ? 'bg-white' : 'min-h-screen bg-white'}
         style={{
           fontFamily:
             "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
@@ -200,20 +229,20 @@ export function YedamLife({
         }}
       >
         {/* ── 1단: 상단 로테이션 배너 ── */}
-        {!hideHeader && (
+        {!hideHeader && allBanners.length > 0 && (
           <div
             className="relative text-center py-2.5 text-sm font-medium overflow-hidden"
             style={{
-              backgroundColor: topBanners[currentBannerIdx].bgColor,
+              backgroundColor: allBanners[currentBannerIdx]?.bgColor ?? '#f3f4f6',
               transition: 'background-color 0.5s ease',
             }}
           >
-            {topBanners.map((banner, idx) => {
+            {allBanners.map((banner, idx) => {
               const Icon = banner.icon;
               return (
                 <span
-                  key={idx}
-                  className="inline-flex items-center gap-1.5 transition-all duration-500 ease-in-out"
+                  key={`banner-${idx}`}
+                  className="inline-flex items-center gap-1.5 transition-all duration-500 ease-in-out cursor-pointer"
                   style={{
                     color: banner.textColor,
                     opacity: currentBannerIdx === idx ? 1 : 0,
@@ -224,6 +253,9 @@ export function YedamLife({
                     position:
                       currentBannerIdx === idx ? 'relative' : 'absolute',
                     pointerEvents: currentBannerIdx === idx ? 'auto' : 'none',
+                  }}
+                  onClick={() => {
+                    window.location.href = `/notices/${banner.noticeId}`;
                   }}
                 >
                   <Icon className="w-4 h-4" />
@@ -319,7 +351,7 @@ export function YedamLife({
                     <Phone className="w-4 h-4 text-gray-500" />
                     <div className="flex flex-col leading-tight">
                       <span className="text-[11px] text-gray-500">
-                        빠른상담신청
+                        빠른상담 신청
                       </span>
                       <span className="text-[13px] font-extrabold text-gray-900">
                         1660-0959
@@ -512,7 +544,7 @@ export function YedamLife({
                   style={{ backgroundColor: BRAND_COLOR }}
                 >
                   <Phone className="w-4 h-4" />
-                  무료 상담신청
+                  무료 상담 신청
                 </a>
               </nav>
             </div>
@@ -521,7 +553,7 @@ export function YedamLife({
 
         {/* ══════════════ 탭별 콘텐츠 ══════════════ */}
 
-        {activeCategoryIdx === 0 && (
+        {!headerOnly && activeCategoryIdx === 0 && (
           <GeneralFuneral
             googleFormUrl={googleFormUrl}
             membershipHref={buildHref('/membership/general')}
@@ -541,7 +573,7 @@ export function YedamLife({
           />
         )}
 
-        {activeCategoryIdx === 1 && (
+        {!headerOnly && activeCategoryIdx === 1 && (
           <CorporateFuneral
             googleFormUrl={googleFormUrl}
             corpChartProductIdx={corpChartProductIdx}
@@ -553,90 +585,133 @@ export function YedamLife({
           />
         )}
 
-        {activeCategoryIdx === 2 && (
+        {!headerOnly && activeCategoryIdx === 2 && (
           <EstateCleanup googleFormUrl={googleFormUrl} />
         )}
 
-        {activeCategoryIdx === 3 && (
+        {!headerOnly && activeCategoryIdx === 3 && (
           <CeremonyService googleFormUrl={googleFormUrl} />
         )}
 
-        {activeCategoryIdx === 4 && (
+        {!headerOnly && activeCategoryIdx === 4 && (
           <BurialPlus googleFormUrl={googleFormUrl} />
         )}
 
-        {activeCategoryIdx === 5 && <PostCare />}
-
+        {!headerOnly && activeCategoryIdx === 5 && <PostCare />}
 
         {/* ── PC 우측 플로팅 사이드바 (sm 이상) ── */}
-        {(activeCategoryIdx === 0 || activeCategoryIdx === 1) &&
-          !hideHeader && (
-            <div className="hidden sm:flex fixed right-4 bottom-6 z-50 flex-col gap-2">
-              <a
-                href="tel:1660-0959"
+        {(activeCategoryIdx === 0 || activeCategoryIdx === 1) && (
+          <div className="hidden sm:flex fixed right-4 bottom-6 z-50 flex-col gap-2">
+            <a
+              href="tel:1660-0959"
+              className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
+            >
+              <Phone className="w-5 h-5 text-gray-700" />
+              <span className="text-[9px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
+                전화 상담
+              </span>
+            </a>
+            <button
+              onClick={() => {
+                if (activeCategoryIdx === 0) {
+                  setInquiryMainTab('products');
+                  setTimeout(() => {
+                    document
+                      .getElementById('inquiry')
+                      ?.scrollIntoView({ behavior: 'smooth' });
+                  }, 50);
+                } else {
+                  document
+                    .getElementById('sec-corp-inquiry')
+                    ?.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+              style={{
+                backgroundColor: BRAND_COLOR_LIGHT,
+                color: BRAND_COLOR,
+              }}
+            >
+              <ScrollText className="w-5 h-5" />
+              <span className="text-[10px] font-bold mt-0.5">상담 신청</span>
+            </button>
+            {activeCategoryIdx === 0 && (
+              <button
+                onClick={() => {
+                  setInquiryMainTab('design');
+                  setTimeout(() => {
+                    inquirySectionRef.current?.scrollIntoView({
+                      behavior: 'smooth',
+                    });
+                  }, 50);
+                }}
                 className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
               >
-                <Phone className="w-5 h-5 text-gray-700" />
-                <span className="text-[9px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
-                  전화상담
+                <PenLine className="w-5 h-5 text-gray-700" />
+                <span className="text-[10px] font-bold text-gray-600 mt-0.5">
+                  장례설계
                 </span>
+              </button>
+            )}
+
+            <a
+              href="https://pf.kakao.com/_예담라이프"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-[#FEE500] shadow-lg border border-[#FEE500] hover:shadow-xl transition-shadow cursor-pointer"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#3C1E1E">
+                <path d="M12 3C6.48 3 2 6.54 2 10.86c0 2.78 1.86 5.22 4.65 6.6l-.95 3.53c-.08.3.25.55.52.39l4.2-2.8c.51.07 1.04.1 1.58.1 5.52 0 10-3.54 10-7.86S17.52 3 12 3z" />
+              </svg>
+              <span className="text-[9px] font-bold text-[#3C1E1E]/70 mt-0.5">
+                친구추가
+              </span>
+            </a>
+            <a
+              href={buildHref(
+                activeCategoryIdx === 0
+                  ? '/membership/general'
+                  : '/membership/corporate',
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer text-white"
+              style={{ backgroundColor: '#b8964e' }}
+            >
+              <FileText className="w-5 h-5" />
+              <span className="text-[10px] font-bold mt-0.5">가입신청</span>
+            </a>
+          </div>
+        )}
+
+        {/* ── 모바일 하단 고정 바 (sm 미만) ── */}
+        {(activeCategoryIdx === 0 || activeCategoryIdx === 1) && (
+          <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#222] safe-area-bottom">
+            <div className="flex items-center divide-x divide-white/20">
+              <a
+                href="tel:1660-0959"
+                className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
+              >
+                <Phone className="w-5 h-5" />
+                <span className="text-base font-bold">전화 상담</span>
               </a>
               <button
                 onClick={() => {
                   if (activeCategoryIdx === 0) {
-                    setInquiryMainTab('products');
-                    setTimeout(() => {
-                      document
-                        .getElementById('inquiry')
-                        ?.scrollIntoView({ behavior: 'smooth' });
-                    }, 50);
+                    window.dispatchEvent(
+                      new CustomEvent('open-general-consult-modal'),
+                    );
                   } else {
                     document
                       .getElementById('sec-corp-inquiry')
                       ?.scrollIntoView({ behavior: 'smooth' });
                   }
                 }}
-                className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
-                style={{
-                  backgroundColor: BRAND_COLOR_LIGHT,
-                  color: BRAND_COLOR,
-                }}
+                className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
               >
                 <ScrollText className="w-5 h-5" />
-                <span className="text-[10px] font-bold mt-0.5">상담신청</span>
+                <span className="text-base font-bold">상담 신청</span>
               </button>
-              {activeCategoryIdx === 0 && (
-                <button
-                  onClick={() => {
-                    setInquiryMainTab('design');
-                    setTimeout(() => {
-                      inquirySectionRef.current?.scrollIntoView({
-                        behavior: 'smooth',
-                      });
-                    }, 50);
-                  }}
-                  className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
-                >
-                  <PenLine className="w-5 h-5 text-gray-700" />
-                  <span className="text-[10px] font-bold text-gray-600 mt-0.5">
-                    장례설계
-                  </span>
-                </button>
-              )}
-
-              <a
-                href="https://pf.kakao.com/_예담라이프"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-[#FEE500] shadow-lg border border-[#FEE500] hover:shadow-xl transition-shadow cursor-pointer"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#3C1E1E">
-                  <path d="M12 3C6.48 3 2 6.54 2 10.86c0 2.78 1.86 5.22 4.65 6.6l-.95 3.53c-.08.3.25.55.52.39l4.2-2.8c.51.07 1.04.1 1.58.1 5.52 0 10-3.54 10-7.86S17.52 3 12 3z" />
-                </svg>
-                <span className="text-[9px] font-bold text-[#3C1E1E]/70 mt-0.5">
-                  친구추가
-                </span>
-              </a>
               <a
                 href={buildHref(
                   activeCategoryIdx === 0
@@ -645,67 +720,17 @@ export function YedamLife({
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer text-white"
-                style={{ backgroundColor: '#b8964e' }}
+                className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
               >
                 <FileText className="w-5 h-5" />
-                <span className="text-[10px] font-bold mt-0.5">가입신청</span>
+                <span className="text-base font-bold">가입 신청</span>
               </a>
             </div>
-          )}
+          </div>
+        )}
 
-        {/* ── 모바일 하단 고정 바 (sm 미만) ── */}
-        {(activeCategoryIdx === 0 || activeCategoryIdx === 1) &&
-          !hideHeader && (
-            <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#222] safe-area-bottom">
-              <div className="flex items-center divide-x divide-white/20">
-                <a
-                  href="tel:1660-0959"
-                  className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
-                >
-                  <Phone className="w-5 h-5" />
-                  <span className="text-base font-bold">전화상담</span>
-                </a>
-                <button
-                  onClick={() => {
-                    if (activeCategoryIdx === 0) {
-                      setInquiryMainTab('products');
-                      setTimeout(() => {
-                        document
-                          .getElementById('inquiry')
-                          ?.scrollIntoView({ behavior: 'smooth' });
-                      }, 50);
-                    } else {
-                      document
-                        .getElementById('sec-corp-inquiry')
-                        ?.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
-                  className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
-                >
-                  <ScrollText className="w-5 h-5" />
-                  <span className="text-base font-bold">상담신청</span>
-                </button>
-                <a
-                  href={buildHref(
-                    activeCategoryIdx === 0
-                      ? '/membership/general'
-                      : '/membership/corporate',
-                  )}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
-                >
-                  <FileText className="w-5 h-5" />
-                  <span className="text-base font-bold">가입 신청</span>
-                </a>
-              </div>
-            </div>
-          )}
-
-        <YedamFooter />
-        {/* 모바일 하단 고정 바 높이만큼 여백 */}
-        <div className="sm:hidden h-16" />
+        {!headerOnly && <YedamFooter />}
+        {!headerOnly && <div className="sm:hidden h-16" />}
       </div>
     </>
   );

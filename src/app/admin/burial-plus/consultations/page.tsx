@@ -56,7 +56,7 @@ const columns: Column<Row>[] = [
 export default function Page() {
   return (
     <ServiceListPage
-      title="장지+ - 상담신청"
+      title="장지+ - 상담 신청"
       apiPath="/api/v1/admin/burial-plus/consultations"
       columns={columns}
     />

@@ -71,12 +71,12 @@
 [구글 로그인 버튼 클릭] ──▶ [권한 검증 없이 즉시 세션 생성] ──▶ [/admin/dashboard]
 ```
 
-| 항목       | 설명                                                                  |
-| ---------- | --------------------------------------------------------------------- |
-| 적용 조건  | `localhost` 또는 `127.0.0.1` 환경에서만 동작                         |
-| 동작 방식  | 구글 OAuth 실제 인증 과정을 생략하고, 로그인 버튼 클릭 시 바로 접속   |
-| 세션 처리  | 초기 관리자(`dahunee37@gmail.com`)로 mock 세션 생성                   |
-| 운영 환경  | 프로덕션에서는 반드시 실제 Google OAuth + `admin_users` 권한 검증 필요 |
+| 항목      | 설명                                                                   |
+| --------- | ---------------------------------------------------------------------- |
+| 적용 조건 | `localhost` 또는 `127.0.0.1` 환경에서만 동작                           |
+| 동작 방식 | 구글 OAuth 실제 인증 과정을 생략하고, 로그인 버튼 클릭 시 바로 접속    |
+| 세션 처리 | 초기 관리자(`dahunee37@gmail.com`)로 mock 세션 생성                    |
+| 운영 환경 | 프로덕션에서는 반드시 실제 Google OAuth + `admin_users` 권한 검증 필요 |
 
 ---
 
@@ -159,7 +159,7 @@ ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 
 | Endpoint                                      | 대상 테이블                  | 설명                |
 | --------------------------------------------- | ---------------------------- | ------------------- |
-| `/api/v1/admin/general-funeral/consultations` | `gf_consultation_requests`   | 상담신청 관리       |
+| `/api/v1/admin/general-funeral/consultations` | `gf_consultation_requests`   | 상담 신청 관리      |
 | `/api/v1/admin/general-funeral/memberships`   | `gf_membership_applications` | 가입 신청 관리      |
 | `/api/v1/admin/general-funeral/reservations`  | `gf_direct_requests`         | 장례 설계 예약 관리 |
 
@@ -167,7 +167,7 @@ ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 
 | Endpoint                                        | 대상 테이블                   | 설명             |
 | ----------------------------------------------- | ----------------------------- | ---------------- |
-| `/api/v1/admin/corporate-funeral/consultations` | `cf_consultation_requests`    | 상담신청 관리    |
+| `/api/v1/admin/corporate-funeral/consultations` | `cf_consultation_requests`    | 상담 신청 관리   |
 | `/api/v1/admin/corporate-funeral/memberships`   | `cf_membership_applications`  | 가입 신청 관리   |
 | `/api/v1/admin/corporate-funeral/proposals`     | `corporate_proposal_requests` | 제안서 신청 관리 |
 
@@ -179,15 +179,15 @@ ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 
 #### 장지+ (burial-plus)
 
-| Endpoint                                  | 대상 테이블                | 설명          |
-| ----------------------------------------- | -------------------------- | ------------- |
-| `/api/v1/admin/burial-plus/consultations` | `bp_consultation_requests` | 상담신청 관리 |
+| Endpoint                                  | 대상 테이블                | 설명           |
+| ----------------------------------------- | -------------------------- | -------------- |
+| `/api/v1/admin/burial-plus/consultations` | `bp_consultation_requests` | 상담 신청 관리 |
 
 #### 사후행정케어 (post-care)
 
-| Endpoint                                | 대상 테이블                | 설명          |
-| --------------------------------------- | -------------------------- | ------------- |
-| `/api/v1/admin/post-care/consultations` | `pc_consultation_requests` | 상담신청 관리 |
+| Endpoint                                | 대상 테이블                | 설명           |
+| --------------------------------------- | -------------------------- | -------------- |
+| `/api/v1/admin/post-care/consultations` | `pc_consultation_requests` | 상담 신청 관리 |
 
 ### 5-3. 공통 Query Parameters (리스트 조회)
 
@@ -308,15 +308,15 @@ GET /api/v1/admin/{service}/{resource}?page=1&limit=20&search=홍길동&status=p
 | 메뉴명       | 하위 메뉴      | 경로                                     |
 | ------------ | -------------- | ---------------------------------------- |
 | 대시보드     | -              | `/admin/dashboard`                       |
-| 일반상조     | 상담신청       | `/admin/general-funeral/consultations`   |
+| 일반상조     | 상담 신청      | `/admin/general-funeral/consultations`   |
 |              | 가입 신청      | `/admin/general-funeral/memberships`     |
 |              | 장례 설계 예약 | `/admin/general-funeral/reservations`    |
-| 기업상조     | 상담신청       | `/admin/corporate-funeral/consultations` |
+| 기업상조     | 상담 신청      | `/admin/corporate-funeral/consultations` |
 |              | 가입 신청      | `/admin/corporate-funeral/memberships`   |
 |              | 제안서 신청    | `/admin/corporate-funeral/proposals`     |
 | 유품정리     | 견적 신청      | `/admin/estate-cleanup/estimates`        |
-| 장지+        | 상담신청       | `/admin/burial-plus/consultations`       |
-| 사후행정케어 | 상담신청       | `/admin/post-care/consultations`         |
+| 장지+        | 상담 신청      | `/admin/burial-plus/consultations`       |
+| 사후행정케어 | 상담 신청      | `/admin/post-care/consultations`         |
 
 ### 6-3. 통계 카드 섹션
 
@@ -365,8 +365,8 @@ src/
 │   │   │   └── page.tsx                    -- 대시보드 (통합 통계)
 │   │   ├── general-funeral/
 │   │   │   ├── consultations/
-│   │   │   │   ├── page.tsx                -- 상담신청 리스트
-│   │   │   │   └── [id]/page.tsx           -- 상담신청 상세
+│   │   │   │   ├── page.tsx                -- 상담 신청 리스트
+│   │   │   │   └── [id]/page.tsx           -- 상담 신청 상세
 │   │   │   ├── memberships/
 │   │   │   │   ├── page.tsx                -- 가입 신청 리스트
 │   │   │   │   └── [id]/page.tsx           -- 가입 신청 상세

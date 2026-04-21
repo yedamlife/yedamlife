@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Ambulance,
   MessageSquareText,
+  Megaphone,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -33,7 +34,7 @@ const menuItems: MenuItem[] = [
     label: '일반상조',
     icon: <Heart className="size-4" />,
     children: [
-      { label: '상담신청', href: '/admin/general-funeral/consultations' },
+      { label: '상담 신청', href: '/admin/general-funeral/consultations' },
       { label: '가입 신청', href: '/admin/general-funeral/memberships' },
       { label: '장례 설계 예약', href: '/admin/general-funeral/reservations' },
     ],
@@ -42,7 +43,7 @@ const menuItems: MenuItem[] = [
     label: '기업상조',
     icon: <Building2 className="size-4" />,
     children: [
-      { label: '상담신청', href: '/admin/corporate-funeral/consultations' },
+      { label: '상담 신청', href: '/admin/corporate-funeral/consultations' },
       { label: '가입 신청', href: '/admin/corporate-funeral/memberships' },
       { label: '제안서 신청', href: '/admin/corporate-funeral/proposals' },
     ],
@@ -56,24 +57,31 @@ const menuItems: MenuItem[] = [
     label: '장지+',
     icon: <MapPin className="size-4" />,
     children: [
-      { label: '상담신청', href: '/admin/burial-plus/consultations' },
+      { label: '상담 신청', href: '/admin/burial-plus/consultations' },
       { label: '장지관리', href: '/admin/burial-plus/products' },
     ],
   },
   {
     label: '사후행정케어',
     icon: <FileText className="size-4" />,
-    children: [{ label: '상담신청', href: '/admin/post-care/consultations' }],
+    children: [{ label: '상담 신청', href: '/admin/post-care/consultations' }],
   },
   {
     label: '운구의전',
     icon: <Ambulance className="size-4" />,
-    children: [{ label: '예약 관리', href: '/admin/funeral-escort/reservations' }],
+    children: [
+      { label: '예약 관리', href: '/admin/funeral-escort/reservations' },
+    ],
   },
   {
     label: '후기 관리',
     icon: <MessageSquareText className="size-4" />,
     href: '/admin/reviews',
+  },
+  {
+    label: '공지사항 관리',
+    icon: <Megaphone className="size-4" />,
+    href: '/admin/notices',
   },
 ];
 

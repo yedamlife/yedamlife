@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <Suspense>
-      <YedamLife initialCategoryIdx={0} />
+      <YedamLife initialCategoryIdx={0} hideHeader={true} />
     </Suspense>
   );
 }

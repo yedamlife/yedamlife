@@ -19,7 +19,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   return (
     <DetailPage
-      title="상담신청 상세"
+      title="상담 신청 상세"
       apiPath="/api/v1/admin/general-funeral/consultations"
       id={id}
       fields={fields}

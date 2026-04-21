@@ -36,7 +36,7 @@ export default async function CategoryPage({
 
   return (
     <Suspense>
-      <YedamLife initialCategoryIdx={initialIdx >= 0 ? initialIdx : 0} />
+      <YedamLife initialCategoryIdx={initialIdx >= 0 ? initialIdx : 0} hideHeader={true} />
     </Suspense>
   );
 }

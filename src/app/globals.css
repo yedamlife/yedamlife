@@ -183,3 +183,21 @@ body {
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* 후기 상세 본문 HTML 렌더링 */
+.review-content { line-height: 1.8; color: #374151; font-size: 0.9375rem; }
+.review-content h1, .review-content h2, .review-content h3 { font-weight: 700; color: #111827; margin: 1.5em 0 0.5em; }
+.review-content h2 { font-size: 1.25rem; }
+.review-content h3 { font-size: 1.1rem; }
+.review-content p { margin: 0.75em 0; }
+.review-content ul, .review-content ol { margin: 0.75em 0; padding-left: 1.5em; }
+.review-content ul { list-style-type: disc; }
+.review-content ol { list-style-type: decimal; }
+.review-content li { margin: 0.25em 0; }
+.review-content strong { font-weight: 600; color: #111827; }
+.review-content em { font-style: italic; }
+.review-content u { text-decoration: underline; }
+.review-content blockquote { border-left: 3px solid #e5e7eb; padding-left: 1em; margin: 1em 0; color: #6b7280; font-style: italic; }
+.review-content img { max-width: 100%; border-radius: 0.75rem; margin: 1em 0; }
+.review-content a { color: #4a5a2b; text-decoration: underline; }
+.review-content a:hover { opacity: 0.8; }

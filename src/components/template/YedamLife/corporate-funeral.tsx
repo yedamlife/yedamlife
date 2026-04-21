@@ -8,8 +8,6 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
-  Star,
-  User,
   Download,
   FileText,
   ChevronDown,
@@ -28,7 +26,6 @@ import {
   corpConsultationData,
   corpServiceData,
   corpFuneralProducts,
-  corpTestimonials,
   corpComparisonData,
   clientLogoRow1,
   clientLogoRow2,
@@ -36,7 +33,13 @@ import {
   LOGO_BASE,
 } from './constants';
 
-import { Ticker, CtaSection, MembershipSection } from './components';
+import {
+  Ticker,
+  CtaSection,
+  MembershipSection,
+  ReviewCarousel,
+  ReviewItem,
+} from './components';
 import { ProposalModal } from './proposal-modal';
 
 const PRODUCT_IMG_BASE =
@@ -121,10 +124,21 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
     setCorpTableFilter,
   } = props;
 
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+
+  useEffect(() => {
+    fetch('/api/v1/reviews?category=corporate&limit=4')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) setReviews(json.data);
+      })
+      .catch(() => {});
+  }, []);
+
   // 제안서 문의 모달
   const [showProposalModal, setShowProposalModal] = useState(false);
 
-  // 상담신청 폼 state
+  // 상담 신청 폼 state
   const [corpConsultForm, setCorpConsultForm] = useState({
     product: '',
     name: '',
@@ -1453,55 +1467,24 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
       </section>
 
       {/* ── 11. 기업 도입 후기 ── */}
-      <section
-        id="sec-corp-reviews"
-        className="py-16 sm:py-24 bg-white overflow-hidden"
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-3">
-              기업 도입 후기
-            </h2>
-            <p className="text-gray-500 max-w-lg mx-auto">
-              가족의 마음으로 함께한 시간, 그 진심이 전해졌습니다
-            </p>
+      {reviews.length > 0 && (
+        <section
+          id="sec-corp-reviews"
+          className="py-16 sm:py-24 bg-white overflow-hidden"
+        >
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-3">
+                기업 도입 후기
+              </h2>
+              <p className="text-gray-500 max-w-lg mx-auto">
+                예담라이프 기업상조를 도입한 기업들의 생생한 후기입니다
+              </p>
+            </div>
+            <ReviewCarousel reviews={reviews} />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {corpTestimonials.map((item, idx) => (
-              <div
-                key={idx}
-                className="p-6 rounded-2xl bg-white border border-gray-100 hover:shadow-md transition-shadow"
-              >
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: item.rating }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className="w-4 h-4 text-yellow-400 fill-yellow-400"
-                    />
-                  ))}
-                </div>
-                <p className="text-gray-600 text-sm leading-relaxed mb-5">
-                  &ldquo;{item.text}&rdquo;
-                </p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
-                      <User className="w-4 h-4 text-gray-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {item.author}
-                      </p>
-                      <p className="text-xs text-gray-400">{item.relation}</p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-gray-300">{item.date}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── 12. 주요 고객사 (로고 캐러셀) ── */}
       <section
@@ -1857,7 +1840,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
 
           {/* 공통 문의 폼 */}
           <div className="mt-8 p-6 bg-gray-50 rounded-2xl border border-gray-200">
-            <p className="text-sm font-bold text-gray-700 mb-4">상담신청</p>
+            <p className="text-sm font-bold text-gray-700 mb-4">상담 신청</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               <Select
                 value={corpConsultForm.product}
@@ -2014,7 +1997,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                     const result = await res.json();
                     if (result.success) {
                       toast.success(
-                        '상담신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.',
+                        '상담 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.',
                       );
                       setCorpConsultForm({
                         product: '',
@@ -2038,7 +2021,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                 className="px-8 py-3 text-white text-sm font-bold rounded-xl cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50"
                 style={{ backgroundColor: BRAND_COLOR }}
               >
-                {corpConsultSubmitting ? '신청 중...' : '상담신청'}
+                {corpConsultSubmitting ? '신청 중...' : '상담 신청'}
               </button>
             </div>
           </div>

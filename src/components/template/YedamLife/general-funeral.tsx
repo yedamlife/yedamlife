@@ -3,13 +3,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
-  Star,
   Headphones,
   ArrowRight,
   ChevronLeft,
   ChevronRight,
   FileText,
-  User,
   MessageCircle,
   Mail,
   ChevronDown,
@@ -35,7 +33,6 @@ import {
   serviceBenefits,
   funeralProducts,
   productDetails,
-  testimonials,
   afterServices,
   clientLogoRow1,
   clientLogoRow2,
@@ -50,7 +47,11 @@ import {
   CountUp,
   MembershipSection,
   CtaSection,
+  ReviewCarousel,
+  ReviewItem,
+  stripHtml,
 } from './components';
+import { FuneralCostModal } from './funeral-cost-modal';
 
 const PRODUCT_IMG_BASE =
   'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/products';
@@ -170,7 +171,18 @@ export function GeneralFuneral({
   embedded,
   headerRef,
 }: GeneralFuneralProps) {
-  // 상담신청 폼 state
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+
+  useEffect(() => {
+    fetch('/api/v1/reviews?category=general&limit=8')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) setReviews(json.data);
+      })
+      .catch(() => {});
+  }, []);
+
+  // 상담 신청 폼 state
   const [consultForm, setConsultForm] = useState({
     product: '',
     name: '',
@@ -181,6 +193,13 @@ export function GeneralFuneral({
   });
   const [consultSubmitting, setConsultSubmitting] = useState(false);
   const [showConsultModal, setShowConsultModal] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setShowConsultModal(true);
+    window.addEventListener('open-general-consult-modal', handler);
+    return () =>
+      window.removeEventListener('open-general-consult-modal', handler);
+  }, []);
 
   // 다이렉트 장례설계 폼 state
   const [directName, setDirectName] = useState('');
@@ -318,9 +337,18 @@ export function GeneralFuneral({
   // 주요정보 안내사항 토글
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [costModalOpen, setCostModalOpen] = useState(false);
+
+  // URL에 fc_type 파라미터가 있으면 모달 자동 오픈
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has('fc_type')) {
+      setCostModalOpen(true);
+    }
+  }, []);
 
   // A/B 뷰 전환: card(신규) / table(기존)
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [tooltipLabel, setTooltipLabel] = useState<string | null>(null);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.metaKey && e.key === 'a') {
@@ -476,22 +504,15 @@ export function GeneralFuneral({
                   className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-white text-gray-900 text-sm sm:text-base font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg cursor-pointer"
                 >
                   <ScrollText className="w-4 h-4 sm:w-5 sm:h-5" />
-                  장례상품 상담신청
+                  장례상품 상담 신청
                 </button>
-                <a
-                  href="#inquiry"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setInquiryMainTab('design');
-                    document
-                      .getElementById('inquiry')
-                      ?.scrollIntoView({ behavior: 'smooth' });
-                  }}
+                <button
+                  onClick={() => setCostModalOpen(true)}
                   className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 border-2 border-white/70 text-white text-sm sm:text-base font-bold rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   <PenLine className="w-4 h-4 sm:w-5 sm:h-5" />
-                  다이렉트 장례설계
-                </a>
+                  장례비용 알아보기
+                </button>
               </div>
             </div>
           </div>
@@ -676,121 +697,204 @@ export function GeneralFuneral({
               ))}
             </div>
 
-            {/* 차트: 예담라이프 vs 선불제상조 vs 장례식장 상조 비교 */}
+            {/* 차트: 예담라이프 vs 선불제상조 vs 장례식장 비교 (2단 스택 바) */}
             {(() => {
+              // 장례식장 비용(공통) + 상조 비용(차이) 분리
               const priceMap = [
-                { yedam: 130, prepaid: 200, funeral: 350 },
-                { yedam: 230, prepaid: 330, funeral: 500 },
-                { yedam: 340, prepaid: 480, funeral: 700 },
-                { yedam: 460, prepaid: 630, funeral: 900 },
+                {
+                  facilityFee: 100,
+                  yedamFee: 30,
+                  prepaidFee: 100,
+                  funeralHomeFee: 250,
+                },
+                {
+                  facilityFee: 150,
+                  yedamFee: 80,
+                  prepaidFee: 180,
+                  funeralHomeFee: 350,
+                },
+                {
+                  facilityFee: 200,
+                  yedamFee: 140,
+                  prepaidFee: 280,
+                  funeralHomeFee: 500,
+                },
+                {
+                  facilityFee: 250,
+                  yedamFee: 210,
+                  prepaidFee: 380,
+                  funeralHomeFee: 650,
+                },
               ];
-              const prices = priceMap[chartProductIdx];
-              const maxPrice = prices.funeral;
-              const barHeight = (val: number) =>
-                Math.round((val / maxPrice) * 220);
+              const p = priceMap[chartProductIdx];
+              const totalYedam = p.facilityFee + p.yedamFee;
+              const totalPrepaid = p.facilityFee + p.prepaidFee;
+              const totalFuneral = p.facilityFee + p.funeralHomeFee;
+              const maxTotal = totalFuneral;
+              const maxBarH = 220;
+              const h = (val: number) => Math.round((val / maxTotal) * maxBarH);
               const savingPercent = Math.round(
-                ((prices.funeral - prices.yedam) / prices.funeral) * 100,
+                ((totalFuneral - totalYedam) / totalFuneral) * 100,
               );
+
+              const bars = [
+                {
+                  label: '예담라이프',
+                  total: totalYedam,
+                  serviceFee: p.yedamFee,
+                  darkColor: '#4a7fb5',
+                  lightColor: '#e5e7eb',
+                  isHighlight: true,
+                },
+                {
+                  label: '선불제상조',
+                  total: totalPrepaid,
+                  serviceFee: p.prepaidFee,
+                  darkColor: '#9ca3af',
+                  lightColor: '#e5e7eb',
+                  isHighlight: false,
+                },
+                {
+                  label: '장례식장',
+                  total: totalFuneral,
+                  serviceFee: p.funeralHomeFee,
+                  darkColor: '#6b7280',
+                  lightColor: '#e5e7eb',
+                  isHighlight: false,
+                },
+              ];
+
+              const maxServiceFee = Math.max(...bars.map((b) => b.serviceFee));
+
               return (
-                <div className="relative max-w-lg mx-auto mb-14 scale-[0.8] sm:scale-100 origin-top">
-                  <div className="flex items-end justify-center gap-6 sm:gap-10 h-[280px] sm:h-[320px]">
-                    {/* 예담라이프 */}
-                    <div className="flex flex-col items-center gap-2 flex-1 max-w-[110px]">
-                      <div className="relative">
-                        <div
-                          className="px-3 py-1.5 rounded-lg text-sm font-bold text-white whitespace-nowrap"
-                          style={{ backgroundColor: '#4a7fb5' }}
-                        >
-                          {prices.yedam}만원
-                        </div>
-                        <div
-                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45"
-                          style={{ backgroundColor: '#4a7fb5' }}
-                        />
-                      </div>
-                      <div
-                        className="w-full rounded-t-xl transition-all duration-500"
-                        style={{
-                          height: `${barHeight(prices.yedam)}px`,
-                          backgroundColor: '#4a7fb5',
-                        }}
-                      />
-                      <span
-                        className="text-xs sm:text-sm font-bold text-center leading-tight"
-                        style={{ color: '#4a7fb5' }}
-                      >
-                        예담라이프
-                      </span>
-                    </div>
-
-                    {/* 선불제상조 */}
-                    <div className="flex flex-col items-center gap-2 flex-1 max-w-[110px]">
-                      <span className="text-sm font-bold text-gray-400">
-                        {prices.prepaid}만원
-                      </span>
-                      <div
-                        className="w-full rounded-t-xl transition-all duration-500"
-                        style={{
-                          height: `${barHeight(prices.prepaid)}px`,
-                          backgroundColor: '#d1d5db',
-                        }}
-                      />
-                      <span className="text-xs sm:text-sm font-medium text-gray-400 text-center leading-tight">
-                        선불제상조
-                      </span>
-                    </div>
-
-                    {/* 장례식장 상조 */}
-                    <div className="flex flex-col items-center gap-2 flex-1 max-w-[110px]">
-                      <span className="text-sm font-bold text-gray-400">
-                        {prices.funeral}만원
-                      </span>
-                      <div
-                        className="w-full rounded-t-xl transition-all duration-500"
-                        style={{
-                          height: `${barHeight(prices.funeral)}px`,
-                          backgroundColor: '#e5e7eb',
-                        }}
-                      />
-                      <span className="text-xs sm:text-sm font-medium text-gray-400 text-center leading-tight">
-                        장례식장
-                      </span>
-                    </div>
-
-                    {/* 절약 말풍선 */}
-                    <div className="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
-                      <div
-                        className="w-24 h-24 rounded-full flex items-center justify-center"
-                        style={{
-                          backgroundColor: BRAND_COLOR_LIGHT,
-                          animation: 'heartbeat 1.5s ease-in-out infinite',
-                        }}
-                      >
-                        <p
-                          className="text-xs font-bold text-center leading-tight"
-                          style={{ color: BRAND_COLOR }}
-                        >
-                          최대
-                          <br />
-                          <span className="text-sm font-extrabold">
-                            {savingPercent}% 절약
-                          </span>
-                          <br />
-                          월납입금 0원
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 점선 기준선 */}
+                <div className="max-w-xl mx-auto mb-14">
                   <div
-                    className="absolute left-0 right-0 border-t-2 border-dashed pointer-events-none transition-all duration-500"
+                    className="grid justify-center transition-all duration-500"
                     style={{
-                      bottom: `${barHeight(prices.yedam) + 35}px`,
-                      borderColor: '#4a7fb5',
-                      opacity: 0.6,
+                      gridTemplateColumns:
+                        'repeat(3, minmax(70px, 110px)) auto',
+                      gap: '0 clamp(8px, 3vw, 40px)',
                     }}
-                  />
+                  >
+                    {/* Row 1: 상조 비용 (진한색) + 총합 라벨을 막대 바로 위에 */}
+                    {bars.map((bar) => (
+                      <div
+                        key={`s-${bar.label}`}
+                        className="self-end flex flex-col items-center"
+                      >
+                        {/* 총합 라벨 */}
+                        <div className="mb-2">
+                          {bar.isHighlight ? (
+                            <div
+                              className="relative"
+                              style={{
+                                animation: 'heartbeat 2s ease-in-out infinite',
+                              }}
+                            >
+                              <div
+                                className="px-3 py-1.5 rounded-lg text-sm font-bold text-white whitespace-nowrap text-center"
+                                style={{ backgroundColor: bar.darkColor }}
+                              >
+                                <span className="text-[10px] font-semibold text-white/80">
+                                  최대 {savingPercent}% 절약
+                                </span>
+                                <br />
+                                {bar.total}만원
+                              </div>
+                              <div
+                                className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45"
+                                style={{ backgroundColor: bar.darkColor }}
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-sm font-bold text-gray-400 whitespace-nowrap">
+                              {bar.total}만원
+                            </span>
+                          )}
+                        </div>
+                        {/* 상조 비용 바 */}
+                        <div
+                          className="w-full rounded-t-xl flex items-center justify-center transition-all duration-500"
+                          style={{
+                            height: `${h(bar.serviceFee)}px`,
+                            backgroundColor: bar.darkColor,
+                          }}
+                        >
+                          {h(bar.serviceFee) > 24 && (
+                            <span className="text-xs sm:text-sm font-bold text-white/90">
+                              {bar.serviceFee}만
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {/* 우측: 상조 비용 라벨 — 가장 큰 막대(장례식장) 기준 중간 */}
+                    <div
+                      className="self-end pl-2"
+                      style={{
+                        paddingBottom: `${Math.round(h(bars[2].serviceFee) / 2 - 8)}px`,
+                      }}
+                    >
+                      <span className="text-[11px] sm:text-xs font-semibold text-gray-500 whitespace-nowrap">
+                        서비스별
+                        <br />
+                        상조 평균 비용
+                      </span>
+                    </div>
+
+                    {/* Row 3: 빨간 절취선 — 전체 너비 관통 */}
+                    <div
+                      className="border-t-[3px] border-dashed"
+                      style={{ gridColumn: '1 / -1', borderColor: '#7a6240' }}
+                    />
+
+                    {/* Row 4: 장례식장 비용 (연한색, 높이 동일) */}
+                    {bars.map((bar) => (
+                      <div key={`f-${bar.label}`}>
+                        <div
+                          className="w-full flex items-center justify-center transition-all duration-500"
+                          style={{
+                            height: `${h(p.facilityFee)}px`,
+                            backgroundColor: bar.lightColor,
+                          }}
+                        >
+                          {h(p.facilityFee) > 24 && (
+                            <span
+                              className="text-[10px] sm:text-xs font-bold"
+                              style={{ color: '#9ca3af' }}
+                            >
+                              {p.facilityFee}만
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {/* 우측: 장례식장 비용 라벨 */}
+                    <div className="self-center pl-2">
+                      <span className="text-[11px] sm:text-xs font-semibold text-gray-500 whitespace-nowrap">
+                        장례식장 평균 비용
+                      </span>
+                      <br />
+                      <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                        - 상조 금액과 별도
+                      </span>
+                    </div>
+
+                    {/* Row 4: 하단 라벨 */}
+                    {bars.map((bar) => (
+                      <div key={`l-${bar.label}`} className="text-center pt-2">
+                        <span
+                          className="text-xs sm:text-sm font-bold"
+                          style={{
+                            color: bar.isHighlight ? '#111827' : '#9ca3af',
+                          }}
+                        >
+                          {bar.label}
+                        </span>
+                      </div>
+                    ))}
+                    <div />
+                  </div>
                 </div>
               );
             })()}
@@ -1055,9 +1159,7 @@ export function GeneralFuneral({
 
             {/* Sticky 탭 */}
             <div className="sticky top-0 z-20 bg-gray-50 pt-2 pb-4">
-              <div
-                className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap"
-              >
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
                 <button
                   onClick={() => setProductInquiryTab('all')}
                   className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${productInquiryTab === 'all' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
@@ -1083,7 +1185,10 @@ export function GeneralFuneral({
                 {productInquiryTab === 'all' && (
                   <div>
                     {comparisonData.map((section) => (
-                      <div key={section.category} className="mb-10 max-w-3xl mx-auto">
+                      <div
+                        key={section.category}
+                        className="mb-10 max-w-3xl mx-auto"
+                      >
                         <div
                           className="w-8 h-1 rounded-full mb-3"
                           style={{ backgroundColor: BRAND_COLOR }}
@@ -1091,19 +1196,18 @@ export function GeneralFuneral({
                         <h3 className="text-lg sm:text-xl font-extrabold text-gray-900 mb-5">
                           {section.category.replace(/\n/g, ' ')}
                         </h3>
-                        <div className="grid grid-cols-3 sm:grid-cols-5 gap-x-4 sm:gap-x-6 gap-y-6 justify-items-center">
+                        <div className="grid gap-x-4 sm:gap-x-6 gap-y-6 justify-items-center grid-cols-3 sm:grid-cols-5">
                           {section.items.map((item) => {
                             const images = PRODUCT_LABEL_IMAGES[item.label];
-                            const allSame =
-                              item.values[0] &&
-                              item.values.every(
-                                (v) => v === item.values[0] || v === '',
-                              );
                             return (
-                              <div key={item.label} className="flex flex-col items-center text-center w-full">
+                              <div
+                                key={item.label}
+                                className="flex flex-col items-center text-center w-full"
+                              >
                                 {/* 정사각형 이미지 */}
                                 {images ? (
-                                  <div className="w-full aspect-square rounded-lg overflow-hidden bg-gray-50 cursor-pointer"
+                                  <div
+                                    className="w-full aspect-square rounded-lg overflow-hidden bg-gray-50 cursor-pointer"
                                     onClick={() =>
                                       setLightboxSrc(images[0].src)
                                     }
@@ -1129,30 +1233,51 @@ export function GeneralFuneral({
                                 )}
                                 {/* 텍스트 정보 */}
                                 <div className="mt-2 w-full min-w-0">
-                                  <h4 className="text-sm font-bold text-gray-900">
-                                    {item.label}
-                                  </h4>
-                                  {'sub' in item && item.sub && (
-                                    <p className="text-xs text-gray-400">
-                                      {item.sub}
-                                    </p>
-                                  )}
-                                  {allSame ? (
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      전 상품 동일 · {item.values[0]}
+                                  <div className="relative flex items-center justify-center gap-1 mb-1.5">
+                                    <h4 className="text-sm font-medium text-gray-500">
+                                      {item.label}
+                                    </h4>
+                                    {'sub' in item && item.sub && (
+                                      <button
+                                        type="button"
+                                        className="shrink-0 cursor-pointer"
+                                        onClick={() =>
+                                          setTooltipLabel(
+                                            tooltipLabel === item.label
+                                              ? null
+                                              : item.label,
+                                          )
+                                        }
+                                      >
+                                        <Info className="w-3.5 h-3.5 text-gray-500 hover:text-gray-700 transition-colors" />
+                                      </button>
+                                    )}
+                                    {tooltipLabel === item.label &&
+                                      'sub' in item &&
+                                      item.sub && (
+                                        <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 z-10 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
+                                          {item.sub}
+                                          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45" />
+                                        </div>
+                                      )}
+                                  </div>
+                                  {item.values.every((v, i) => i === 0 || !v) &&
+                                  item.values[0] ? (
+                                    <p className="text-xs font-bold text-gray-900 mt-1">
+                                      {item.values[0]}
                                     </p>
                                   ) : (
-                                    <ul className="mt-1 space-y-1.5">
+                                    <ul className="border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-100">
                                       {funeralProducts.map((p, idx) => (
                                         <li
                                           key={p.id}
-                                          className="flex items-center justify-between gap-3 text-xs"
+                                          className="flex items-center justify-between gap-2 px-2 py-1.5 text-xs"
                                         >
-                                          <span className="text-gray-400 whitespace-nowrap shrink-0">
+                                          <span className="text-gray-500 whitespace-nowrap shrink-0">
                                             {p.name}
                                           </span>
                                           <span
-                                            className={`font-bold text-right ${item.values[idx] && item.values[idx] !== '-' ? 'text-gray-900' : 'text-gray-300'}`}
+                                            className={`font-semibold text-right ${item.values[idx] && item.values[idx] !== '-' ? 'text-gray-700' : 'text-gray-300'}`}
                                           >
                                             {item.values[idx] || '-'}
                                           </span>
@@ -1218,10 +1343,7 @@ export function GeneralFuneral({
                           );
                           if (filtered.length === 0) return null;
                           return (
-                            <div
-                              key={section.category}
-                              className="mb-10"
-                            >
+                            <div key={section.category} className="mb-10">
                               <div
                                 className="w-8 h-1 rounded-full mb-3"
                                 style={{ backgroundColor: BRAND_COLOR }}
@@ -1229,14 +1351,18 @@ export function GeneralFuneral({
                               <h3 className="text-lg sm:text-xl font-extrabold text-gray-900 mb-5">
                                 {section.category.replace(/\n/g, ' ')}
                               </h3>
-                              <div className="grid grid-cols-3 sm:grid-cols-5 gap-x-4 sm:gap-x-6 gap-y-6 justify-items-center">
+                              <div className="grid gap-x-4 sm:gap-x-6 gap-y-6 justify-items-center grid-cols-3 sm:grid-cols-5">
                                 {filtered.map((item) => {
                                   const images =
                                     PRODUCT_LABEL_IMAGES[item.label];
                                   return (
-                                    <div key={item.label} className="flex flex-col items-center text-center w-full">
+                                    <div
+                                      key={item.label}
+                                      className="flex flex-col items-center text-center w-full"
+                                    >
                                       {images ? (
-                                        <div className="w-full aspect-square rounded-lg overflow-hidden bg-gray-50 cursor-pointer"
+                                        <div
+                                          className="w-full aspect-square rounded-lg overflow-hidden bg-gray-50 cursor-pointer"
                                           onClick={() =>
                                             setLightboxSrc(images[0].src)
                                           }
@@ -1255,18 +1381,34 @@ export function GeneralFuneral({
                                         </div>
                                       )}
                                       <div className="mt-2">
-                                        <h4 className="text-sm font-bold text-gray-900">
-                                          {item.label}
-                                        </h4>
-                                        {item.sub && (
-                                          <p className="text-xs text-gray-400">
-                                            {item.sub}
-                                          </p>
-                                        )}
-                                        <p
-                                          className="text-sm font-bold mt-0.5 whitespace-pre-line"
-                                          style={{ color: BRAND_COLOR }}
-                                        >
+                                        <div className="relative flex items-center justify-center gap-1">
+                                          <h4 className="text-sm font-medium text-gray-500">
+                                            {item.label}
+                                          </h4>
+                                          {item.sub && (
+                                            <button
+                                              type="button"
+                                              className="shrink-0 cursor-pointer"
+                                              onClick={() =>
+                                                setTooltipLabel(
+                                                  tooltipLabel === item.label
+                                                    ? null
+                                                    : item.label,
+                                                )
+                                              }
+                                            >
+                                              <Info className="w-3.5 h-3.5 text-gray-500 hover:text-gray-700 transition-colors" />
+                                            </button>
+                                          )}
+                                          {tooltipLabel === item.label &&
+                                            item.sub && (
+                                              <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 z-10 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
+                                                {item.sub}
+                                                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45" />
+                                              </div>
+                                            )}
+                                        </div>
+                                        <p className="text-sm font-bold mt-0.5 whitespace-pre-line text-gray-900">
                                           {item.value}
                                         </p>
                                       </div>
@@ -1986,10 +2128,7 @@ export function GeneralFuneral({
       />
 
       {/* ── 6. 후기 ── */}
-      <section
-        id="reviews"
-        className="py-16 sm:py-24 overflow-hidden bg-white"
-      >
+      <section id="reviews" className="py-16 sm:py-24 overflow-hidden bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-3">
@@ -1999,40 +2138,8 @@ export function GeneralFuneral({
               가족의 마음으로 함께한 시간, 그 진심이 전해졌습니다
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {testimonials.map((review, idx) => (
-              <div
-                key={idx}
-                className="p-6 rounded-2xl bg-white border border-gray-100 hover:shadow-md transition-shadow"
-              >
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: review.rating }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className="w-4 h-4 text-yellow-400 fill-yellow-400"
-                    />
-                  ))}
-                </div>
-                <p className="text-gray-600 text-sm leading-relaxed mb-5">
-                  &ldquo;{review.text}&rdquo;
-                </p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
-                      <User className="w-4 h-4 text-gray-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {review.author}
-                      </p>
-                      <p className="text-xs text-gray-400">{review.relation}</p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-gray-300">{review.date}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+
+          <ReviewCarousel reviews={reviews} />
         </div>
       </section>
 
@@ -2186,228 +2293,224 @@ export function GeneralFuneral({
         </div>
       </section>
 
-
       {/* ── 13. 다이렉트 장례설계 ── */}
       <section className="py-16 sm:py-24 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div>
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-                    다이렉트 장례설계
-                  </h2>
-                  <p className="text-sm sm:text-base text-gray-500 mt-3">
-                    나에게 맞는 후불제 장례서비스 상품을 간단한 질문 답변을 통해
-                    확인하세요
-                  </p>
-                  <span
-                    className="inline-block px-4 py-2 text-sm font-bold rounded-lg mt-4"
-                    style={{
-                      backgroundColor: BRAND_COLOR_LIGHT,
-                      color: BRAND_COLOR,
-                    }}
-                  >
-                    사전상담 시 20만원 할인 혜택
-                  </span>
+            <div className="text-center mb-8">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                다이렉트 장례설계
+              </h2>
+              <p className="text-sm sm:text-base text-gray-500 mt-3">
+                나에게 맞는 후불제 장례서비스 상품을 간단한 질문 답변을 통해
+                확인하세요
+              </p>
+              <span
+                className="inline-block px-4 py-2 text-sm font-bold rounded-lg mt-4"
+                style={{
+                  backgroundColor: BRAND_COLOR_LIGHT,
+                  color: BRAND_COLOR,
+                }}
+              >
+                사전상담 시 20만원 할인 혜택
+              </span>
+            </div>
+
+            <div className="w-full max-w-xl mx-auto px-0">
+              <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-500">
+                      Question
+                    </span>
+                    <span className="text-sm font-medium text-gray-400">
+                      {surveyStep + 1} / {surveyQuestions.length}
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${((surveyStep + 1) / surveyQuestions.length) * 100}%`,
+                        backgroundColor: BRAND_COLOR,
+                      }}
+                    />
+                  </div>
                 </div>
 
-                <div className="w-full max-w-xl mx-auto px-0">
-                  <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
-                    <div className="mb-6">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-500">
-                          Question
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-8">
+                  {surveyQuestions[surveyStep].question}
+                </h3>
+
+                {surveyQuestions[surveyStep].type === 'select' && (
+                  <Select
+                    value={surveyAnswers[surveyStep] || ''}
+                    onValueChange={(value) =>
+                      setSurveyAnswers({
+                        ...surveyAnswers,
+                        [surveyStep]: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="w-full rounded-xl">
+                      <SelectValue placeholder="선택해주세요." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {surveyQuestions[surveyStep].options.map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {surveyQuestions[surveyStep].type === 'radio' && (
+                  <RadioGroup
+                    value={surveyAnswers[surveyStep] || ''}
+                    onValueChange={(value) =>
+                      setSurveyAnswers({
+                        ...surveyAnswers,
+                        [surveyStep]: value,
+                      })
+                    }
+                    className="space-y-3"
+                  >
+                    {surveyQuestions[surveyStep].options.map((opt) => (
+                      <label
+                        key={opt}
+                        htmlFor={`q-${surveyStep}-${opt}`}
+                        className="flex items-center gap-3 cursor-pointer group rounded-xl border border-gray-200 px-4 py-3 transition-colors hover:border-gray-300 data-[state=checked]:border-[var(--brand)]"
+                        style={
+                          {
+                            '--brand': BRAND_COLOR,
+                            ...(surveyAnswers[surveyStep] === opt
+                              ? {
+                                  borderColor: BRAND_COLOR,
+                                  backgroundColor: `${BRAND_COLOR}08`,
+                                }
+                              : {}),
+                          } as React.CSSProperties
+                        }
+                      >
+                        <RadioGroupItem
+                          value={opt}
+                          id={`q-${surveyStep}-${opt}`}
+                          className="border-gray-300 data-[state=checked]:border-[var(--brand)] data-[state=checked]:text-[var(--brand)]"
+                          style={
+                            {
+                              '--brand': BRAND_COLOR,
+                            } as React.CSSProperties
+                          }
+                        />
+                        <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                          {opt}
                         </span>
-                        <span className="text-sm font-medium text-gray-400">
-                          {surveyStep + 1} / {surveyQuestions.length}
-                        </span>
-                      </div>
-                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{
-                            width: `${((surveyStep + 1) / surveyQuestions.length) * 100}%`,
-                            backgroundColor: BRAND_COLOR,
-                          }}
-                        />
-                      </div>
-                    </div>
+                      </label>
+                    ))}
+                  </RadioGroup>
+                )}
 
-                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-8">
-                      {surveyQuestions[surveyStep].question}
-                    </h3>
-
-                    {surveyQuestions[surveyStep].type === 'select' && (
-                      <Select
-                        value={surveyAnswers[surveyStep] || ''}
-                        onValueChange={(value) =>
-                          setSurveyAnswers({
-                            ...surveyAnswers,
-                            [surveyStep]: value,
-                          })
-                        }
-                      >
-                        <SelectTrigger className="w-full rounded-xl">
-                          <SelectValue placeholder="선택해주세요." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {surveyQuestions[surveyStep].options.map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                              {opt}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-
-                    {surveyQuestions[surveyStep].type === 'radio' && (
-                      <RadioGroup
-                        value={surveyAnswers[surveyStep] || ''}
-                        onValueChange={(value) =>
-                          setSurveyAnswers({
-                            ...surveyAnswers,
-                            [surveyStep]: value,
-                          })
-                        }
-                        className="space-y-3"
-                      >
-                        {surveyQuestions[surveyStep].options.map((opt) => (
-                          <label
-                            key={opt}
-                            htmlFor={`q-${surveyStep}-${opt}`}
-                            className="flex items-center gap-3 cursor-pointer group rounded-xl border border-gray-200 px-4 py-3 transition-colors hover:border-gray-300 data-[state=checked]:border-[var(--brand)]"
-                            style={
-                              {
-                                '--brand': BRAND_COLOR,
-                                ...(surveyAnswers[surveyStep] === opt
-                                  ? {
-                                      borderColor: BRAND_COLOR,
-                                      backgroundColor: `${BRAND_COLOR}08`,
-                                    }
-                                  : {}),
-                              } as React.CSSProperties
-                            }
-                          >
-                            <RadioGroupItem
-                              value={opt}
-                              id={`q-${surveyStep}-${opt}`}
-                              className="border-gray-300 data-[state=checked]:border-[var(--brand)] data-[state=checked]:text-[var(--brand)]"
-                              style={
-                                {
-                                  '--brand': BRAND_COLOR,
-                                } as React.CSSProperties
-                              }
-                            />
-                            <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                              {opt}
-                            </span>
-                          </label>
-                        ))}
-                      </RadioGroup>
-                    )}
-
-                    {surveyQuestions[surveyStep].type === 'text' && (
-                      <div className="space-y-3 w-full">
-                        <input
-                          type="text"
-                          placeholder="이름"
-                          value={directName}
-                          onChange={(e) => setDirectName(e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none"
-                        />
-                        <input
-                          type="tel"
-                          placeholder="-를 제외한 숫자만 입력해주세요"
-                          value={directPhone}
-                          onChange={(e) => setDirectPhone(e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none"
-                        />
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between gap-3 mt-10">
-                      <button
-                        onClick={() =>
-                          setSurveyStep(Math.max(0, surveyStep - 1))
-                        }
-                        disabled={surveyStep === 0}
-                        className="px-6 py-3 rounded-xl text-sm font-bold transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-gray-200 text-gray-600 hover:bg-gray-300 flex-1"
-                      >
-                        이전
-                      </button>
-                      {surveyStep < surveyQuestions.length - 1 ? (
-                        <button
-                          onClick={() => setSurveyStep(surveyStep + 1)}
-                          className="px-8 py-3 rounded-xl text-sm font-bold text-white transition-colors cursor-pointer hover:opacity-90 flex-1"
-                          style={{ backgroundColor: BRAND_COLOR }}
-                        >
-                          다음
-                        </button>
-                      ) : (
-                        <button
-                          disabled={directSubmitting}
-                          onClick={async () => {
-                            if (!directName.trim() || !directPhone.trim()) {
-                              toast.warning('이름과 연락처를 입력해주세요.');
-                              return;
-                            }
-                            setDirectSubmitting(true);
-                            try {
-                              const res = await fetch(
-                                '/api/v1/general-funeral/direct-design',
-                                {
-                                  method: 'POST',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                  },
-                                  body: JSON.stringify({
-                                    funeral_location: surveyAnswers[0] || '',
-                                    expected_guests: surveyAnswers[1] || '',
-                                    funeral_scale: surveyAnswers[2] || '',
-                                    binso_required: surveyAnswers[3] || '',
-                                    escort_service: surveyAnswers[4] || '',
-                                    clothing_type: surveyAnswers[5] || '',
-                                    funeral_gown_required:
-                                      surveyAnswers[6] || '',
-                                    additional_service: surveyAnswers[7] || '',
-                                    name: directName,
-                                    contact_number: directPhone,
-                                  }),
-                                },
-                              );
-                              const result = await res.json();
-                              if (result.success) {
-                                toast.success(
-                                  '상담신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.',
-                                );
-                                setDirectName('');
-                                setDirectPhone('');
-                                setSurveyStep(0);
-                                setSurveyAnswers({});
-                              } else {
-                                toast.error(
-                                  result.message || '오류가 발생했습니다.',
-                                );
-                              }
-                            } catch {
-                              toast.error(
-                                '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
-                              );
-                            } finally {
-                              setDirectSubmitting(false);
-                            }
-                          }}
-                          className="px-8 py-3 rounded-xl text-sm font-bold text-white transition-colors cursor-pointer hover:opacity-90 flex-1 text-center disabled:opacity-50 disabled:cursor-not-allowed"
-                          style={{ backgroundColor: BRAND_COLOR }}
-                        >
-                          {directSubmitting ? '신청 중...' : '상담신청하기'}
-                        </button>
-                      )}
-                    </div>
+                {surveyQuestions[surveyStep].type === 'text' && (
+                  <div className="space-y-3 w-full">
+                    <input
+                      type="text"
+                      placeholder="이름"
+                      value={directName}
+                      onChange={(e) => setDirectName(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="-를 제외한 숫자만 입력해주세요"
+                      value={directPhone}
+                      onChange={(e) => setDirectPhone(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none"
+                    />
                   </div>
+                )}
+
+                <div className="flex items-center justify-between gap-3 mt-10">
+                  <button
+                    onClick={() => setSurveyStep(Math.max(0, surveyStep - 1))}
+                    disabled={surveyStep === 0}
+                    className="px-6 py-3 rounded-xl text-sm font-bold transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-gray-200 text-gray-600 hover:bg-gray-300 flex-1"
+                  >
+                    이전
+                  </button>
+                  {surveyStep < surveyQuestions.length - 1 ? (
+                    <button
+                      onClick={() => setSurveyStep(surveyStep + 1)}
+                      className="px-8 py-3 rounded-xl text-sm font-bold text-white transition-colors cursor-pointer hover:opacity-90 flex-1"
+                      style={{ backgroundColor: BRAND_COLOR }}
+                    >
+                      다음
+                    </button>
+                  ) : (
+                    <button
+                      disabled={directSubmitting}
+                      onClick={async () => {
+                        if (!directName.trim() || !directPhone.trim()) {
+                          toast.warning('이름과 연락처를 입력해주세요.');
+                          return;
+                        }
+                        setDirectSubmitting(true);
+                        try {
+                          const res = await fetch(
+                            '/api/v1/general-funeral/direct-design',
+                            {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({
+                                funeral_location: surveyAnswers[0] || '',
+                                expected_guests: surveyAnswers[1] || '',
+                                funeral_scale: surveyAnswers[2] || '',
+                                binso_required: surveyAnswers[3] || '',
+                                escort_service: surveyAnswers[4] || '',
+                                clothing_type: surveyAnswers[5] || '',
+                                funeral_gown_required: surveyAnswers[6] || '',
+                                additional_service: surveyAnswers[7] || '',
+                                name: directName,
+                                contact_number: directPhone,
+                              }),
+                            },
+                          );
+                          const result = await res.json();
+                          if (result.success) {
+                            toast.success(
+                              '상담 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.',
+                            );
+                            setDirectName('');
+                            setDirectPhone('');
+                            setSurveyStep(0);
+                            setSurveyAnswers({});
+                          } else {
+                            toast.error(
+                              result.message || '오류가 발생했습니다.',
+                            );
+                          }
+                        } catch {
+                          toast.error(
+                            '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                          );
+                        } finally {
+                          setDirectSubmitting(false);
+                        }
+                      }}
+                      className="px-8 py-3 rounded-xl text-sm font-bold text-white transition-colors cursor-pointer hover:opacity-90 flex-1 text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: BRAND_COLOR }}
+                    >
+                      {directSubmitting ? '신청 중...' : '상담 신청하기'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
-          </section>
+          </div>
+        </div>
+      </section>
 
       {/* ══════════════ CTA ══════════════ */}
       <CtaSection
@@ -2434,7 +2537,7 @@ export function GeneralFuneral({
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
             >
               <ScrollText className="w-5 h-5" />
-              상담신청하기
+              상담 신청하기
             </button>
             <a
               href={membershipHref}
@@ -2483,7 +2586,7 @@ export function GeneralFuneral({
         </div>
       )}
 
-      {/* ══════════════ 상담신청 모달 ══════════════ */}
+      {/* ══════════════ 상담 신청 모달 ══════════════ */}
       {showConsultModal && (
         <div
           className="fixed inset-0 z-100 flex items-center justify-center bg-black/50"
@@ -2494,7 +2597,7 @@ export function GeneralFuneral({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-6 py-4 flex items-center justify-between bg-gray-100 rounded-t-2xl shrink-0">
-              <span className="font-bold text-gray-800">상담신청</span>
+              <span className="font-bold text-gray-800">상담 신청</span>
               <button
                 onClick={() => setShowConsultModal(false)}
                 className="p-1 hover:bg-black/5 rounded-lg cursor-pointer transition-colors"
@@ -2668,7 +2771,7 @@ export function GeneralFuneral({
                     const result = await res.json();
                     if (result.success) {
                       toast.success(
-                        '상담신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.',
+                        '상담 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.',
                       );
                       setConsultForm({
                         product: '',
@@ -2693,12 +2796,18 @@ export function GeneralFuneral({
                 className="w-full py-4 rounded-xl text-white font-bold text-base cursor-pointer hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: BRAND_COLOR }}
               >
-                {consultSubmitting ? '신청 중...' : '상담신청하기'}
+                {consultSubmitting ? '신청 중...' : '상담 신청하기'}
               </button>
             </div>
           </div>
         </div>
       )}
+      {/* 장례비용 알아보기 모달 */}
+      <FuneralCostModal
+        isOpen={costModalOpen}
+        onClose={() => setCostModalOpen(false)}
+        onSelectProduct={(productId) => setProductInquiryTab(productId)}
+      />
     </>
   );
 }

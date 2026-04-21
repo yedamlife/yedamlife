@@ -1,9 +1,8 @@
 'use client';
 
 import { Suspense, useState, useEffect, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Phone, MapPin, Mail, Building2, AlertCircle } from 'lucide-react';
-import { YedamHeader } from '@/components/template/YedamLife/header';
 import { YedamFooter } from '@/components/template/YedamLife/footer';
 import {
   BRAND_COLOR,
@@ -32,7 +31,6 @@ export default function AboutPage() {
 }
 
 function AboutPageContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const fromUrl = searchParams.get('from') || null;
   const mapRef = useRef<HTMLDivElement>(null);
@@ -114,13 +112,7 @@ function AboutPageContent() {
         className="min-h-screen bg-white"
         style={{ fontFamily: 'Pretendard, sans-serif' }}
       >
-        {/* ── 공통 헤더 ── */}
-        <YedamHeader
-          activeCategoryIdx={-1}
-          onCategoryChange={(idx) => {
-            router.push(`/?tab=${idx}`);
-          }}
-        />
+        {/* 헤더는 root layout의 GlobalHeader에서 전역 렌더링 */}
 
         {/* ══════════════════════════════════════════ */}
         {/* 1. 인사말                                   */}

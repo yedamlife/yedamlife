@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
   Phone,
@@ -15,8 +15,14 @@ import {
   Layers,
 } from 'lucide-react';
 import { BRAND_COLOR, BRAND_COLOR_LIGHT } from './constants';
-import { CountUp, FaqItem, CtaSection, MembershipSection } from './components';
-import { Checkbox } from '@/components/ui/checkbox';
+import {
+  CountUp,
+  FaqItem,
+  CtaSection,
+  MembershipSection,
+  ReviewCarousel,
+  ReviewItem,
+} from './components';
 import {
   Select,
   SelectContent,
@@ -488,7 +494,7 @@ function PostCareConsultationModal({
       }
 
       toast.success(
-        '상담신청이 완료되었습니다.\n담당자가 빠르게 연락 드리겠습니다.',
+        '상담 신청이 완료되었습니다.\n담당자가 빠르게 연락 드리겠습니다.',
       );
       onClose();
     } catch {
@@ -510,7 +516,9 @@ function PostCareConsultationModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 px-6 py-4 flex items-center justify-between bg-gray-100 rounded-t-2xl shrink-0">
-          <span className="font-bold text-gray-800">사후행정케어 상담신청</span>
+          <span className="font-bold text-gray-800">
+            사후행정케어 상담 신청
+          </span>
           <button
             onClick={onClose}
             className="p-1 hover:bg-black/5 rounded-lg cursor-pointer transition-colors"
@@ -662,7 +670,7 @@ function PostCareConsultationModal({
             className="w-full py-4 rounded-xl text-white font-bold text-base cursor-pointer hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: BRAND_COLOR }}
           >
-            {submitting ? '신청 중...' : '상담신청하기'}
+            {submitting ? '신청 중...' : '상담 신청하기'}
           </button>
         </div>
       </div>
@@ -673,6 +681,16 @@ function PostCareConsultationModal({
 // ── 메인 컴포넌트 ──
 export function PostCare() {
   const [showConsultation, setShowConsultation] = useState(false);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+
+  useEffect(() => {
+    fetch('/api/v1/reviews?category=postcare&limit=6')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) setReviews(json.data);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <>
@@ -723,7 +741,7 @@ export function PostCare() {
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white text-gray-900 text-base font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg cursor-pointer"
                 >
                   <ScrollText className="w-5 h-5" />
-                  무료 상담신청
+                  무료 상담 신청
                 </button>
                 <a
                   href="tel:1660-0959"
@@ -1009,7 +1027,7 @@ export function PostCare() {
                   style={{ backgroundColor: BRAND_COLOR }}
                 >
                   <ScrollText className="w-5 h-5" />
-                  {service.title} 무료 상담신청
+                  {service.title} 무료 상담 신청
                 </button>
               </div>
             </div>
@@ -1073,6 +1091,33 @@ export function PostCare() {
       {/* ══════════════ 멤버십 제휴할인 ══════════════ */}
       <MembershipSection background="bg-white" />
 
+      {/* ══════════════ 고객 후기 ══════════════ */}
+      {reviews.length > 0 && (
+        <section
+          id="sec-postcare-reviews"
+          className="py-16 sm:py-24 overflow-hidden"
+          style={{ backgroundColor: '#fafaf8' }}
+        >
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12">
+              <p
+                className="text-sm font-semibold mb-2"
+                style={{ color: BRAND_COLOR }}
+              >
+                REVIEW
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                고객 후기
+              </h2>
+              <p className="text-gray-500 mt-2 text-sm sm:text-base">
+                예담라이프 사후행정케어를 이용하신 분들의 생생한 후기입니다
+              </p>
+            </div>
+            <ReviewCarousel reviews={reviews} />
+          </div>
+        </section>
+      )}
+
       {/* ══════════════ CTA 하단 ══════════════ */}
       <CtaSection
         overlayOpacity={65}
@@ -1097,7 +1142,7 @@ export function PostCare() {
               className="relative overflow-hidden inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white text-gray-900 text-base font-bold rounded-xl cursor-pointer transition-all hover:bg-gray-100 shadow-lg"
             >
               <ScrollText className="w-5 h-5" />
-              무료 상담신청
+              무료 상담 신청
             </button>
             <a
               href="tel:1660-0959"
@@ -1127,7 +1172,7 @@ export function PostCare() {
           }}
         >
           <ScrollText className="w-5 h-5" />
-          <span className="text-[10px] font-bold mt-0.5">상담신청</span>
+          <span className="text-[10px] font-bold mt-0.5">상담 신청</span>
         </button>
         <a
           href="tel:1660-0959"
@@ -1137,7 +1182,7 @@ export function PostCare() {
           <span className="text-[9px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
             빠른
             <br />
-            상담신청
+            상담 신청
           </span>
         </a>
       </div>
@@ -1150,14 +1195,14 @@ export function PostCare() {
             className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
             <Phone className="w-5 h-5" />
-            <span className="text-base font-bold">전화상담</span>
+            <span className="text-base font-bold">전화 상담</span>
           </a>
           <button
             onClick={() => setShowConsultation(true)}
             className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
             <ScrollText className="w-5 h-5" />
-            <span className="text-base font-bold">상담신청</span>
+            <span className="text-base font-bold">상담 신청</span>
           </button>
         </div>
       </div>

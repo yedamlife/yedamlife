@@ -16,17 +16,17 @@
 
 ## 1. 개요
 
-유품정리 랜딩 페이지(`estate-cleanup.tsx`)에서 수집하는 견적 상담신청 데이터를 서버 API + DB로 연동한다.
+유품정리 랜딩 페이지(`estate-cleanup.tsx`)에서 수집하는 견적 상담 신청 데이터를 서버 API + DB로 연동한다.
 
-| #   | 기능          | 설명                                                                                        |
-| --- | ------------- | ------------------------------------------------------------------------------------------- |
-| 1   | 견적 상담신청 | 유품정리 견적 상담 모달 폼 (성함, 연락처, 주소, 서비스종류, 평수, 층수, 주거형태, 방문날짜) |
+| #   | 기능           | 설명                                                                                        |
+| --- | -------------- | ------------------------------------------------------------------------------------------- |
+| 1   | 견적 상담 신청 | 유품정리 견적 상담 모달 폼 (성함, 연락처, 주소, 서비스종류, 평수, 층수, 주거형태, 방문날짜) |
 
 ---
 
 ## 2. DB 테이블 설계
 
-### 2-1. 견적 상담신청 내역 (`ec_estimate_requests`)
+### 2-1. 견적 상담 신청 내역 (`ec_estimate_requests`)
 
 > 유품정리 견적 상담 모달 폼 데이터
 
@@ -76,11 +76,11 @@ ALTER TABLE ec_estimate_requests ENABLE ROW LEVEL SECURITY;
 
 ### Base Path: `/api/v1/estate-cleanup`
 
-### 3-1. 견적 상담신청 API
+### 3-1. 견적 상담 신청 API
 
-| Method | Endpoint                          | 설명               |
-| ------ | --------------------------------- | ------------------ |
-| POST   | `/api/v1/estate-cleanup/estimate` | 견적 상담신청 생성 |
+| Method | Endpoint                          | 설명                |
+| ------ | --------------------------------- | ------------------- |
+| POST   | `/api/v1/estate-cleanup/estimate` | 견적 상담 신청 생성 |
 
 **Request Body:**
 
@@ -144,7 +144,7 @@ ALTER TABLE ec_estimate_requests ENABLE ROW LEVEL SECURITY;
 
 ### Phase 2: API 구현
 
-- [ ] `src/app/api/v1/estate-cleanup/estimate/route.ts` - 견적 상담신청 API
+- [ ] `src/app/api/v1/estate-cleanup/estimate/route.ts` - 견적 상담 신청 API
 
 ### Phase 3: 프론트엔드 연동
 
@@ -160,7 +160,7 @@ src/
 │   └── api/
 │       └── v1/
 │           └── estate-cleanup/
-│               └── estimate/route.ts      -- 견적 상담신청
+│               └── estimate/route.ts      -- 견적 상담 신청
 └── components/
     └── template/
         └── YedamLife/
@@ -171,6 +171,6 @@ src/
 
 기존 패턴을 따라 유품정리는 `ec_` prefix를 사용한다.
 
-| 테이블                 | Prefix | 용도                   |
-| ---------------------- | ------ | ---------------------- |
-| `ec_estimate_requests` | `ec_`  | 유품정리 견적 상담신청 |
+| 테이블                 | Prefix | 용도                    |
+| ---------------------- | ------ | ----------------------- |
+| `ec_estimate_requests` | `ec_`  | 유품정리 견적 상담 신청 |

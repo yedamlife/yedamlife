@@ -21,7 +21,7 @@
 
 | #   | 기능                  | 설명                                          |
 | --- | --------------------- | --------------------------------------------- |
-| 1   | 상담신청              | 다이렉트 장례 설계 설문(9단계) 기반 상담 요청 |
+| 1   | 상담 신청             | 다이렉트 장례 설계 설문(9단계) 기반 상담 요청 |
 | 2   | 후불제상조 가입신청서 | 일반 회원 가입 신청 (membership/general)      |
 | 3   | 다이렉트 장례 설계    | 장례 운구 서비스 예약 (ReservationModal)      |
 
@@ -42,7 +42,7 @@
 
 ## 3. DB 테이블 설계
 
-### 3-1. 상담신청 내역 (`gf_consultation_requests`)
+### 3-1. 상담 신청 내역 (`gf_consultation_requests`)
 
 > 9단계 설문 결과 + 연락처를 저장
 
@@ -157,11 +157,11 @@ ALTER TABLE gf_direct_requests ENABLE ROW LEVEL SECURITY;
 
 ### Base Path: `/api/v1/general-funeral`
 
-### 4-1. 상담신청 API
+### 4-1. 상담 신청 API
 
-| Method | Endpoint                               | 설명          |
-| ------ | -------------------------------------- | ------------- |
-| POST   | `/api/v1/general-funeral/consultation` | 상담신청 생성 |
+| Method | Endpoint                               | 설명           |
+| ------ | -------------------------------------- | -------------- |
+| POST   | `/api/v1/general-funeral/consultation` | 상담 신청 생성 |
 
 **Request Body:**
 
@@ -299,7 +299,7 @@ ALTER TABLE gf_direct_requests ENABLE ROW LEVEL SECURITY;
 
 ### Phase 2: API 구현
 
-- [ ] `src/app/api/v1/general-funeral/consultation/route.ts` - 상담신청 API
+- [ ] `src/app/api/v1/general-funeral/consultation/route.ts` - 상담 신청 API
 - [ ] `src/app/api/v1/general-funeral/membership/route.ts` - 가입신청서 API
 - [ ] `src/app/api/v1/general-funeral/direct-design/route.ts` - 다이렉트 장례 설계 API
 

@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, type ReactNode } from 'react';
-import { ChevronRight, FileText } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
+import { ChevronRight, ChevronLeft, FileText, User, Quote } from 'lucide-react';
+import useEmblaCarousel from 'embla-carousel-react';
+import Link from 'next/link';
 import { BRAND_COLOR, BRAND_COLOR_LIGHT, BRAND_COLOR_PREMIUM, membershipServices } from './constants';
 
 const CTA_BG_URL =
@@ -315,6 +317,168 @@ export function Ticker<T>({
           {renderItem(item)}
         </div>
       ))}
+    </div>
+  );
+}
+
+// ── 공통 후기 캐러셀 ──
+export interface ReviewItem {
+  id: number;
+  author: string;
+  written_at: string;
+  title: string | null;
+  content: string;
+}
+
+export function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, '').replace(/&[^;]+;/g, ' ').trim();
+}
+
+// 이름 가운데 글자 마스킹 (예: 홍길동 → 홍*동, 홍길동일 → 홍**일, 홍길 → 홍*)
+export function maskName(name: string): string {
+  if (!name) return '';
+  const trimmed = name.trim();
+  const chars = Array.from(trimmed);
+  if (chars.length <= 1) return trimmed;
+  if (chars.length === 2) return `${chars[0]}*`;
+  return `${chars[0]}${'*'.repeat(chars.length - 2)}${chars[chars.length - 1]}`;
+}
+
+export function ReviewCarousel({
+  reviews,
+  accentColor = BRAND_COLOR,
+}: {
+  reviews: ReviewItem[];
+  accentColor?: string;
+}) {
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: false,
+    align: 'start',
+    slidesToScroll: 1,
+    breakpoints: {
+      '(min-width: 768px)': { slidesToScroll: 1 },
+    },
+  });
+
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(true);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+    setCanPrev(emblaApi.canScrollPrev());
+    setCanNext(emblaApi.canScrollNext());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on('select', onSelect);
+    emblaApi.on('reInit', onSelect);
+    return () => {
+      emblaApi.off('select', onSelect);
+      emblaApi.off('reInit', onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+
+  const snapCount = emblaApi?.scrollSnapList().length ?? 0;
+
+  if (reviews.length === 0) return null;
+
+  return (
+    <div className="relative">
+      {/* 화살표 — 좌 */}
+      <button
+        onClick={scrollPrev}
+        disabled={!canPrev}
+        aria-label="이전 후기"
+        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 sm:-translate-x-5 z-10 flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white shadow-md border border-gray-200 transition-opacity disabled:opacity-30"
+      >
+        <ChevronLeft className="w-5 h-5 text-gray-600" />
+      </button>
+
+      {/* 카드 트랙 */}
+      <div className="overflow-hidden" ref={emblaRef}>
+        <div className="flex gap-4 sm:gap-5">
+          {reviews.map((review) => {
+            const plain = stripHtml(review.content);
+            const snippet = plain.slice(0, 160);
+            return (
+              <Link
+                key={review.id}
+                href={`/reviews/${review.id}`}
+                className="flex-none w-[80vw] sm:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)] flex flex-col p-6 rounded-2xl border border-gray-100 bg-white hover:shadow-md hover:border-gray-200 transition-all cursor-pointer"
+              >
+                <Quote
+                  className="w-6 h-6 mb-3 opacity-20"
+                  style={{ color: accentColor }}
+                />
+                {review.title && (
+                  <p
+                    className="text-xs font-semibold mb-2 line-clamp-1"
+                    style={{ color: accentColor }}
+                  >
+                    {review.title}
+                  </p>
+                )}
+                <p className="text-gray-600 text-sm leading-relaxed flex-1 line-clamp-4">
+                  {snippet}
+                  {snippet.length < plain.length ? '…' : ''}
+                </p>
+                <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
+                      <User className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {maskName(review.author)}
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-400">
+                    {new Date(review.written_at).toLocaleDateString('ko-KR', {
+                      year: 'numeric',
+                      month: 'long',
+                    })}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 화살표 — 우 */}
+      <button
+        onClick={scrollNext}
+        disabled={!canNext}
+        aria-label="다음 후기"
+        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 sm:translate-x-5 z-10 flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white shadow-md border border-gray-200 transition-opacity disabled:opacity-30"
+      >
+        <ChevronRight className="w-5 h-5 text-gray-600" />
+      </button>
+
+      {/* 점 인디케이터 */}
+      {snapCount > 1 && (
+        <div className="flex justify-center gap-1.5 mt-6">
+          {Array.from({ length: snapCount }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => emblaApi?.scrollTo(i)}
+              aria-label={`후기 ${i + 1}`}
+              className="w-1.5 h-1.5 rounded-full transition-all"
+              style={{
+                backgroundColor:
+                  i === selectedIndex ? accentColor : '#d1d5db',
+                width: i === selectedIndex ? '20px' : '6px',
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -38,7 +38,7 @@ export const scrollSpySections: ScrollSpySection[][] = [
     { id: 'reviews', label: '고객 후기' },
     { id: 'sec-clients', label: '주요 고객사' },
     { id: 'sec-emergency', label: '긴급출동' },
-    { id: 'inquiry', label: '상담신청' },
+    { id: 'inquiry', label: '상담 신청' },
   ],
   // Tab 1: 기업 상조
   [
@@ -172,38 +172,10 @@ export const topNavItems: {
   {
     label: '고객센터',
     href: '',
-    subItems: [
-      { label: '공지사항', href: '#contact' },
-      {
-        label: '카톡상담신청',
-        href: 'https://forms.gle/yp4FxcD7yUNERkzp7',
-        external: true,
-      },
-    ],
+    subItems: [{ label: '공지사항', href: '/notices' }],
   },
 ];
 
-// ── 상단 로테이션 배너 ──
-export const topBanners = [
-  {
-    text: '오직 예담라이프에서 가입하면 후불제 장례서비스 제공!',
-    icon: Flower2,
-    bgColor: '#f3f4f6',
-    textColor: '#374151',
-  },
-  {
-    text: '지금 상담신청하고, 최대 지원금 128만원 받기',
-    icon: Sparkles,
-    bgColor: '#eef2ff',
-    textColor: '#4338ca',
-  },
-  {
-    text: '멤버십 가입하면 포인트 적립! 지금 바로 상담받기',
-    icon: Heart,
-    bgColor: '#fdf2f8',
-    textColor: '#be185d',
-  },
-];
 
 // ── Google Form URL ──
 export const GOOGLE_FORM_URL = 'https://forms.gle/yp4FxcD7yUNERkzp7';
@@ -471,9 +443,9 @@ export const productDetails: Record<
       {
         category: '장의차량',
         items: [
-          { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
           { label: '장의버스', value: '택1 / 150km' },
           { label: '리무진', value: '택1 / 150km' },
+          { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
         ],
       },
       {
@@ -523,9 +495,9 @@ export const productDetails: Record<
       {
         category: '장의차량',
         items: [
-          { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
           { label: '장의버스', value: '택1 / 180km' },
           { label: '리무진', value: '택1 / 180km' },
+          { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
         ],
       },
       {
@@ -576,9 +548,9 @@ export const productDetails: Record<
       {
         category: '장의차량',
         items: [
-          { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
           { label: '장의버스', value: '200km' },
           { label: '리무진', value: '200km' },
+          { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
         ],
       },
       {
@@ -632,9 +604,9 @@ export const productDetails: Record<
       {
         category: '장의차량',
         items: [
-          { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
           { label: '장의버스', value: '300km' },
           { label: '리무진', value: '300km' },
+          { label: '앰뷸런스', value: '사전가입 시 관내 이송 지원 혜택' },
         ],
       },
       {
@@ -850,16 +822,16 @@ export const comparisonData = [
     category: '장의차량',
     items: [
       {
-        label: '앰뷸런스',
-        values: ['사전가입 시 관내 이송 지원 혜택', '', '', ''],
-      },
-      {
         label: '장의버스',
         values: ['택1 / 150km', '택1 / 180km', '200km', '300km'],
       },
       {
         label: '리무진',
         values: ['택1 / 150km', '택1 / 180km', '200km', '300km'],
+      },
+      {
+        label: '앰뷸런스',
+        values: ['사전가입 시 관내 이송 지원 혜택', '', '', ''],
       },
     ],
   },
@@ -907,12 +879,8 @@ export const comparisonData = [
     items: [
       {
         label: '운구지원',
-        values: [
-          '-',
-          '-',
-          '2인 지원\n(수도권/화장장 한함)',
-          '4인 지원\n(수도권/화장장 한함)',
-        ],
+        sub: '(수도권/화장장 한함)',
+        values: ['-', '-', '2인 지원', '4인 지원'],
       },
     ],
   },
@@ -1078,7 +1046,11 @@ export const corpComparisonData = [
     category: '인력지원',
     items: [
       { label: '장례지도사', values: ['1명*3일', '1명*3일'] },
-      { label: '접객 도우미', sub: '(1일 10시간 기준)', values: ['3명', '4명'] },
+      {
+        label: '접객 도우미',
+        sub: '(1일 10시간 기준)',
+        values: ['3명', '4명'],
+      },
       { label: '입관상례사', values: ['1명', '1명'] },
     ],
   },

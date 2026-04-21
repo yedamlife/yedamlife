@@ -29,7 +29,7 @@ const columns: Column<Row>[] = [
 export default function Page() {
   return (
     <ServiceListPage
-      title="일반상조 - 상담신청"
+      title="일반상조 - 상담 신청"
       apiPath="/api/v1/admin/general-funeral/consultations"
       columns={columns}
     />

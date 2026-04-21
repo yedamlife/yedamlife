@@ -5,7 +5,13 @@ import { Phone, MapPin, X, ScrollText, Loader2, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { CountUp, CtaSection, MembershipSection } from './components';
+import {
+  CountUp,
+  CtaSection,
+  MembershipSection,
+  ReviewCarousel,
+  ReviewItem,
+} from './components';
 import {
   Select,
   SelectContent,
@@ -443,6 +449,7 @@ const REGIONS: Record<string, string[]> = {
   제주: ['전체', '제주시', '서귀포시'],
 };
 
+// ── 후기 ──
 // ── 장지 상품 데이터 (API) ──
 interface BurialProductRow {
   id: number;
@@ -459,7 +466,7 @@ interface BurialProductRow {
 // ── 종교 목록 ──
 const RELIGIONS = ['해당 없음', '기독교', '천주교', '불교', '원불교', '기타'];
 
-// ── 상담신청 모달 ──
+// ── 상담 신청 모달 ──
 export function BurialConsultationModal({
   open,
   onClose,
@@ -541,7 +548,7 @@ export function BurialConsultationModal({
       const result = await res.json();
       if (result.success) {
         toast.success(
-          '상담신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.',
+          '상담 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.',
         );
         onClose();
       } else {
@@ -574,7 +581,7 @@ export function BurialConsultationModal({
         <div className="px-6 py-5 shrink-0 border-b border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">상담신청</h2>
+              <h2 className="text-lg font-bold text-gray-900">상담 신청</h2>
               <p className="text-sm text-gray-500 mt-1">
                 소중한 분의 마지막 안식처를 위해 전문 상담을 무료로 제공해
                 드립니다.
@@ -765,6 +772,8 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const initializedRef = useRef(false);
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
 
   const [selectedType, setSelectedType] = useState<BurialType | '전체'>(
     '봉안당',
@@ -780,16 +789,16 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
   const [loading, setLoading] = useState(true);
   const [showResults, setShowResults] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
 
-  // 섹션 ID 목록 (스크롤 스파이용)
-  const sectionIds = [
-    'sec-burial-hero',
-    'sec-burial-trust',
-    'sec-burial-types',
-    'sec-burial-products',
-    'sec-burial-guide',
-    'sec-burial-membership',
-  ];
+  useEffect(() => {
+    fetch('/api/v1/reviews?category=burial&limit=6')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) setReviews(json.data);
+      })
+      .catch(() => {});
+  }, []);
 
   // URL 쿼리 파라미터에서 초기값 복원
   useEffect(() => {
@@ -800,7 +809,10 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
     const qRegion = searchParams.get('sido');
     const qDistrict = searchParams.get('sigungu');
 
-    if (qType && ['봉안당', '수목장', '공원묘지', '해양장', '전체'].includes(qType)) {
+    if (
+      qType &&
+      ['봉안당', '수목장', '공원묘지', '해양장', '전체'].includes(qType)
+    ) {
       setSelectedType(qType as BurialType | '전체');
     }
     if (qRegion) setSelectedRegion(qRegion);
@@ -814,50 +826,27 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
       }, 300);
     } else if (qType || qRegion || qDistrict) {
       setTimeout(() => {
-        document.getElementById('sec-burial-products')?.scrollIntoView({ behavior: 'smooth' });
+        document
+          .getElementById('sec-burial-products')
+          ?.scrollIntoView({ behavior: 'smooth' });
       }, 300);
     }
   }, [searchParams]);
 
-  // 스크롤 시 URL hash 동기화
-  useEffect(() => {
-    const els = sectionIds
-      .map((id) => document.getElementById(id))
-      .filter(Boolean) as HTMLElement[];
-    if (els.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            const id = entry.target.id;
-            if (window.location.hash !== `#${id}`) {
-              history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${id}`);
-            }
-            break;
-          }
-        }
-      },
-      { rootMargin: '-40% 0px -55% 0px' },
-    );
-
-    els.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-
-  // 필터 변경 시 URL 쿼리 파라미터 동기화
-  useEffect(() => {
-    if (!initializedRef.current) return;
-    const params = new URLSearchParams();
-    if (selectedType !== '봉안당') params.set('category', selectedType);
-    if (selectedRegion && selectedRegion !== 'all-regions')
-      params.set('sido', selectedRegion);
-    if (selectedDistrict && selectedDistrict !== '전체')
-      params.set('sigungu', selectedDistrict);
-    const qs = params.toString();
-    const url = qs ? `${pathname}?${qs}` : pathname;
-    router.replace(url, { scroll: false });
-  }, [selectedType, selectedRegion, selectedDistrict, pathname, router]);
+  // 필터 변경 시 URL 쿼리 파라미터 동기화 — 이벤트 핸들러에서 직접 호출
+  const syncFilterUrl = useCallback(
+    (type: BurialType | '전체', region: string, district: string) => {
+      if (!initializedRef.current) return;
+      const params = new URLSearchParams();
+      if (type !== '봉안당') params.set('category', type);
+      if (region && region !== 'all-regions') params.set('sido', region);
+      if (district && district !== '전체') params.set('sigungu', district);
+      const qs = params.toString();
+      const url = qs ? `${pathnameRef.current}?${qs}` : pathnameRef.current;
+      router.replace(url, { scroll: false });
+    },
+    [router],
+  );
 
   const buildApiQuery = useCallback(
     (nextCursor: string | null) => {
@@ -885,7 +874,9 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
     (async () => {
       const fetchStart = Date.now();
       try {
-        const res = await fetch(`/api/v1/burial-plus/products?${buildApiQuery(null)}`);
+        const res = await fetch(
+          `/api/v1/burial-plus/products?${buildApiQuery(null)}`,
+        );
         const json = await res.json();
         if (cancelled) return;
 
@@ -905,22 +896,27 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
         if (!cancelled) toast.error('상품 목록을 불러오지 못했습니다.');
       } finally {
         if (!cancelled) {
-
           setLoading(false);
           // 카드가 fade-in 되도록 약간의 딜레이
-          setTimeout(() => { if (!cancelled) setShowResults(true); }, 50);
+          setTimeout(() => {
+            if (!cancelled) setShowResults(true);
+          }, 50);
         }
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [buildApiQuery]);
 
   const loadMore = async () => {
     if (!hasMore || loadingMore || !cursor) return;
     setLoadingMore(true);
     try {
-      const res = await fetch(`/api/v1/burial-plus/products?${buildApiQuery(cursor)}`);
+      const res = await fetch(
+        `/api/v1/burial-plus/products?${buildApiQuery(cursor)}`,
+      );
       const json = await res.json();
       if (json.success) {
         setProducts((prev) => [...prev, ...json.data]);
@@ -998,14 +994,14 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                     }}
                   />
                   <ScrollText className="relative w-5 h-5" />
-                  <span className="relative">상담신청</span>
+                  <span className="relative">상담 신청</span>
                 </button>
                 <a
                   href="tel:1660-0959"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
                 >
                   <Phone className="w-5 h-5" />
-                  전화상담
+                  전화 상담
                 </a>
               </div>
             </div>
@@ -1017,7 +1013,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-6 grid grid-cols-2 sm:grid-cols-4 gap-y-4 divide-x-0 sm:divide-x divide-gray-200">
             {[
               { label: '상담 가능 장지', value: 100, suffix: '+ 곳' },
-              { label: '상담신청 건수', value: 28050, suffix: '건' },
+              { label: '상담 신청 건수', value: 28050, suffix: '건' },
               { label: '계약 체결 건수', value: 25342, suffix: '건' },
               { label: '고객 만족도', value: 98, suffix: '%' },
             ].map((stat) => (
@@ -1038,7 +1034,10 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
       </section>
 
       {/* ══════════════ 차별점 섹션 ══════════════ */}
-      <section id="sec-burial-trust" className="py-20 sm:py-28 overflow-hidden bg-white">
+      <section
+        id="sec-burial-trust"
+        className="py-20 sm:py-28 overflow-hidden bg-white"
+      >
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           {/* 헤더 */}
           <div className="text-center mb-14 sm:mb-20">
@@ -1141,7 +1140,11 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
               return (
                 <button
                   key={bt.type}
-                  onClick={() => setSelectedType(isActive ? '전체' : bt.type)}
+                  onClick={() => {
+                    const next = isActive ? '전체' : bt.type;
+                    setSelectedType(next);
+                    syncFilterUrl(next, selectedRegion, selectedDistrict);
+                  }}
                   className={`relative flex flex-col items-center text-center px-4 py-6 sm:py-8 rounded-2xl border transition-all cursor-pointer ${
                     isActive
                       ? 'bg-white shadow-md'
@@ -1174,10 +1177,22 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                     className="mt-3 w-full py-2 rounded-lg text-[11px] sm:text-xs font-medium text-gray-500 bg-gray-100 transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (!isActive) setSelectedType(bt.type);
-                      setTimeout(() => {
-                        document.getElementById('sec-burial-products')?.scrollIntoView({ behavior: 'smooth' });
-                      }, isActive ? 0 : 100);
+                      if (!isActive) {
+                        setSelectedType(bt.type);
+                        syncFilterUrl(
+                          bt.type,
+                          selectedRegion,
+                          selectedDistrict,
+                        );
+                      }
+                      setTimeout(
+                        () => {
+                          document
+                            .getElementById('sec-burial-products')
+                            ?.scrollIntoView({ behavior: 'smooth' });
+                        },
+                        isActive ? 0 : 100,
+                      );
                     }}
                   >
                     상품 상세 보기 &nbsp;→
@@ -1203,6 +1218,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                 onValueChange={(v) => {
                   setSelectedRegion(v);
                   setSelectedDistrict('');
+                  syncFilterUrl(selectedType, v, '');
                 }}
               >
                 <SelectTrigger className="h-auto px-3 py-3 rounded-xl border-gray-200 bg-white text-sm sm:w-48 sm:px-4">
@@ -1220,7 +1236,10 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
 
               <Select
                 value={selectedDistrict}
-                onValueChange={(v) => setSelectedDistrict(v)}
+                onValueChange={(v) => {
+                  setSelectedDistrict(v);
+                  syncFilterUrl(selectedType, selectedRegion, v);
+                }}
                 disabled={!selectedRegion || selectedRegion === 'all-regions'}
               >
                 <SelectTrigger className="h-auto px-3 py-3 rounded-xl border-gray-200 bg-white text-sm sm:w-48 sm:px-4">
@@ -1237,11 +1256,11 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
 
               <Select
                 value={selectedType === '전체' ? 'all-types' : selectedType}
-                onValueChange={(v) =>
-                  setSelectedType(
-                    v === 'all-types' ? '전체' : (v as BurialType),
-                  )
-                }
+                onValueChange={(v) => {
+                  const next = v === 'all-types' ? '전체' : (v as BurialType);
+                  setSelectedType(next);
+                  syncFilterUrl(next, selectedRegion, selectedDistrict);
+                }}
               >
                 <SelectTrigger className="h-auto px-3 py-3 rounded-xl border-gray-200 bg-white text-sm sm:w-48 sm:px-4">
                   <SelectValue placeholder="봉안(납골)당" />
@@ -1302,16 +1321,42 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
               </div>
               <style jsx>{`
                 @keyframes smoothMorph {
-                  0% { transform: scale(1) rotate(0deg); border-radius: 50%; }
-                  20% { transform: scale(0.9) rotate(72deg); border-radius: 35%; }
-                  40% { transform: scale(1.1) rotate(144deg); border-radius: 15%; }
-                  60% { transform: scale(0.85) rotate(216deg); border-radius: 8%; }
-                  80% { transform: scale(1.05) rotate(288deg); border-radius: 25%; }
-                  100% { transform: scale(1) rotate(360deg); border-radius: 50%; }
+                  0% {
+                    transform: scale(1) rotate(0deg);
+                    border-radius: 50%;
+                  }
+                  20% {
+                    transform: scale(0.9) rotate(72deg);
+                    border-radius: 35%;
+                  }
+                  40% {
+                    transform: scale(1.1) rotate(144deg);
+                    border-radius: 15%;
+                  }
+                  60% {
+                    transform: scale(0.85) rotate(216deg);
+                    border-radius: 8%;
+                  }
+                  80% {
+                    transform: scale(1.05) rotate(288deg);
+                    border-radius: 25%;
+                  }
+                  100% {
+                    transform: scale(1) rotate(360deg);
+                    border-radius: 50%;
+                  }
                 }
                 @keyframes aiDot {
-                  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
-                  40% { opacity: 1; transform: scale(1.2); }
+                  0%,
+                  80%,
+                  100% {
+                    opacity: 0.3;
+                    transform: scale(0.8);
+                  }
+                  40% {
+                    opacity: 1;
+                    transform: scale(1.2);
+                  }
                 }
               `}</style>
             </div>
@@ -1319,11 +1364,14 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
             <>
               <div
                 className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5 transition-all duration-500 ${
-                  showResults ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  showResults
+                    ? 'opacity-100 translate-y-0'
+                    : 'opacity-0 translate-y-4'
                 }`}
               >
                 {products.map((product) => {
-                  const thumb = product.thumbnail_url || product.photos?.[0]?.fileurl_full;
+                  const thumb =
+                    product.thumbnail_url || product.photos?.[0]?.fileurl_full;
                   return (
                     <Link
                       key={product.id}
@@ -1345,7 +1393,10 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                         {product.is_recommended && (
                           <span
                             className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold shadow-sm"
-                            style={{ backgroundColor: '#ffffff', color: BRAND_COLOR }}
+                            style={{
+                              backgroundColor: '#ffffff',
+                              color: BRAND_COLOR,
+                            }}
                           >
                             추천
                           </span>
@@ -1374,16 +1425,6 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                             </span>
                           ))}
                         </div>
-                        {product.min_price != null && product.min_price > 0 ? (
-                          <p className="text-sm sm:text-base font-extrabold text-gray-900">
-                            {product.min_price.toLocaleString()}
-                            <span className="text-xs font-normal text-gray-500">
-                              원~
-                            </span>
-                          </p>
-                        ) : (
-                          <p className="text-xs text-gray-400">가격 문의</p>
-                        )}
                       </div>
                     </Link>
                   );
@@ -1396,7 +1437,9 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                     disabled={loadingMore}
                     className="px-8 py-3 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {loadingMore && (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    )}
                     {loadingMore ? '불러오는 중...' : '더보기'}
                   </button>
                 </div>
@@ -1493,7 +1536,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                     />
                   </svg>
                 ),
-                title: '장지 상담신청',
+                title: '장지 상담 신청',
                 desc: '24시간 365일 무료 상담\n전문 상담사가 친절하게 안내드립니다.',
               },
               {
@@ -1610,6 +1653,32 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
         <MembershipSection background="bg-white" />
       </div>
 
+      {/* ══════════════ 후기 섹션 ══════════════ */}
+      {reviews.length > 0 && (
+        <section
+          id="sec-burial-reviews"
+          className="py-16 sm:py-24 overflow-hidden bg-white"
+        >
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12">
+              <p
+                className="text-sm font-semibold mb-2"
+                style={{ color: BRAND_COLOR }}
+              >
+                REVIEW
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                고객 후기
+              </h2>
+              <p className="text-gray-500 mt-2 text-sm sm:text-base">
+                예담라이프 장지 서비스를 경험하신 분들의 생생한 후기입니다
+              </p>
+            </div>
+            <ReviewCarousel reviews={reviews} />
+          </div>
+        </section>
+      )}
+
       {/* ══════════════ CTA 섹션 ══════════════ */}
       <CtaSection
         overlayOpacity={60}
@@ -1645,7 +1714,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                 }}
               />
               <ScrollText className="relative w-5 h-5" />
-              <span className="relative">상담신청</span>
+              <span className="relative">상담 신청</span>
             </button>
             <a
               href="tel:1660-0959"
@@ -1653,13 +1722,13 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
               style={{ fontFamily: 'Pretendard, sans-serif' }}
             >
               <Phone className="w-5 h-5" />
-              전화상담
+              전화 상담
             </a>
           </>
         }
       />
 
-      {/* 상담신청 모달 */}
+      {/* 상담 신청 모달 */}
       <BurialConsultationModal
         open={showConsultation}
         onClose={() => setShowConsultation(false)}
@@ -1676,7 +1745,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
           }}
         >
           <ScrollText className="w-5 h-5" />
-          <span className="text-[10px] font-bold mt-0.5">상담신청</span>
+          <span className="text-[10px] font-bold mt-0.5">상담 신청</span>
         </button>
         <a
           href="tel:1660-0959"
@@ -1686,7 +1755,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
           <span className="text-[9px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
             빠른
             <br />
-            상담신청
+            상담 신청
           </span>
         </a>
       </div>
@@ -1699,14 +1768,14 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
             className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
             <Phone className="w-5 h-5" />
-            <span className="text-base font-bold">전화상담</span>
+            <span className="text-base font-bold">전화 상담</span>
           </a>
           <button
             onClick={() => setShowConsultation(true)}
             className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
             <ScrollText className="w-5 h-5" />
-            <span className="text-base font-bold">상담신청</span>
+            <span className="text-base font-bold">상담 신청</span>
           </button>
         </div>
       </div>

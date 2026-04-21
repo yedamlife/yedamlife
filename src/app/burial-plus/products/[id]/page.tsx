@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   MapPin,
-  Building2,
   Car,
   Bus,
   ScrollText,
@@ -20,7 +19,10 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { BRAND_COLOR, BRAND_COLOR_LIGHT } from '@/components/template/YedamLife/constants';
+import {
+  BRAND_COLOR,
+  BRAND_COLOR_LIGHT,
+} from '@/components/template/YedamLife/constants';
 import { BurialConsultationModal } from '@/components/template/YedamLife/burial-plus';
 
 const FACILITY_TYPE_LABEL: Record<string, string> = {
@@ -101,6 +103,9 @@ export default function BurialProductDetailPage() {
   const [data, setData] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showConsultation, setShowConsultation] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    'intro' | 'price' | 'photos' | 'facility'
+  >('intro');
 
   useEffect(() => {
     fetch(`/api/v1/burial-plus/products/${params.id}`)
@@ -110,6 +115,72 @@ export default function BurialProductDetailPage() {
       })
       .finally(() => setLoading(false));
   }, [params.id]);
+
+  useEffect(() => {
+    const sectionKeys = ['intro', 'photos', 'price', 'facility'] as const;
+    type SectionKey = (typeof sectionKeys)[number];
+
+    const getSections = () =>
+      sectionKeys
+        .map((key) => ({
+          key,
+          element: document.getElementById(`section-${key}`),
+        }))
+        .filter(
+          (item): item is { key: SectionKey; element: HTMLElement } =>
+            item.element !== null,
+        );
+
+    const updateActiveTabByScroll = () => {
+      const sections = getSections();
+      if (sections.length === 0) return;
+
+      const viewportHeight = window.innerHeight;
+      const activationLine = 200;
+      const bottomTrigger = viewportHeight * 0.6;
+
+      const visibleIndices = sections
+        .map((section, index) => {
+          const rect = section.element.getBoundingClientRect();
+          const isEnteringFromBottom =
+            rect.top < bottomTrigger && rect.bottom > 0;
+          return isEnteringFromBottom ? index : -1;
+        })
+        .filter((index) => index >= 0);
+
+      if (visibleIndices.length > 0) {
+        const lastIndex = visibleIndices[visibleIndices.length - 1];
+        setActiveTab(sections[lastIndex].key);
+        return;
+      }
+
+      let currentKey: SectionKey = sections[0].key;
+      for (const section of sections) {
+        if (section.element.getBoundingClientRect().top <= activationLine) {
+          currentKey = section.key;
+        }
+      }
+
+      const scrolledToBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 4;
+      if (scrolledToBottom) {
+        currentKey = sections[sections.length - 1].key;
+      }
+
+      setActiveTab(currentKey);
+    };
+
+    updateActiveTabByScroll();
+    window.addEventListener('scroll', updateActiveTabByScroll, {
+      passive: true,
+    });
+    window.addEventListener('resize', updateActiveTabByScroll);
+    return () => {
+      window.removeEventListener('scroll', updateActiveTabByScroll);
+      window.removeEventListener('resize', updateActiveTabByScroll);
+    };
+  }, [data]);
 
   if (loading) {
     return (
@@ -142,7 +213,12 @@ export default function BurialProductDetailPage() {
   const heroImage = data.thumbnail_url || photos[0]?.fileurl_full;
 
   const facilityList = [
-    { key: 'parking', label: '주차장', icon: ParkingCircle, extra: facilities.parkingCount ? `(${facilities.parkingCount}대)` : '' },
+    {
+      key: 'parking',
+      label: '주차장',
+      icon: ParkingCircle,
+      extra: facilities.parkingCount ? `(${facilities.parkingCount}대)` : '',
+    },
     { key: 'mealroom', label: '식당', icon: Utensils },
     { key: 'waitroom', label: '대기실', icon: Armchair },
     { key: 'handicap', label: '장애인 편의시설', icon: Accessibility },
@@ -150,6 +226,22 @@ export default function BurialProductDetailPage() {
   ] as const;
 
   const activeFacilities = facilityList.filter((f) => facilities[f.key]);
+  const tabs = [
+    { key: 'intro' as const, label: '소개' },
+    { key: 'photos' as const, label: '사진' },
+    { key: 'price' as const, label: '가격' },
+    { key: 'facility' as const, label: '시설' },
+  ];
+
+  const handleTabClick = (tab: 'intro' | 'price' | 'photos' | 'facility') => {
+    setActiveTab(tab);
+    const section = document.getElementById(`section-${tab}`);
+    if (section) {
+      const targetTop =
+        section.getBoundingClientRect().top + window.scrollY - 150;
+      window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#fafaf8]">
@@ -170,7 +262,7 @@ export default function BurialProductDetailPage() {
 
       {/* 히어로 이미지 */}
       {heroImage && (
-        <div className="w-full aspect-[21/9] sm:aspect-[3/1] bg-gray-200 overflow-hidden">
+        <div className="w-full aspect-21/9 sm:aspect-3/1 bg-gray-200 overflow-hidden">
           <img
             src={heroImage}
             alt={data.company_name}
@@ -180,194 +272,268 @@ export default function BurialProductDetailPage() {
       )}
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-12">
-        {/* 기본 정보 카드 */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            {data.categories.map((c) => (
-              <span
-                key={c}
-                className="px-3 py-1 rounded-full text-xs font-semibold border"
-                style={{
-                  color: BRAND_COLOR,
-                  borderColor: BRAND_COLOR_LIGHT,
-                  backgroundColor: BRAND_COLOR_LIGHT,
-                }}
-              >
-                {c}
-              </span>
-            ))}
-            {data.public_label && (
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                {data.public_label}
-              </span>
-            )}
-          </div>
-
-          <h2
-            className="text-xl sm:text-2xl font-bold text-gray-900 mb-2"
-            style={{ fontFamily: 'Pretendard, sans-serif' }}
-          >
-            {data.company_name}
-          </h2>
-
-          {data.min_price != null && data.min_price > 0 && (
-            <p className="text-lg sm:text-xl font-extrabold mb-6" style={{ color: BRAND_COLOR }}>
-              {data.min_price.toLocaleString()}
-              <span className="text-sm font-normal text-gray-500">원~</span>
-            </p>
-          )}
-
-          <div className="space-y-3 text-sm text-gray-600">
-            {intro.fulladdress && (
-              <div className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-gray-400" />
-                <span>{intro.fulladdress}</span>
-              </div>
-            )}
-            {intro.homepage && (
-              <div className="flex items-start gap-2.5">
-                <Globe className="w-4 h-4 mt-0.5 shrink-0 text-gray-400" />
-                <a
-                  href={intro.homepage.startsWith('http') ? intro.homepage : `https://${intro.homepage}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-gray-900 break-all"
+        {/* 상단 탭 */}
+        <div className="sticky top-14 z-30 bg-[#fafaf8] pt-1">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-1 grid grid-cols-4 gap-1">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => handleTabClick(tab.key)}
+                  className="px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
+                  style={
+                    isActive
+                      ? { backgroundColor: BRAND_COLOR, color: '#fff' }
+                      : { backgroundColor: 'transparent', color: '#6b7280' }
+                  }
                 >
-                  {intro.homepage}
-                </a>
-              </div>
-            )}
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* 사진 갤러리 */}
-        {photos.length > 1 && (
-          <section>
-            <SectionTitle>사진</SectionTitle>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {photos.map((p, i) =>
-                p.fileurl_full ? (
-                  <div key={i} className="aspect-4/3 rounded-xl overflow-hidden bg-gray-100">
-                    <img
-                      src={p.fileurl_full}
-                      alt={p.filetitle ?? `사진 ${i + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : null,
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* 부대시설 */}
-        {activeFacilities.length > 0 && (
-          <section>
-            <SectionTitle>부대시설</SectionTitle>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              {activeFacilities.map((f) => (
-                <div
-                  key={f.key}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-3"
+        {/* 기본 정보 카드 */}
+        <section
+          id="section-intro"
+          className="scroll-mt-36 space-y-8 sm:space-y-10"
+        >
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {data.categories.map((c) => (
+                <span
+                  key={c}
+                  className="px-3 py-1 rounded-full text-xs font-semibold border"
+                  style={{
+                    color: BRAND_COLOR,
+                    borderColor: BRAND_COLOR_LIGHT,
+                    backgroundColor: BRAND_COLOR_LIGHT,
+                  }}
                 >
-                  <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: BRAND_COLOR_LIGHT }}
-                  >
-                    <f.icon className="w-4 h-4" style={{ color: BRAND_COLOR }} />
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">
-                    {f.label}
-                    {'extra' in f && f.extra ? ` ${f.extra}` : ''}
-                  </span>
-                </div>
+                  {c}
+                </span>
               ))}
-            </div>
-          </section>
-        )}
-
-        {/* 가격 정보 */}
-        <PriceSection price={price} />
-
-        {/* 교통 안내 */}
-        {(intro.traffpublic || intro.traffowner) && (
-          <section>
-            <SectionTitle>교통 안내</SectionTitle>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
-              {intro.traffpublic && (
-                <TrafficBlock
-                  icon={<Bus className="w-4 h-4" style={{ color: BRAND_COLOR }} />}
-                  label="대중교통"
-                  text={intro.traffpublic}
-                />
-              )}
-              {intro.traffowner && (
-                <TrafficBlock
-                  icon={<Car className="w-4 h-4" style={{ color: BRAND_COLOR }} />}
-                  label="자가용"
-                  text={intro.traffowner}
-                />
+              {data.public_label && (
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                  {data.public_label}
+                </span>
               )}
             </div>
-          </section>
-        )}
 
-        {/* 기타 안내 */}
-        {intro.etcinfw && (
-          <section>
-            <SectionTitle>기타 안내</SectionTitle>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                {intro.etcinfw}
+            <h2
+              className="text-xl sm:text-2xl font-bold text-gray-900 mb-2"
+              style={{ fontFamily: 'Pretendard, sans-serif' }}
+            >
+              {data.company_name}
+            </h2>
+
+            {data.min_price != null && data.min_price > 0 && (
+              <p
+                className="text-lg sm:text-xl font-extrabold mb-6"
+                style={{ color: BRAND_COLOR }}
+              >
+                {data.min_price.toLocaleString()}
+                <span className="text-sm font-normal text-gray-500">원~</span>
               </p>
-            </div>
-          </section>
-        )}
+            )}
 
-        {/* 관련 시설 */}
-        {relatedFacilities.length > 0 && (
-          <section>
-            <SectionTitle>관련 시설</SectionTitle>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {relatedFacilities.map((rf, i) => (
-                <div
-                  key={i}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
-                >
-                  {rf.fileurl_full && (
-                    <div className="aspect-4/3 bg-gray-100 relative">
+            <div className="space-y-3 text-sm text-gray-600">
+              {intro.fulladdress && (
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-gray-400" />
+                  <span>{intro.fulladdress}</span>
+                </div>
+              )}
+              {intro.homepage && (
+                <div className="flex items-start gap-2.5">
+                  <Globe className="w-4 h-4 mt-0.5 shrink-0 text-gray-400" />
+                  <a
+                    href={
+                      intro.homepage.startsWith('http')
+                        ? intro.homepage
+                        : `https://${intro.homepage}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-gray-900 break-all"
+                  >
+                    {intro.homepage}
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 교통 안내 */}
+          {(intro.traffpublic || intro.traffowner) && (
+            <section>
+              <SectionTitle>교통 안내</SectionTitle>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+                {intro.traffpublic && (
+                  <TrafficBlock
+                    icon={
+                      <Bus className="w-4 h-4" style={{ color: BRAND_COLOR }} />
+                    }
+                    label="대중교통"
+                    text={intro.traffpublic}
+                  />
+                )}
+                {intro.traffowner && (
+                  <TrafficBlock
+                    icon={
+                      <Car className="w-4 h-4" style={{ color: BRAND_COLOR }} />
+                    }
+                    label="자가용"
+                    text={intro.traffowner}
+                  />
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* 기타 안내 */}
+          {intro.etcinfw && (
+            <section>
+              <SectionTitle>기타 안내</SectionTitle>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                  {intro.etcinfw}
+                </p>
+              </div>
+            </section>
+          )}
+        </section>
+
+        {/* 사진 갤러리 */}
+        <section id="section-photos" className="scroll-mt-36">
+          {photos.length > 0 ? (
+            <>
+              <SectionTitle>사진</SectionTitle>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {photos.map((p, i) =>
+                  p.fileurl_full ? (
+                    <div
+                      key={i}
+                      className="aspect-4/3 rounded-xl overflow-hidden bg-gray-100"
+                    >
                       <img
-                        src={rf.fileurl_full}
-                        alt={rf.companyname ?? ''}
+                        src={p.fileurl_full}
+                        alt={p.filetitle ?? `사진 ${i + 1}`}
                         className="w-full h-full object-cover"
                       />
-                      {rf.type && (
-                        <span
-                          className="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[11px] font-semibold text-white"
-                          style={{ backgroundColor: BRAND_COLOR }}
-                        >
-                          {FACILITY_TYPE_LABEL[rf.type] ?? rf.type}
-                        </span>
+                    </div>
+                  ) : null,
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <SectionTitle>사진</SectionTitle>
+              <EmptyTabMessage message="등록된 사진 정보가 없습니다." />
+            </>
+          )}
+        </section>
+
+        {/* 가격 정보 */}
+        <section id="section-price" className="scroll-mt-36">
+          <PriceSection price={price} />
+          {!(
+            (price.hallRent && price.hallRent.length > 0) ||
+            (price.commission && price.commission.length > 0) ||
+            (price.funeralItem && price.funeralItem.length > 0)
+          ) && (
+            <>
+              <SectionTitle>가격 정보</SectionTitle>
+              <EmptyTabMessage message="등록된 가격 정보가 없습니다." />
+            </>
+          )}
+        </section>
+
+        {/* 부대시설 */}
+        <section
+          id="section-facility"
+          className="scroll-mt-36 space-y-8 sm:space-y-10"
+        >
+          {activeFacilities.length > 0 ? (
+            <section>
+              <SectionTitle>부대시설</SectionTitle>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {activeFacilities.map((f) => (
+                  <div
+                    key={f.key}
+                    className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-3"
+                  >
+                    <div
+                      className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: BRAND_COLOR_LIGHT }}
+                    >
+                      <f.icon
+                        className="w-4 h-4"
+                        style={{ color: BRAND_COLOR }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">
+                      {f.label}
+                      {'extra' in f && f.extra ? ` ${f.extra}` : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : (
+            <>
+              <SectionTitle>부대시설</SectionTitle>
+              <EmptyTabMessage message="등록된 시설 정보가 없습니다." />
+            </>
+          )}
+
+          {/* 관련 시설 */}
+          {relatedFacilities.length > 0 && (
+            <section>
+              <SectionTitle>관련 시설</SectionTitle>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {relatedFacilities.map((rf, i) => (
+                  <div
+                    key={i}
+                    className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                  >
+                    {rf.fileurl_full && (
+                      <div className="aspect-4/3 bg-gray-100 relative">
+                        <img
+                          src={rf.fileurl_full}
+                          alt={rf.companyname ?? ''}
+                          className="w-full h-full object-cover"
+                        />
+                        {rf.type && (
+                          <span
+                            className="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[11px] font-semibold text-white"
+                            style={{ backgroundColor: BRAND_COLOR }}
+                          >
+                            {FACILITY_TYPE_LABEL[rf.type] ?? rf.type}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <div className="p-4 space-y-1.5">
+                      <h4 className="text-sm font-bold text-gray-900">
+                        {rf.companyname}
+                      </h4>
+                      {rf.fulladdress && (
+                        <p className="text-xs text-gray-500 flex items-start gap-1.5">
+                          <MapPin className="w-3 h-3 mt-0.5 shrink-0" />
+                          {rf.fulladdress}
+                        </p>
                       )}
                     </div>
-                  )}
-                  <div className="p-4 space-y-1.5">
-                    <h4 className="text-sm font-bold text-gray-900">
-                      {rf.companyname}
-                    </h4>
-                    {rf.fulladdress && (
-                      <p className="text-xs text-gray-500 flex items-start gap-1.5">
-                        <MapPin className="w-3 h-3 mt-0.5 shrink-0" />
-                        {rf.fulladdress}
-                      </p>
-                    )}
                   </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
+                ))}
+              </div>
+            </section>
+          )}
+        </section>
       </div>
 
       {/* 하단 고정 바 (PC + 모바일) */}
@@ -378,14 +544,14 @@ export default function BurialProductDetailPage() {
             className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
             <Phone className="w-5 h-5" />
-            <span className="text-base font-bold">전화상담</span>
+            <span className="text-base font-bold">전화 상담</span>
           </a>
           <button
             onClick={() => setShowConsultation(true)}
             className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
             <ScrollText className="w-5 h-5" />
-            <span className="text-base font-bold">상담신청</span>
+            <span className="text-base font-bold">상담 신청</span>
           </button>
         </div>
       </div>
@@ -409,6 +575,14 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
     >
       {children}
     </h3>
+  );
+}
+
+function EmptyTabMessage({ message }: { message: string }) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-sm text-gray-500">
+      {message}
+    </div>
   );
 }
 
@@ -439,7 +613,11 @@ function TrafficBlock({
         <span className="text-sm font-semibold text-gray-800">{label}</span>
         {isLong && (
           <span className="ml-auto text-gray-400">
-            {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {open ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
           </span>
         )}
       </button>
@@ -460,9 +638,18 @@ function PriceSection({ price }: { price: Price }) {
     { key: 'commission' as const, title: '수수료 / 부대비' },
     { key: 'funeralItem' as const, title: '장례 용품' },
   ];
+  const [openKeys, setOpenKeys] = useState<
+    Array<(typeof sections)[number]['key']>
+  >(sections.map((s) => s.key));
 
   const hasPriceData = sections.some((s) => (price[s.key] ?? []).length > 0);
   if (!hasPriceData) return null;
+
+  const toggleSection = (key: (typeof sections)[number]['key']) => {
+    setOpenKeys((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  };
 
   return (
     <section>
@@ -471,49 +658,72 @@ function PriceSection({ price }: { price: Price }) {
         {sections.map((s) => {
           const items = price[s.key] ?? [];
           if (items.length === 0) return null;
+          const isOpen = openKeys.includes(s.key);
           return (
             <div
               key={s.key}
               className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
             >
-              <div className="px-5 py-3.5 border-b border-gray-100">
+              <button
+                type="button"
+                onClick={() => toggleSection(s.key)}
+                className="w-full px-5 py-3.5 border-b border-gray-100 flex items-center gap-2 text-left cursor-pointer"
+              >
                 <h4 className="text-sm font-bold text-gray-900">{s.title}</h4>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-gray-50 text-xs text-gray-500">
-                      <th className="px-5 py-2.5 text-left font-medium">항목</th>
-                      <th className="px-5 py-2.5 text-left font-medium">분류</th>
-                      <th className="px-5 py-2.5 text-left font-medium">세부내용</th>
-                      <th className="px-5 py-2.5 text-right font-medium">금액</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((row, idx) => (
-                      <tr
-                        key={idx}
-                        className="border-t border-gray-50 hover:bg-gray-50/50"
-                      >
-                        <td className="px-5 py-3 text-gray-800 font-medium">
-                          {row.item ?? '-'}
-                        </td>
-                        <td className="px-5 py-3 text-gray-600">
-                          {row.category ?? '-'}
-                        </td>
-                        <td className="px-5 py-3 text-gray-500 max-w-[200px] truncate">
-                          {row.rentcontent ?? '-'}
-                        </td>
-                        <td className="px-5 py-3 text-right tabular-nums font-semibold text-gray-900">
-                          {row.facilityamt != null && row.facilityamt > 0
-                            ? `${row.facilityamt.toLocaleString()}원`
-                            : row.facilityamtm ?? '-'}
-                        </td>
+                <span className="text-xs text-gray-400">({items.length})</span>
+                <span className="ml-auto text-gray-400">
+                  {isOpen ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </span>
+              </button>
+              {isOpen && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 text-xs text-gray-500">
+                        <th className="px-5 py-2.5 text-left font-medium">
+                          항목
+                        </th>
+                        <th className="px-5 py-2.5 text-left font-medium">
+                          분류
+                        </th>
+                        <th className="px-5 py-2.5 text-left font-medium">
+                          세부내용
+                        </th>
+                        <th className="px-5 py-2.5 text-right font-medium">
+                          금액
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {items.map((row, idx) => (
+                        <tr
+                          key={idx}
+                          className="border-t border-gray-50 hover:bg-gray-50/50"
+                        >
+                          <td className="px-5 py-3 text-gray-800 font-medium">
+                            {row.item ?? '-'}
+                          </td>
+                          <td className="px-5 py-3 text-gray-600">
+                            {row.category ?? '-'}
+                          </td>
+                          <td className="px-5 py-3 text-gray-500 max-w-[200px] truncate">
+                            {row.rentcontent ?? '-'}
+                          </td>
+                          <td className="px-5 py-3 text-right tabular-nums font-semibold text-gray-900">
+                            {row.facilityamt != null && row.facilityamt > 0
+                              ? `${row.facilityamt.toLocaleString()}원`
+                              : (row.facilityamtm ?? '-')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           );
         })}

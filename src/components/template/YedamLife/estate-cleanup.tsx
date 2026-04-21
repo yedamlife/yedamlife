@@ -18,7 +18,13 @@ import {
   fmtShort,
   daysAgo,
 } from './constants';
-import { FaqItem, MembershipSection, CtaSection } from './components';
+import {
+  FaqItem,
+  MembershipSection,
+  CtaSection,
+  ReviewCarousel,
+  ReviewItem,
+} from './components';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
@@ -38,7 +44,7 @@ import { ko } from 'date-fns/locale';
 import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 
-// ── 실시간 상담신청 현황 ──
+// ── 실시간 상담 신청 현황 ──
 const consultationData = [
   { type: '원룸', service: '유품소각', name: '권OO', daysAgo: 0 },
   { type: '투룸', service: '유품정리+분리이사', name: '노OO', daysAgo: 0 },
@@ -718,6 +724,17 @@ const housingOptions = [
 ];
 
 export function EstateCleanup(_props: { googleFormUrl: string }) {
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+
+  useEffect(() => {
+    fetch('/api/v1/reviews?category=estate&limit=6')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) setReviews(json.data);
+      })
+      .catch(() => {});
+  }, []);
+
   const [expandedDetail, setExpandedDetail] = useState<string | null>(null);
   const [expandedReligion, setExpandedReligion] = useState(false);
   const [showEstimateModal, setShowEstimateModal] = useState(false);
@@ -827,7 +844,7 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
       }
 
       toast.success(
-        '견적 상담신청이 완료되었습니다.\n담당자가 빠른 시일 내에 연락드리겠습니다.',
+        '견적 상담 신청이 완료되었습니다.\n담당자가 빠른 시일 내에 연락드리겠습니다.',
       );
       setShowEstimateModal(false);
       setEstimateForm({
@@ -940,14 +957,14 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
               </div>
             </div>
 
-            {/* 실시간 상담신청 현황 + 고객 한줄후기 */}
+            {/* 실시간 상담 신청 현황 + 고객 한줄후기 */}
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* 상담신청 현황 */}
+                {/* 상담 신청 현황 */}
                 <div className="rounded-2xl overflow-hidden backdrop-blur-md bg-white/95">
                   <div className="px-5 py-3 bg-gray-200/80 border-b border-gray-200">
                     <h3 className="text-sm font-bold text-gray-800">
-                      실시간 상담신청 현황
+                      실시간 상담 신청 현황
                     </h3>
                   </div>
                   <AutoScrollTicker speed={40}>
@@ -1686,6 +1703,32 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
         }}
       />
 
+      {/* ── 후기 ── */}
+      {reviews.length > 0 && (
+        <section
+          id="sec-cleanup-reviews"
+          className="py-16 sm:py-24 overflow-hidden bg-white"
+        >
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12">
+              <p
+                className="text-sm font-semibold mb-2"
+                style={{ color: BRAND_COLOR }}
+              >
+                REVIEW
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                고객 후기
+              </h2>
+              <p className="text-gray-500 mt-2 text-sm sm:text-base">
+                예담라이프 유품정리 서비스를 경험하신 분들의 생생한 후기입니다
+              </p>
+            </div>
+            <ReviewCarousel reviews={reviews} />
+          </div>
+        </section>
+      )}
+
       {/* ── FAQ ── */}
       <section
         id="sec-cleanup-faq"
@@ -1733,7 +1776,7 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
           <span className="text-[9px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
             빠른
             <br />
-            상담신청
+            상담 신청
           </span>
         </a>
       </div>
@@ -1753,7 +1796,7 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
             className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
             <ScrollText className="w-5 h-5" />
-            <span className="text-base font-bold">상담신청</span>
+            <span className="text-base font-bold">상담 신청</span>
           </button>
         </div>
       </div>
@@ -1772,7 +1815,7 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
           >
             <div className="sticky top-0 z-10 px-6 py-4 flex items-center justify-between bg-gray-100 rounded-t-2xl">
               <span className="font-bold text-gray-800">
-                빠른 견적 상담신청
+                빠른 견적 상담 신청
               </span>
               <button
                 onClick={() => setShowEstimateModal(false)}
@@ -2068,7 +2111,7 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
             >
               <Phone className="w-5 h-5" />
-              전화상담
+              전화 상담
             </a>
           </>
         }

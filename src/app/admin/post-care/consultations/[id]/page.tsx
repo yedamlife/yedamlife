@@ -15,7 +15,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   return (
     <DetailPage
-      title="사후행정케어 상담신청 상세"
+      title="사후행정케어 상담 신청 상세"
       apiPath="/api/v1/admin/post-care/consultations"
       id={id}
       fields={fields}

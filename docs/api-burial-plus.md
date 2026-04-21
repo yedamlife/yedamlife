@@ -19,16 +19,16 @@
 
 장지 플러스 랜딩 페이지(`burial-plus.tsx`)의 상담 폼 및 장지 상품 데이터를 서버 API + DB로 연동한다.
 
-| #   | 기능          | 설명                                                                                            |
-| --- | ------------- | ----------------------------------------------------------------------------------------------- |
-| 1   | 장지 상담신청 | 상담 모달 폼 (BurialConsultationModal) — 이름, 연락처, 종교, 희망 지역, 예산, 메세지, 동의 항목 |
-| 2   | 장지 상품     | 봉안당 · 수목장 · 공원묘지 · 해양장 카테고리별 상품 목록 (관리자 CMS에서 등록, 랜딩에서 필터 조회) |
+| #   | 기능           | 설명                                                                                               |
+| --- | -------------- | -------------------------------------------------------------------------------------------------- |
+| 1   | 장지 상담 신청 | 상담 모달 폼 (BurialConsultationModal) — 이름, 연락처, 종교, 희망 지역, 예산, 메세지, 동의 항목    |
+| 2   | 장지 상품      | 봉안당 · 수목장 · 공원묘지 · 해양장 카테고리별 상품 목록 (관리자 CMS에서 등록, 랜딩에서 필터 조회) |
 
 ---
 
 ## 2. DB 테이블 설계
 
-### 2-1. 장지 상담신청 내역 (`bp_consultation_requests`)
+### 2-1. 장지 상담 신청 내역 (`bp_consultation_requests`)
 
 > 장지 플러스 상담 모달 폼 데이터
 
@@ -158,11 +158,11 @@ ORDER BY display_order, id;
 
 ### Base Path: `/api/v1/burial-plus`
 
-### 3-1. 장지 상담신청 API
+### 3-1. 장지 상담 신청 API
 
-| Method | Endpoint                           | 설명               |
-| ------ | ---------------------------------- | ------------------ |
-| POST   | `/api/v1/burial-plus/consultation` | 장지 상담신청 생성 |
+| Method | Endpoint                           | 설명                |
+| ------ | ---------------------------------- | ------------------- |
+| POST   | `/api/v1/burial-plus/consultation` | 장지 상담 신청 생성 |
 
 **Request Body:**
 
@@ -195,23 +195,23 @@ ORDER BY display_order, id;
 
 ### 3-2. 장지 상품 API
 
-| Method | Endpoint                             | 설명                       | 권한         |
-| ------ | ------------------------------------ | -------------------------- | ------------ |
-| GET    | `/api/v1/burial-plus/products`       | 상품 목록 조회 (랜딩)      | public       |
-| GET    | `/api/v1/admin/burial-plus/products` | 상품 목록 조회 (관리자)    | service_role |
-| POST   | `/api/v1/admin/burial-plus/products` | 상품 등록                  | service_role |
-| PATCH  | `/api/v1/admin/burial-plus/products/:id` | 상품 수정              | service_role |
-| DELETE | `/api/v1/admin/burial-plus/products/:id` | 상품 삭제 (소프트)     | service_role |
+| Method | Endpoint                                 | 설명                    | 권한         |
+| ------ | ---------------------------------------- | ----------------------- | ------------ |
+| GET    | `/api/v1/burial-plus/products`           | 상품 목록 조회 (랜딩)   | public       |
+| GET    | `/api/v1/admin/burial-plus/products`     | 상품 목록 조회 (관리자) | service_role |
+| POST   | `/api/v1/admin/burial-plus/products`     | 상품 등록               | service_role |
+| PATCH  | `/api/v1/admin/burial-plus/products/:id` | 상품 수정               | service_role |
+| DELETE | `/api/v1/admin/burial-plus/products/:id` | 상품 삭제 (소프트)      | service_role |
 
 #### GET `/api/v1/burial-plus/products`
 
 **Query Params:**
 
-| 파라미터  | 타입   | 설명                                                 |
-| --------- | ------ | ---------------------------------------------------- |
-| `region`  | string | 시/도 필터 (예: `경기`)                              |
-| `district`| string | 시/군/구 필터 (예: `용인시`)                         |
-| `type`    | string | 카테고리 필터 (`봉안당` / `수목장` / `공원묘지` / `해양장`) |
+| 파라미터   | 타입   | 설명                                                        |
+| ---------- | ------ | ----------------------------------------------------------- |
+| `region`   | string | 시/도 필터 (예: `경기`)                                     |
+| `district` | string | 시/군/구 필터 (예: `용인시`)                                |
+| `type`     | string | 카테고리 필터 (`봉안당` / `수목장` / `공원묘지` / `해양장`) |
 
 **Response (200):**
 
@@ -286,14 +286,14 @@ ORDER BY display_order, id;
 ### Phase 1: DB 테이블 생성
 
 - [x] Supabase에 `bp_consultation_requests` 테이블 생성
-- [x] 상담신청 RLS 정책 적용
+- [x] 상담 신청 RLS 정책 적용
 - [ ] `bp_burial_type` enum 및 `bp_products` 테이블 생성
 - [ ] 상품 테이블 RLS 정책 적용
 - [ ] 기존 하드코딩 데이터(`burialProducts` 20건) 시드 투입
 
 ### Phase 2: API 구현
 
-- [x] `src/app/api/v1/burial-plus/consultation/route.ts` - 장지 상담신청 API
+- [x] `src/app/api/v1/burial-plus/consultation/route.ts` - 장지 상담 신청 API
 - [ ] `src/app/api/v1/burial-plus/products/route.ts` - 공개 상품 목록 GET
 - [ ] `src/app/api/v1/admin/burial-plus/products/route.ts` - 관리자 상품 목록/생성
 - [ ] `src/app/api/v1/admin/burial-plus/products/[id]/route.ts` - 관리자 상품 수정/삭제
@@ -316,12 +316,12 @@ src/
 ├── app/
 │   ├── admin/
 │   │   └── burial-plus/
-│   │       ├── consultations/              -- 상담신청 관리
+│   │       ├── consultations/              -- 상담 신청 관리
 │   │       └── products/                   -- 장지 상품 관리 (신규)
 │   └── api/
 │       └── v1/
 │           ├── burial-plus/
-│           │   ├── consultation/route.ts   -- 상담신청 POST
+│           │   ├── consultation/route.ts   -- 상담 신청 POST
 │           │   └── products/route.ts       -- 상품 공개 GET (신규)
 │           └── admin/
 │               └── burial-plus/
@@ -338,10 +338,10 @@ src/
 
 기존 패턴을 따라 장지 플러스는 `bp_` prefix를 사용한다.
 
-| 테이블                     | Prefix | 용도          |
-| -------------------------- | ------ | ------------- |
-| `bp_consultation_requests` | `bp_`  | 장지 상담신청 |
-| `bp_products`              | `bp_`  | 장지 상품     |
+| 테이블                     | Prefix | 용도           |
+| -------------------------- | ------ | -------------- |
+| `bp_consultation_requests` | `bp_`  | 장지 상담 신청 |
+| `bp_products`              | `bp_`  | 장지 상품      |
 
 ### 페이지별 API/테이블 매핑 전체 현황
 
