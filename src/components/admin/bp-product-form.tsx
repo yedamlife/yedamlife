@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/components/ui/utils';
-import { Phone, Printer, MapPin } from 'lucide-react';
+import { Phone, Printer, MapPin, Star } from 'lucide-react';
 
 const FACILITY_TYPE_LABEL: Record<string, string> = {
   CharnelDet: '봉안시설',
@@ -14,6 +14,7 @@ const FACILITY_TYPE_LABEL: Record<string, string> = {
 };
 
 const CATEGORIES = ['봉안당', '수목장', '공원묘지', '해양장'] as const;
+const RELIGIONS = ['무교', '기독교', '불교', '천주교'] as const;
 const TABS = ['소개', '가격', '사진', '시설'] as const;
 
 const SORT_FIELDS: { key: keyof Pick<BpProductFormValue, 'sort_all' | 'sort_charnel' | 'sort_tree' | 'sort_park' | 'sort_ocean'>; label: string; category: string | null }[] = [
@@ -39,6 +40,8 @@ interface Intro {
   etcinfw?: string | null;
   traffpublic?: string | null;
   traffowner?: string | null;
+  facility_rating?: number | null;
+  traffic_rating?: number | null;
   facilities?: {
     handicap?: boolean;
     mealroom?: boolean;
@@ -88,6 +91,7 @@ interface RelatedFacility {
 
 export interface BpProductFormValue {
   categories: string[];
+  religions: string[];
   intro: Intro;
   price: Price;
   photos: Photo[];
@@ -122,6 +126,12 @@ export function BpProductForm({ value, onChange, productId }: Props) {
   const toggleCategory = (c: string) => {
     const has = value.categories.includes(c);
     update('categories', has ? value.categories.filter((x) => x !== c) : [...value.categories, c]);
+  };
+
+  const toggleReligion = (r: string) => {
+    const list = value.religions ?? [];
+    const has = list.includes(r);
+    update('religions', has ? list.filter((x) => x !== r) : [...list, r]);
   };
 
   const intro = value.intro || {};
@@ -199,7 +209,7 @@ export function BpProductForm({ value, onChange, productId }: Props) {
               </div>
             )}
           </div>
-          <div className="space-y-3">
+          <div className="space-y-5">
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <Switch
@@ -218,7 +228,7 @@ export function BpProductForm({ value, onChange, productId }: Props) {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">장지명</label>
+              <label className="mb-1.5 block text-xs font-medium text-gray-500">장지명</label>
               <input
                 value={intro.companyname ?? ''}
                 onChange={(e) => updateIntro({ companyname: e.target.value })}
@@ -227,7 +237,7 @@ export function BpProductForm({ value, onChange, productId }: Props) {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">카테고리 (복수 선택 가능)</label>
+              <label className="mb-1.5 block text-xs font-medium text-gray-500">카테고리 (복수 선택 가능)</label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((c) => {
                   const on = value.categories.includes(c);
@@ -244,6 +254,30 @@ export function BpProductForm({ value, onChange, productId }: Props) {
                       )}
                     >
                       {c}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-gray-500">종교 (복수 선택 가능)</label>
+              <div className="flex flex-wrap gap-2">
+                {RELIGIONS.map((r) => {
+                  const on = (value.religions ?? []).includes(r);
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => toggleReligion(r)}
+                      className={cn(
+                        'rounded-full border px-3 py-1 text-sm transition-colors',
+                        on
+                          ? 'border-gray-900 bg-gray-900 text-white'
+                          : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
+                      )}
+                    >
+                      {r}
                     </button>
                   );
                 })}
@@ -296,6 +330,26 @@ export function BpProductForm({ value, onChange, productId }: Props) {
                 placeholder="원 단위 숫자 입력"
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
               />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-500">종합 평점</label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2">
+                  <span className="text-sm font-medium text-gray-700">편의시설</span>
+                  <StarRating
+                    value={intro.facility_rating ?? null}
+                    onChange={(v) => updateIntro({ facility_rating: v })}
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2">
+                  <span className="text-sm font-medium text-gray-700">교통편</span>
+                  <StarRating
+                    value={intro.traffic_rating ?? null}
+                    onChange={(v) => updateIntro({ traffic_rating: v })}
+                  />
+                </div>
+              </div>
             </div>
 
             <div>
@@ -391,7 +445,13 @@ export function BpProductForm({ value, onChange, productId }: Props) {
 
       {tab === '가격' && <PriceTab price={price} onChange={(p) => update('price', p)} />}
 
-      {tab === '사진' && <PhotosTab photos={photos} onChange={(ps) => update('photos', ps)} />}
+      {tab === '사진' && (
+        <PhotosTab
+          photos={photos}
+          onChange={(ps) => update('photos', ps)}
+          productId={productId}
+        />
+      )}
 
       {tab === '시설' && (
         <div className="space-y-4">
@@ -591,7 +651,52 @@ function PriceTab({ price, onChange }: { price: Price; onChange: (p: Price) => v
   );
 }
 
-function PhotosTab({ photos, onChange }: { photos: Photo[]; onChange: (ps: Photo[]) => void }) {
+function StarRating({
+  value,
+  onChange,
+}: {
+  value: number | null;
+  onChange: (v: number | null) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((n) => {
+        const filled = value != null && n <= value;
+        return (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onChange(value === n ? null : n)}
+            className="p-0.5 cursor-pointer"
+            aria-label={`${n}점`}
+          >
+            <Star
+              className={cn(
+                'size-5 transition-colors',
+                filled ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300',
+              )}
+            />
+          </button>
+        );
+      })}
+      <span className="ml-2 w-6 text-right text-xs text-gray-400">
+        {value ?? '-'}
+      </span>
+    </div>
+  );
+}
+
+function PhotosTab({
+  photos,
+  onChange,
+  productId,
+}: {
+  photos: Photo[];
+  onChange: (ps: Photo[]) => void;
+  productId?: string;
+}) {
+  const [uploading, setUploading] = useState(false);
+
   const update = (idx: number, patch: Partial<Photo>) => {
     const next = [...photos];
     next[idx] = { ...next[idx], ...patch };
@@ -604,17 +709,73 @@ function PhotosTab({ photos, onChange }: { photos: Photo[]; onChange: (ps: Photo
       { fileorder: photos.length + 1, filetitle: '', fileurl_full: '' },
     ]);
 
+  const handleUpload = async (files: FileList | null) => {
+    if (!productId || !files || files.length === 0) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach((f) => formData.append('files', f));
+      const res = await fetch(
+        `/api/v1/admin/burial-plus/products/${productId}/photos`,
+        { method: 'POST', body: formData },
+      );
+      const json = await res.json();
+      if (json.success && Array.isArray(json.urls) && json.urls.length > 0) {
+        onChange([
+          ...photos,
+          ...(json.urls as string[]).map((u, i) => ({
+            fileorder: photos.length + i + 1,
+            filetitle: '',
+            fileurl_full: u,
+          })),
+        ]);
+        if (Array.isArray(json.errors) && json.errors.length > 0) {
+          alert(`${json.errors.length}개 파일 업로드 실패`);
+        }
+      } else {
+        alert(json.message || '업로드에 실패했습니다.');
+      }
+    } catch {
+      alert('업로드 중 오류가 발생했습니다.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <Card className="border-gray-200">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">사진</CardTitle>
-        <button
-          type="button"
-          onClick={add}
-          className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
-        >
-          + 추가
-        </button>
+        <div className="flex items-center gap-2">
+          {productId && (
+            <label
+              className={cn(
+                'flex cursor-pointer items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50',
+                uploading && 'cursor-not-allowed opacity-60',
+              )}
+            >
+              {uploading ? '업로드 중...' : '이미지 업로드'}
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                disabled={uploading}
+                className="hidden"
+                onChange={(e) => {
+                  handleUpload(e.target.files);
+                  e.target.value = '';
+                }}
+              />
+            </label>
+          )}
+          <button
+            type="button"
+            onClick={add}
+            className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
+          >
+            + 추가
+          </button>
+        </div>
       </CardHeader>
       <CardContent>
         {photos.length === 0 ? (

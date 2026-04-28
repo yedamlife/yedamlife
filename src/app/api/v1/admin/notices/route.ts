@@ -8,17 +8,22 @@ export async function GET(request: Request) {
   const page = Number(searchParams.get('page')) || 1;
   const limit = Math.min(Number(searchParams.get('limit')) || 20, 100);
   const search = searchParams.get('search') || undefined;
+  const category = searchParams.get('category') || undefined;
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
   let query = supabase
     .from(TABLE)
-    .select('id, uuid, title, is_active, sort_order, view_count, created_at', {
-      count: 'exact',
-    });
+    .select(
+      'id, uuid, title, category, is_active, sort_order, view_count, created_at',
+      { count: 'exact' },
+    );
 
   if (search) {
     query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
+  }
+  if (category) {
+    query = query.eq('category', category);
   }
 
   query = query
@@ -70,6 +75,7 @@ export async function POST(request: Request) {
     .insert({
       title: body.title,
       content: body.content,
+      category: body.category ?? '공지',
       is_active: body.is_active ?? true,
     })
     .select('id, uuid')

@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-const VALID_SERVICE_TYPES = ['심리 상담', '세무 상담', '상속 절차', '법률 지원'];
+const VALID_SERVICE_TYPES = [
+  '심리 상담',
+  '세무 상담',
+  '상속 절차',
+  '법률 지원',
+  '원스톱 통합 서비스',
+];
 
 export async function POST(request: Request) {
   try {

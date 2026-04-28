@@ -153,6 +153,23 @@ const SIZE_CATEGORIES: {
   },
 ];
 
+/* ─── 평균 상조비용 상수 ─── */
+const SANGJO_ITEMS_NOBINSO = [
+  { label: '인력지원 (장례지도사, 입관지도사)', price: 500000 },
+  { label: '장의차량 (장의버스, 리무진)', price: 350000 },
+  { label: '고인용품 (수의, 관, 유골함, 횡대, 입관용품)', price: 600000 },
+];
+
+const SANGJO_ITEMS_3DAY = [
+  { label: '인력지원 (장례지도사, 입관지도사)', price: 500000 },
+  { label: '장의차량 (장의버스, 리무진)', price: 350000 },
+  { label: '고인용품 (수의, 관, 유골함, 횡대, 입관용품, 빈소용품, 헌화)', price: 900000 },
+  { label: '상복 (남자 상복, 여자 상복)', price: 200000 },
+];
+
+const SANGJO_TOTAL_NOBINSO = SANGJO_ITEMS_NOBINSO.reduce((s, i) => s + i.price, 0);
+const SANGJO_TOTAL_3DAY = SANGJO_ITEMS_3DAY.reduce((s, i) => s + i.price, 0);
+
 const YEDAM_PRODUCTS = [
   {
     id: 'yedam-1',
@@ -520,7 +537,9 @@ export function FuneralCostModal({
       const transfer = costs.transfer;
       const mortuary = costs.mortuary;
       const encoffin = costs.encoffin;
-      const total = transfer + mortuary + encoffin;
+      const basicTotal = transfer + mortuary + encoffin;
+      const sangjoTotal = SANGJO_TOTAL_NOBINSO;
+      const total = basicTotal + sangjoTotal;
       return {
         funeralType: 'nobinso' as const,
         isMetro,
@@ -529,6 +548,8 @@ export function FuneralCostModal({
         encoffin,
         facilityFee: 0,
         food: 0,
+        basicTotal,
+        sangjoTotal,
         total,
         guestCount: 0,
       };
@@ -553,7 +574,9 @@ export function FuneralCostModal({
     const transfer = costs.transfer;
     const mortuary = costs.mortuary * 3;
     const food = costs.food * guestCount;
-    const total = facilityFee + encoffin + transfer + mortuary + food;
+    const basicTotal = facilityFee + encoffin + transfer + mortuary + food;
+    const sangjoTotal = SANGJO_TOTAL_3DAY;
+    const total = basicTotal + sangjoTotal;
 
     return {
       funeralType: '3day' as const,
@@ -563,6 +586,8 @@ export function FuneralCostModal({
       encoffin,
       facilityFee,
       food,
+      basicTotal,
+      sangjoTotal,
       total,
       guestCount,
     };
@@ -955,10 +980,10 @@ export function FuneralCostModal({
 
               return (
                 <div>
-                  {/* 요약 */}
+                  {/* 총 예상비용 */}
                   <div className="text-center mb-4">
                     <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
-                      예상 장례식장 비용
+                      총 장례 예상비용
                     </h3>
                     <p
                       className="text-3xl sm:text-4xl font-extrabold"
@@ -968,7 +993,7 @@ export function FuneralCostModal({
                     </p>
                   </div>
 
-                  {/* 상세 비용 요약 */}
+                  {/* ── 장례식장 기본 비용 ── */}
                   {(() => {
                     const facilityFeeItems = selectedHall.facility_fees.filter(
                       (f) => f.판매여부 === 'Y' && f.품종 === '시설임대료',
@@ -977,81 +1002,101 @@ export function FuneralCostModal({
                       (sum, i) => sum + (facilityFeeItems[i]?.요금 ?? 0),
                       0,
                     );
-                    const costs = result.isMetro
-                      ? METRO_COSTS
-                      : NON_METRO_COSTS;
                     const hasBinsoSelected =
                       funeralType === '3day' && checkedFeeIndexes.length > 0;
 
                     return (
-                      <div className="border border-gray-200 rounded-xl overflow-hidden mb-5 text-sm">
-                        {funeralType === '3day' && (
-                          <div className="px-4 py-2.5 flex justify-between items-center border-b border-gray-100">
-                            <span className="text-gray-600">
-                              빈소 사용료 (3일)
-                            </span>
-                            {hasBinsoSelected ? (
-                              <span className="font-semibold text-gray-900 text-right">
-                                <span className="text-xs text-gray-400">
-                                  {checkedTotal.toLocaleString()} x 3일 ={' '}
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm font-bold text-gray-700">장례식장 기본 비용</p>
+                          <p className="text-sm font-bold" style={{ color: BRAND_COLOR }}>
+                            {result.basicTotal.toLocaleString()}원
+                          </p>
+                        </div>
+                        <div className="border border-gray-200 rounded-xl overflow-hidden text-sm">
+                          {funeralType === '3day' && (
+                            <div className="px-4 py-2.5 flex justify-between items-center border-b border-gray-100">
+                              <span className="text-gray-600">
+                                빈소 사용료 (3일)
+                              </span>
+                              {hasBinsoSelected ? (
+                                <span className="font-semibold text-gray-900 text-right">
+                                  <span className="text-xs text-gray-400">
+                                    {checkedTotal.toLocaleString()} x 3일 ={' '}
+                                  </span>
+                                  {(checkedTotal * 3).toLocaleString()}원
                                 </span>
-                                {(checkedTotal * 3).toLocaleString()}원
-                              </span>
-                            ) : (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
-                                선택 필요
-                              </span>
-                            )}
+                              ) : (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
+                                  선택 필요
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          <div className="px-4 py-2.5 flex justify-between border-b border-gray-100">
+                            <span className="text-gray-600">입관실 사용료</span>
+                            <span className="font-semibold text-gray-900">
+                              <span className="text-xs text-gray-400 mr-1">평균</span>
+                              {result.encoffin.toLocaleString()}원
+                            </span>
                           </div>
-                        )}
-                        <div className="px-4 py-2.5 flex justify-between border-b border-gray-100">
-                          <span className="text-gray-600">입관실 사용료</span>
-                          <span className="font-semibold text-gray-900">
-                            <span className="text-xs text-gray-400 mr-1">
-                              평균
+                          <div className="px-4 py-2.5 flex justify-between border-b border-gray-100">
+                            <span className="text-gray-600">고인 이송비</span>
+                            <span className="font-semibold text-gray-900">
+                              <span className="text-xs text-gray-400 mr-1">평균</span>
+                              {result.transfer.toLocaleString()}원
                             </span>
-                            {result.encoffin.toLocaleString()}원
-                          </span>
-                        </div>
-                        <div className="px-4 py-2.5 flex justify-between border-b border-gray-100">
-                          <span className="text-gray-600">고인 이송비</span>
-                          <span className="font-semibold text-gray-900">
-                            <span className="text-xs text-gray-400 mr-1">
-                              평균
-                            </span>
-                            {result.transfer.toLocaleString()}원
-                          </span>
-                        </div>
-                        <div className="px-4 py-2.5 flex justify-between border-b border-gray-100">
-                          <span className="text-gray-600">
-                            안치실 안치료
-                            {funeralType === '3day' ? ' (3일)' : ''}
-                          </span>
-                          <span className="font-semibold text-gray-900">
-                            <span className="text-xs text-gray-400 mr-1">
-                              평균
-                            </span>
-                            {result.mortuary.toLocaleString()}원
-                          </span>
-                        </div>
-                        {funeralType === '3day' && (
-                          <div className="px-4 py-2.5 flex justify-between">
+                          </div>
+                          <div className="px-4 py-2.5 flex justify-between border-b border-gray-100">
                             <span className="text-gray-600">
-                              음식비 ({guestCount}명 x{' '}
-                              {(result.isMetro
-                                ? METRO_COSTS
-                                : NON_METRO_COSTS
-                              ).food.toLocaleString()}
-                              원)
+                              안치실 안치료{funeralType === '3day' ? ' (3일)' : ''}
                             </span>
                             <span className="font-semibold text-gray-900">
-                              <span className="text-xs text-gray-400 mr-1">
-                                평균
-                              </span>
-                              {result.food.toLocaleString()}원
+                              <span className="text-xs text-gray-400 mr-1">평균</span>
+                              {result.mortuary.toLocaleString()}원
                             </span>
                           </div>
-                        )}
+                          {funeralType === '3day' && (
+                            <div className="px-4 py-2.5 flex justify-between">
+                              <span className="text-gray-600">
+                                음식비 ({guestCount}명 x{' '}
+                                {(result.isMetro ? METRO_COSTS : NON_METRO_COSTS).food.toLocaleString()}원)
+                              </span>
+                              <span className="font-semibold text-gray-900">
+                                <span className="text-xs text-gray-400 mr-1">평균</span>
+                                {result.food.toLocaleString()}원
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── 장례식장 평균 상조비용 ── */}
+                  {(() => {
+                    const isNobinso = funeralType === 'nobinso';
+                    const sangjoItems = isNobinso ? SANGJO_ITEMS_NOBINSO : SANGJO_ITEMS_3DAY;
+
+                    return (
+                      <div className="mb-5">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm font-bold text-gray-700">장례식장 평균 상조비용</p>
+                          <p className="text-sm font-bold" style={{ color: BRAND_COLOR }}>
+                            <span className="text-xs text-gray-400 mr-1">평균</span>
+                            {result.sangjoTotal.toLocaleString()}원
+                          </p>
+                        </div>
+                        <div className="border border-gray-200 rounded-xl overflow-hidden text-sm">
+                          {sangjoItems.map((item, i) => (
+                            <div
+                              key={i}
+                              className={`px-4 py-2.5 text-gray-600 ${i < sangjoItems.length - 1 ? 'border-b border-gray-100' : ''}`}
+                            >
+                              {item.label}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     );
                   })()}
@@ -1319,7 +1364,11 @@ export function FuneralCostModal({
         {step === resultStep &&
           selectedHall &&
           (() => {
-            const recommended = getRecommendedProduct(calcResult()?.total ?? 0);
+            const res = calcResult();
+            const recommended = getRecommendedProduct(res?.total ?? 0);
+            const discountPct = res && res.sangjoTotal > 0
+              ? Math.round(((res.sangjoTotal - recommended.price) / res.sangjoTotal) * 100)
+              : 0;
             return (
               <div
                 className="shrink-0 border-t border-gray-100 bg-white px-4 sm:px-6 pt-3 pb-4 sm:pb-4"
@@ -1353,7 +1402,7 @@ export function FuneralCostModal({
                     className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-white text-sm font-bold cursor-pointer"
                     style={{ backgroundColor: BRAND_COLOR }}
                   >
-                    {recommended.name}로 장례 준비하기
+                    {recommended.name}로 평균 {discountPct}% 할인 받기
                     <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>

@@ -136,7 +136,8 @@ function MembershipGeneralPageContent() {
     }
 
     const script = document.createElement('script');
-    script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
+    script.src =
+      '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
     script.onload = run;
     document.head.appendChild(script);
   };
@@ -184,7 +185,9 @@ function MembershipGeneralPageContent() {
       if (result.success) {
         setSubmitted(true);
       } else {
-        toast.error(result.message || '오류가 발생했습니다. 다시 시도해주세요.');
+        toast.error(
+          result.message || '오류가 발생했습니다. 다시 시도해주세요.',
+        );
       }
     } catch {
       toast.error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
@@ -264,35 +267,7 @@ function MembershipGeneralPageContent() {
             style={{ backgroundColor: BRAND_COLOR_PREMIUM }}
           />
 
-          <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 pt-3 sm:pt-6 pb-12 sm:pb-16">
-            {/* 헤더 로고 */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center">
-                <img
-                  src="https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/main_logo.png"
-                  alt="예담라이프"
-                  className="h-[120px] sm:h-[150px] w-auto object-contain"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <span
-                  className="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium text-[#4a5a2b]"
-                  style={{ backgroundColor: BRAND_COLOR_LIGHT }}
-                >
-                  ISO 9001
-                </span>
-                <span
-                  className="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium"
-                  style={{
-                    backgroundColor: BRAND_COLOR_LIGHT,
-                    color: BRAND_COLOR,
-                  }}
-                >
-                  예비사회적기업
-                </span>
-              </div>
-            </div>
-
+          <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-12 sm:pb-16">
             {/* 타이틀 */}
             <div className="text-center mb-6">
               <p

@@ -328,6 +328,7 @@ export interface ReviewItem {
   written_at: string;
   title: string | null;
   content: string;
+  tags?: string[] | null;
 }
 
 export function stripHtml(html: string): string {
@@ -429,6 +430,22 @@ export function ReviewCarousel({
                   {snippet}
                   {snippet.length < plain.length ? '…' : ''}
                 </p>
+                {review.tags && review.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-3">
+                    {review.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium"
+                        style={{
+                          backgroundColor: '#f3f4f6',
+                          color: accentColor,
+                        }}
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">

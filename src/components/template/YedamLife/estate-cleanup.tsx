@@ -1755,28 +1755,37 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
         </div>
       </section>
 
-      {/* ── PC 우측 플로팅 버튼 (sm 이상) ── */}
-      <div className="hidden sm:flex fixed right-4 bottom-6 z-50 flex-col gap-2">
-        <button
-          onClick={() => setShowEstimateModal(true)}
-          className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
-          style={{
-            backgroundColor: BRAND_COLOR_LIGHT,
-            color: BRAND_COLOR,
-          }}
-        >
-          <ScrollText className="w-5 h-5" />
-          <span className="text-[10px] font-bold mt-0.5">견적상담</span>
-        </button>
+      {/* ── PC 우측 플로팅 사이드바 (sm 이상) ── */}
+      <div className="hidden sm:flex fixed right-4 top-1/2 -translate-y-1/2 z-50 flex-col bg-white rounded-[32px] shadow-xl border border-gray-200 overflow-hidden divide-y divide-gray-200">
         <a
           href="tel:1899-1477"
-          className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
+          className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
         >
           <Phone className="w-5 h-5 text-gray-700" />
-          <span className="text-[9px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
-            빠른
-            <br />
-            상담 신청
+          <span className="text-[10px] font-bold text-gray-600 mt-1 leading-tight text-center">
+            전화 상담
+          </span>
+        </a>
+        <button
+          onClick={() => setShowEstimateModal(true)}
+          className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+        >
+          <ScrollText className="w-5 h-5 text-gray-700" />
+          <span className="text-[10px] font-bold text-gray-600 mt-1">
+            견적 상담
+          </span>
+        </button>
+        <a
+          href="https://pf.kakao.com/_예담라이프"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#374151">
+            <path d="M12 3C6.48 3 2 6.54 2 10.86c0 2.78 1.86 5.22 4.65 6.6l-.95 3.53c-.08.3.25.55.52.39l4.2-2.8c.51.07 1.04.1 1.58.1 5.52 0 10-3.54 10-7.86S17.52 3 12 3z" />
+          </svg>
+          <span className="text-[10px] font-bold text-gray-700 mt-1">
+            친구추가
           </span>
         </a>
       </div>

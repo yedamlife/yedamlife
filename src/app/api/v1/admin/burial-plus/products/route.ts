@@ -14,7 +14,7 @@ const SORT_COLUMN: Record<string, string> = {
 const SORT_COLUMNS_CSV = Object.values(SORT_COLUMN).join(', ');
 
 const SELECT_COLUMNS =
-  `id, uuid, facility_cd, company_name, sido_name, full_address, public_label, categories, photos, min_price, is_recommended, is_active, ${SORT_COLUMNS_CSV}, created_at, updated_at`;
+  `id, uuid, facility_cd, company_name, sido_name, full_address, public_label, categories, religions, photos, min_price, is_recommended, is_active, ${SORT_COLUMNS_CSV}, created_at, updated_at`;
 
 interface Cursor {
   sort: number;
@@ -117,6 +117,7 @@ export async function POST(request: Request) {
       menu_id: body.menu_id ?? 'M0001000100000000',
       facility_group_cd: body.facility_group_cd ?? '',
       categories: body.categories ?? [],
+      religions: body.religions ?? [],
       intro: body.intro ?? {},
       price: body.price ?? {},
       photos: body.photos ?? [],

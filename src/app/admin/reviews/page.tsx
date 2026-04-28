@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/components/ui/utils';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 
@@ -32,6 +31,7 @@ interface Row {
   author: string;
   written_at: string;
   title: string | null;
+  tags: string[] | null;
   is_active: boolean;
   created_at: string;
 }
@@ -59,6 +59,7 @@ export default function Page() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [category, setCategory] = useState('all');
+  const [hasTagsOnly, setHasTagsOnly] = useState(false);
 
   const page = Number(searchParams.get('page') || 1);
 
@@ -71,6 +72,7 @@ export default function Page() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: '20' });
     if (category && category !== 'all') params.set('category', category);
+    if (hasTagsOnly) params.set('has_tags', 'true');
     if (debouncedSearch) params.set('search', debouncedSearch);
 
     const res = await fetch(`/api/v1/admin/reviews?${params}`);
@@ -80,7 +82,7 @@ export default function Page() {
       setPagination(json.pagination);
     }
     setLoading(false);
-  }, [page, category, debouncedSearch]);
+  }, [page, category, hasTagsOnly, debouncedSearch]);
 
   useEffect(() => {
     fetchData();
@@ -94,7 +96,9 @@ export default function Page() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
-    const res = await fetch(`/api/v1/admin/reviews/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/v1/admin/reviews/${id}`, {
+      method: 'DELETE',
+    });
     if (res.ok) {
       toast.success('삭제되었습니다.');
       fetchData();
@@ -111,7 +115,9 @@ export default function Page() {
     });
     if (res.ok) {
       setData((prev) =>
-        prev.map((r) => (r.id === row.id ? { ...r, is_active: !r.is_active } : r)),
+        prev.map((r) =>
+          r.id === row.id ? { ...r, is_active: !r.is_active } : r,
+        ),
       );
     } else {
       toast.error('상태 변경에 실패했습니다.');
@@ -133,7 +139,10 @@ export default function Page() {
 
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white p-4">
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger size="sm" className="h-9! w-32 border-gray-200 bg-white text-sm px-3! py-0!">
+          <SelectTrigger
+            size="sm"
+            className="h-9! w-32 border-gray-200 bg-white text-sm px-3! py-0!"
+          >
             <SelectValue placeholder="전체" />
           </SelectTrigger>
           <SelectContent>
@@ -155,6 +164,11 @@ export default function Page() {
             className="h-9 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-gray-400"
           />
         </div>
+
+        <label className="flex items-center gap-2 text-sm cursor-pointer whitespace-nowrap">
+          <Switch checked={hasTagsOnly} onCheckedChange={setHasTagsOnly} />
+          <span className="text-gray-700">태그 있는 후기만</span>
+        </label>
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white">
@@ -162,25 +176,42 @@ export default function Page() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-4 py-3 text-left font-medium text-gray-500">ID</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">카테고리</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">제목</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">작성자</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">작성일</th>
-                <th className="px-4 py-3 text-center font-medium text-gray-500">활성</th>
-                <th className="px-4 py-3 text-right font-medium text-gray-500">관리</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  ID
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  카테고리
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  제목
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  태그
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  작성자
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">
+                  작성일
+                </th>
+                <th className="px-4 py-3 text-center font-medium text-gray-500">
+                  활성
+                </th>
+                <th className="px-4 py-3 text-right font-medium text-gray-500">
+                  관리
+                </th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-gray-400">
+                  <td colSpan={8} className="py-12 text-center text-gray-400">
                     로딩 중...
                   </td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-gray-400">
+                  <td colSpan={8} className="py-12 text-center text-gray-400">
                     데이터가 없습니다.
                   </td>
                 </tr>
@@ -200,17 +231,44 @@ export default function Page() {
                     <td className="px-4 py-3 font-medium text-gray-900 truncate max-w-[240px]">
                       {row.title || '(제목 없음)'}
                     </td>
+                    <td className="px-4 py-3">
+                      {row.tags && row.tags.length > 0 ? (
+                        <div className="flex flex-wrap items-center gap-1">
+                          {row.tags.slice(0, 2).map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                          {row.tags.length > 2 && (
+                            <span className="text-xs text-gray-500">
+                              +{row.tags.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">-</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-gray-600">{row.author}</td>
                     <td className="px-4 py-3 text-gray-600">
                       {new Date(row.written_at).toLocaleDateString('ko-KR')}
                     </td>
-                    <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                    <td
+                      className="px-4 py-3 text-center"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Switch
                         checked={row.is_active}
                         onCheckedChange={() => handleToggleActive(row)}
                       />
                     </td>
-                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td
+                      className="px-4 py-3 text-right"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Button
                         variant="ghost"
                         size="icon"
@@ -244,24 +302,27 @@ export default function Page() {
               >
                 <ChevronLeft className="size-4" />
               </Button>
-              {Array.from({ length: Math.min(pagination.total_pages, 5) }, (_, i) => {
-                const start = Math.max(
-                  1,
-                  Math.min(pagination.page - 2, pagination.total_pages - 4),
-                );
-                const p = start + i;
-                return (
-                  <Button
-                    key={p}
-                    variant={p === pagination.page ? 'default' : 'outline'}
-                    size="icon"
-                    className="size-8"
-                    onClick={() => setPage(p)}
-                  >
-                    {p}
-                  </Button>
-                );
-              })}
+              {Array.from(
+                { length: Math.min(pagination.total_pages, 5) },
+                (_, i) => {
+                  const start = Math.max(
+                    1,
+                    Math.min(pagination.page - 2, pagination.total_pages - 4),
+                  );
+                  const p = start + i;
+                  return (
+                    <Button
+                      key={p}
+                      variant={p === pagination.page ? 'default' : 'outline'}
+                      size="icon"
+                      className="size-8"
+                      onClick={() => setPage(p)}
+                    >
+                      {p}
+                    </Button>
+                  );
+                },
+              )}
               <Button
                 variant="outline"
                 size="icon"

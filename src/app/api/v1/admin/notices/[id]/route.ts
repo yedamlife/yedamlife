@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
 const TABLE = 'notices';
-const EDITABLE_FIELDS = ['title', 'content', 'is_active', 'sort_order'] as const;
+const EDITABLE_FIELDS = ['title', 'content', 'category', 'is_active', 'sort_order'] as const;
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

@@ -6,11 +6,18 @@ const TABLE = 'notices';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const limit = Math.min(Number(searchParams.get('limit')) || 10, 20);
+  const category = searchParams.get('category') || undefined;
 
-  const { data, error } = await supabase
+  let query = supabase
     .from(TABLE)
-    .select('id, title, created_at')
-    .eq('is_active', true)
+    .select('id, title, category, created_at')
+    .eq('is_active', true);
+
+  if (category) {
+    query = query.eq('category', category);
+  }
+
+  const { data, error } = await query
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: false })
     .limit(limit);

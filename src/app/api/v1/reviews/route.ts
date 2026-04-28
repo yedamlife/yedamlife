@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from('reviews')
-    .select('id, author, written_at, title, content')
+    .select('id, author, written_at, title, content, tags')
     .eq('category', category)
     .eq('is_active', true)
     .order('display_order', { ascending: true })

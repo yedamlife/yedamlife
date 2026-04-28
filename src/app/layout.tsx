@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Toaster } from 'sonner';
 import { GlobalHeader } from '@/components/global-header';
+import { FuneralGuideModals } from '@/components/funeral-guide-modals';
 import { KakaoSDK } from '@/components/kakao-sdk';
 import './globals.css';
 
@@ -19,6 +20,7 @@ export default function RootLayout({
         <KakaoSDK />
         <GlobalHeader />
         {children}
+        <FuneralGuideModals />
         <Toaster position="top-center" richColors />
       </body>
     </html>

@@ -8,12 +8,12 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
-  MessageCircle,
-  Mail,
   ChevronDown,
   Info,
   ScrollText,
-  PenLine,
+  Calculator,
+  Phone,
+  MapPin,
   X,
 } from 'lucide-react';
 import {
@@ -27,9 +27,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
-  BRAND_COLOR_PREMIUM,
-  consultationData,
-  obituaryData,
   serviceBenefits,
   funeralProducts,
   productDetails,
@@ -42,7 +39,6 @@ import {
   comparisonData,
 } from './constants';
 import {
-  Ticker,
   FaqItem,
   CountUp,
   MembershipSection,
@@ -199,6 +195,57 @@ export function GeneralFuneral({
     window.addEventListener('open-general-consult-modal', handler);
     return () =>
       window.removeEventListener('open-general-consult-modal', handler);
+  }, []);
+
+  // CTA 라이브 피드 — 상담완료 로테이션
+  const [liveFeed, setLiveFeed] = useState<
+    { id: number; name: string; status: string; time: string }[]
+  >(() => [
+    { id: 0, name: '김*철', status: '전화상담완료', time: '방금' },
+    { id: 1, name: '박*솔', status: '상담신청', time: '1분전' },
+    { id: 2, name: '박*안', status: '전화상담완료', time: '3분전' },
+    { id: 3, name: '임*순', status: '상담신청', time: '방금' },
+  ]);
+
+  useEffect(() => {
+    const namePool = [
+      '김*철', '박*솔', '박*안', '임*순', '이*민', '정*혜', '최*우',
+      '강*진', '윤*서', '한*규', '조*아', '서*호', '문*경', '오*빈',
+      '신*경', '권*영', '황*수', '안*지', '송*현', '류*연',
+      '백*재', '남*호', '장*미', '홍*기', '구*린', '나*은',
+      '전*아', '문*수', '주*혁', '심*나',
+    ];
+    const statusPool = ['전화상담완료', '상담신청'];
+    const timePool = ['방금', '1분전', '2분전', '3분전', '5분전', '7분전'];
+    const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+    let counter = 1000;
+    const swap = (slotIdx: number) => {
+      setLiveFeed((prev) =>
+        prev.map((item, i) =>
+          i === slotIdx
+            ? {
+                id: counter++,
+                name: pick(namePool),
+                status: pick(statusPool),
+                time: pick(timePool),
+              }
+            : item,
+        ),
+      );
+    };
+
+    // 각 슬롯마다 독립적인 주기(5~9초)로 변경
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const scheduleSlot = (slotIdx: number) => {
+      const delay = 5000 + Math.random() * 4000;
+      timers[slotIdx] = setTimeout(() => {
+        swap(slotIdx);
+        scheduleSlot(slotIdx);
+      }, delay);
+    };
+    for (let i = 0; i < 4; i++) scheduleSlot(i);
+    return () => timers.forEach((t) => clearTimeout(t));
   }, []);
 
   // 다이렉트 장례설계 폼 state
@@ -426,15 +473,54 @@ export function GeneralFuneral({
       <section id="sec-hero" className="overflow-hidden">
         <div className="relative overflow-hidden">
           <div
-            className="absolute inset-0 bg-cover bg-no-repeat bg-right sm:bg-center"
+            className="absolute inset-0 bg-cover bg-no-repeat bg-position-[75%_center] sm:bg-position-[15%_center] scale-[1.25] sm:scale-100 origin-center"
             style={{
               backgroundImage:
-                'url(https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/general-funeral-hero.png)',
+                'url(https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/general_funeral/general_funeral_hero.jpg)',
             }}
           />
           <div className="absolute inset-0 bg-black/40" />
-          <div className="relative z-10 py-20 sm:py-28 lg:py-36 px-4 sm:px-6">
-            <div className="text-center max-w-3xl mx-auto">
+          <div className="relative z-10 py-32 sm:py-28 lg:py-36 px-4 sm:px-6">
+            <div className="text-left max-w-3xl sm:mx-auto sm:max-w-5xl sm:pr-[20%] lg:pr-[25%]">
+              {/* ISO 9001 업계 최초 배지 */}
+              <div className="flex justify-start mb-7 sm:mb-9">
+                <a
+                  href="/about#iso"
+                  className="group inline-flex items-center gap-2 sm:gap-3 pl-5 sm:pl-6 pr-3 sm:pr-4 py-2 sm:py-2.5 rounded-2xl text-center transition-colors hover:bg-black/25 cursor-pointer"
+                  style={{
+                    backgroundColor: 'rgba(0,0,0,0.18)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <span className="block text-left">
+                    <span
+                      className="block font-bold leading-tight"
+                      style={{
+                        fontSize: '13px',
+                        color: '#e8d5a3',
+                        textShadow: '0 1px 3px rgba(0,0,0,0.6)',
+                      }}
+                    >
+                      국내 후불제 상조업계 최초
+                    </span>
+                    <span
+                      className="block font-semibold text-white leading-tight mt-0.5"
+                      style={{
+                        fontSize: '12.5px',
+                        textShadow: '0 1px 3px rgba(0,0,0,0.6)',
+                      }}
+                    >
+                      ISO 9001 품질경영시스템 인증 획득
+                    </span>
+                  </span>
+                  <ChevronRight
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-white/90 transition-transform duration-300 group-hover:translate-x-0.5"
+                    style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}
+                  />
+                </a>
+              </div>
+
               {/* PC: 서브타이틀 + 메인타이틀 */}
               <p
                 className="hidden sm:block text-white text-xl lg:text-2xl font-medium mb-5 tracking-wide"
@@ -446,7 +532,7 @@ export function GeneralFuneral({
                 진심으로 禮를 담아 감동을 전해드리는
               </p>
               <h1
-                className="hidden sm:block text-[34px] lg:text-[44px] font-bold text-white leading-snug mb-1"
+                className="hidden sm:block text-[28px] lg:text-[36px] font-bold text-white leading-snug mb-1 whitespace-nowrap"
                 style={{
                   textShadow: '0 2px 8px rgba(0,0,0,0.6)',
                   fontFamily: '"Nanum Myeongjo", serif',
@@ -455,7 +541,7 @@ export function GeneralFuneral({
                 대한민국 代表 후불제 상조기업
               </h1>
               <h1
-                className="hidden sm:block text-[34px] lg:text-[44px] font-bold leading-snug mb-10"
+                className="hidden sm:block text-[28px] lg:text-[36px] font-bold leading-snug mb-10"
                 style={{
                   textShadow: '0 2px 8px rgba(0,0,0,0.6)',
                   fontFamily: '"Nanum Myeongjo", serif',
@@ -468,7 +554,7 @@ export function GeneralFuneral({
 
               {/* 모바일: 서브타이틀 + 메인타이틀 */}
               <p
-                className="sm:hidden text-white text-[13.5px] font-semibold mb-2.5 tracking-wide"
+                className="sm:hidden text-white text-[15px] font-semibold mb-3 tracking-wide"
                 style={{
                   textShadow: '0 2px 6px rgba(0,0,0,0.6)',
                   fontFamily: '"Nanum Myeongjo", serif',
@@ -477,9 +563,9 @@ export function GeneralFuneral({
                 진심으로 禮를 담아 감동을 전해드리는
               </p>
               <p
-                className="sm:hidden font-bold text-white leading-relaxed mb-0.5"
+                className="sm:hidden font-bold text-white leading-relaxed mb-1 whitespace-nowrap"
                 style={{
-                  fontSize: '20px',
+                  fontSize: '24px',
                   textShadow: '0 2px 8px rgba(0,0,0,0.6)',
                   fontFamily: '"Nanum Myeongjo", serif',
                 }}
@@ -487,9 +573,9 @@ export function GeneralFuneral({
                 대한민국 代表 후불제 상조기업
               </p>
               <p
-                className="sm:hidden font-bold leading-relaxed mb-7"
+                className="sm:hidden font-bold leading-relaxed mb-8"
                 style={{
-                  fontSize: '20px',
+                  fontSize: '24px',
                   textShadow: '0 2px 8px rgba(0,0,0,0.6)',
                   fontFamily: '"Nanum Myeongjo", serif',
                 }}
@@ -498,91 +584,180 @@ export function GeneralFuneral({
                   &ldquo;예담라이프&rdquo;
                 </span>
               </p>
-              <div className="flex flex-row flex-wrap items-center justify-center gap-3">
-                <button
-                  onClick={() => setShowConsultModal(true)}
-                  className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-white text-gray-900 text-sm sm:text-base font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg cursor-pointer"
+              {/* CTA 버튼 그룹 — 전화 상담 / 장례비용 계산 */}
+              <div className="flex justify-start px-2 mt-12 sm:mt-16">
+                <div
+                  className="relative w-auto sm:w-full max-w-2xl rounded-2xl overflow-hidden bg-white"
+                  style={{
+                    boxShadow:
+                      '0 1px 0 0 rgba(255,255,255,0.9) inset, 0 22px 48px -14px rgba(20,16,8,0.35), 0 8px 16px -6px rgba(20,16,8,0.18)',
+                  }}
                 >
-                  <ScrollText className="w-4 h-4 sm:w-5 sm:h-5" />
-                  장례상품 상담 신청
-                </button>
-                <button
-                  onClick={() => setCostModalOpen(true)}
-                  className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 border-2 border-white/70 text-white text-sm sm:text-base font-bold rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
-                >
-                  <PenLine className="w-4 h-4 sm:w-5 sm:h-5" />
-                  장례비용 알아보기
-                </button>
+                  {/* 상단 미세 하이라이트 */}
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-10 top-0 h-px bg-linear-to-r from-transparent via-white to-transparent z-10"
+                  />
+
+                  {/* 자동 shimmer */}
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 bg-linear-to-r from-transparent via-yellow-50/60 to-transparent z-0"
+                    style={{
+                      animation: 'shimmer 3.5s ease-in-out infinite',
+                    }}
+                  />
+
+                  <div className="relative grid grid-cols-2 sm:flex items-stretch z-10">
+                    {/* 좌: 전화 상담 (모바일 숨김) */}
+                    <a
+                      href="tel:1660-0959"
+                      className="group/phone hidden sm:flex flex-1 items-center gap-2.5 sm:gap-3 pl-4 sm:pl-5 pr-3 sm:pr-4 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80"
+                    >
+                      <Phone
+                        className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-gray-900 transition-transform duration-300 group-hover/phone:-rotate-12"
+                        strokeWidth={1.7}
+                      />
+                      <p className="text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
+                        <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
+                          전화 상담
+                        </span>
+                        <span className="block text-[14.5px] sm:text-[15.5px] font-extrabold text-gray-900">
+                          1660-0959
+                        </span>
+                      </p>
+                    </a>
+
+                    {/* 구분선 (모바일 숨김) */}
+                    <span className="hidden sm:block w-px bg-gray-200/80" />
+
+                    {/* 중: 장지+ */}
+                    <a
+                      href="/burial-plus"
+                      className="group/burial flex items-center gap-2.5 sm:gap-3 pl-4 sm:pl-5 pr-3 sm:pr-4 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 sm:flex-1"
+                    >
+                      <MapPin
+                        className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-gray-900 transition-transform duration-300 group-hover/burial:-translate-y-0.5 group-hover/burial:scale-110"
+                        strokeWidth={1.7}
+                      />
+                      <p className="flex-1 text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
+                        <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
+                          장지 검색
+                        </span>
+                        <span className="block text-[14.5px] sm:text-[15.5px] font-extrabold text-gray-900">
+                          장지<span style={{ color: BRAND_COLOR }}>+</span>
+                        </span>
+                      </p>
+                      <ArrowRight
+                        className="shrink-0 w-[16px] h-[16px] sm:w-[18px] sm:h-[18px] text-gray-400 transition-all duration-300 group-hover/burial:text-gray-900 group-hover/burial:translate-x-1"
+                        strokeWidth={1.8}
+                      />
+                    </a>
+
+                    {/* 구분선 (모바일에서는 grid 컬럼 차지하지 않도록 숨김 — 대신 우측 버튼 좌측 보더) */}
+                    <span className="hidden sm:block w-px bg-gray-200/80" />
+
+                    {/* 우: 장례비용 계산 */}
+                    <button
+                      onClick={() => setCostModalOpen(true)}
+                      className="group/calc flex items-center gap-2.5 sm:gap-3 pl-4 sm:pl-5 pr-3 sm:pr-4 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 border-l border-gray-200/80 sm:border-l-0 sm:flex-1"
+                    >
+                      <Calculator
+                        className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-gray-900 transition-transform duration-300 group-hover/calc:-rotate-6 group-hover/calc:scale-110"
+                        strokeWidth={1.7}
+                      />
+                      <p className="flex-1 text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
+                        <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
+                          30초만에
+                        </span>
+                        <span className="block text-[14.5px] sm:text-[15.5px] font-extrabold text-gray-900">
+                          <span style={{ color: BRAND_COLOR }}>장례비용</span>{' '}
+                          계산
+                        </span>
+                      </p>
+                      <ArrowRight
+                        className="shrink-0 w-[16px] h-[16px] sm:w-[18px] sm:h-[18px] text-gray-400 transition-all duration-300 group-hover/calc:text-gray-900 group-hover/calc:translate-x-1"
+                        strokeWidth={1.8}
+                      />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── 1-2. 가입상담현황 + 부고알림현황 티커 ── */}
+      {/* ── 1-2. 통계 섹션 ── */}
       <section
         className="border-b border-gray-200 overflow-hidden"
         style={{
           background: 'linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%)',
         }}
       >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
-            {/* 가입상담현황 */}
-            <div className="flex items-center gap-4 py-4 pr-0 md:pr-6">
-              <div className="flex items-center gap-2 shrink-0">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: BRAND_COLOR_LIGHT }}
-                >
-                  <MessageCircle
-                    className="w-4 h-4"
-                    style={{ color: BRAND_COLOR }}
-                  />
-                </div>
-                <span className="text-sm font-bold text-gray-900 whitespace-nowrap">
-                  가입상담현황
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-2 md:gap-y-0">
+            {/* 1. 상담 건수 */}
+            <div className="flex flex-col items-center justify-center px-2 py-1.5 md:py-3 min-h-[58px] md:min-h-0 border-r border-gray-200">
+              <div className="flex items-baseline">
+                <CountUp
+                  end={5200}
+                  className="text-lg sm:text-3xl font-extrabold tracking-tight text-gray-900"
+                />
+                <span className="text-[13px] sm:text-lg font-extrabold ml-0.5 sm:ml-1 text-gray-900">
+                  건+
                 </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <Ticker
-                  data={consultationData}
-                  renderItem={(item) => (
-                    <span className="text-sm text-gray-600 truncate">
-                      <span className="font-medium text-gray-500">
-                        {item.id}
-                      </span>{' '}
-                      {item.name} {item.status}{' '}
-                      <span className="text-gray-400">{item.date}</span>
-                    </span>
-                  )}
-                />
-              </div>
+              <p className="text-[11px] sm:text-sm text-gray-500 mt-1 text-center">
+                누적 상담 건수
+              </p>
             </div>
-            {/* 부고알림현황 */}
-            <div className="flex items-center gap-4 py-4 pl-0 md:pl-6">
-              <div className="flex items-center gap-2 shrink-0">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: BRAND_COLOR_LIGHT }}
-                >
-                  <Mail className="w-4 h-4" style={{ color: BRAND_COLOR }} />
-                </div>
-                <span className="text-sm font-bold text-gray-900 whitespace-nowrap">
-                  부고알림현황
+
+            {/* 2. 가입 건수 */}
+            <div className="flex flex-col items-center justify-center px-2 py-1.5 md:py-3 min-h-[58px] md:min-h-0 md:border-r border-gray-200">
+              <div className="flex items-baseline">
+                <CountUp
+                  end={1800}
+                  className="text-lg sm:text-3xl font-extrabold tracking-tight text-gray-900"
+                />
+                <span className="text-[13px] sm:text-lg font-extrabold ml-0.5 sm:ml-1 text-gray-900">
+                  건+
                 </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <Ticker
-                  data={obituaryData}
-                  interval={3500}
-                  renderItem={(item) => (
-                    <span className="text-sm text-gray-600 truncate">
-                      {item.name} / {item.period} {item.location}
-                    </span>
-                  )}
+              <p className="text-[11px] sm:text-sm text-gray-500 mt-1 text-center">
+                누적 가입 건수
+              </p>
+            </div>
+
+            {/* 3. 24시 긴급출동 */}
+            <div className="flex flex-col items-center justify-center px-2 py-1.5 md:py-3 min-h-[58px] md:min-h-0 border-r border-gray-200">
+              <div className="flex items-baseline">
+                <CountUp
+                  end={24}
+                  className="text-lg sm:text-3xl font-extrabold tracking-tight text-gray-900"
                 />
+                <span className="text-[13px] sm:text-lg font-extrabold ml-0.5 sm:ml-1 text-gray-900">
+                  H
+                </span>
               </div>
+              <p className="text-[11px] sm:text-sm text-gray-500 mt-1 text-center">
+                365일 긴급출동 서비스
+              </p>
+            </div>
+
+            {/* 4. 가입비 0원 */}
+            <div className="flex flex-col items-center justify-center px-2 py-1.5 md:py-3 min-h-[58px] md:min-h-0">
+              <div className="flex items-baseline">
+                <span className="text-lg sm:text-3xl font-extrabold tracking-tight text-gray-900">
+                  0
+                </span>
+                <span className="text-[13px] sm:text-lg font-extrabold ml-0.5 sm:ml-1 text-gray-900">
+                  원
+                </span>
+              </div>
+              <p className="text-[11px] sm:text-sm text-gray-500 mt-1 text-center">
+                가입비 · 월 납입금
+              </p>
             </div>
           </div>
         </div>
@@ -605,53 +780,41 @@ export function GeneralFuneral({
               </h2>
             </div>
 
-            {/* 4개 카드 - 이미지 스타일 */}
+            {/* 4개 카드 - 아이콘 스타일 */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
                 {
-                  title: '투명한 가격 정책',
-                  desc: '가입비·월회비·연회비 없음\n발인 전날 비용 정산\n품질보증 가격 정찰제',
-                  image:
-                    'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&q=80',
+                  title: '빈소 운영 지원',
+                  desc: '장례식장 설의부터 빈소 세팅, 조문객 안내까지\n전 과정을 책임집니다.',
+                  icon: '⛪',
                 },
                 {
-                  title: '고객 맞춤 시스템',
-                  desc: '가풍과 예산에 맞춘\n맞춤형 장례서비스 제공',
-                  image:
-                    'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600&q=80',
+                  title: '전문 장례지도사',
+                  desc: '전문 장례지도사가 입관·발인·화장까지\n세심하게 도움합니다.',
+                  icon: '👤',
                 },
                 {
-                  title: '사전 혜택 + 사후 케어',
-                  desc: '상조 할인·운구지원 등 8가지 혜택\n1주기 답례·돌봄상담까지',
-                  image:
-                    'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=600&q=80',
+                  title: '사전가입 혜택',
+                  desc: '사전 가입 시 20만원 즉시 할인\n및 소개 혜택으로 합리적인 서비스를 제공합니다.',
+                  icon: '📋',
                 },
                 {
-                  title: '멤버십 시스템',
-                  desc: '장지·유품정리·법률·세무\n제휴 할인 및 무료 컨설팅',
-                  image:
-                    'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=80',
+                  title: '사후 행정 지원',
+                  desc: '유품정리·안심상속·법률상담까지\n사후 모든 행정 절차를 안내합니다.',
+                  icon: '✨',
                 },
               ].map((card) => (
                 <div
                   key={card.title}
-                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col"
+                  className="bg-white rounded-2xl border border-gray-200 px-4 py-6 flex flex-col"
                 >
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <img
-                      src={card.image}
-                      alt={card.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="px-4 py-4 flex-1">
-                    <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">
-                      {card.title}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                      {card.desc}
-                    </p>
-                  </div>
+                  <div className="text-4xl mb-3">{card.icon}</div>
+                  <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-3">
+                    {card.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                    {card.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -1001,18 +1164,46 @@ export function GeneralFuneral({
                               → {product.discountPrice}
                             </span>
                           </div>
-                          <button
-                            onClick={() => {
-                              setProductInquiryTab(product.id);
-                              document
-                                .getElementById('inquiry')
-                                ?.scrollIntoView({ behavior: 'smooth' });
-                            }}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-colors cursor-pointer hover:bg-gray-200 bg-gray-100 text-gray-700"
-                          >
-                            상품 상세 보기
-                            <ArrowRight className="w-4 h-4" />
-                          </button>
+                          {product.subtitle === '무빈소' ? (
+                            <button
+                              onClick={() => {
+                                window.dispatchEvent(
+                                  new CustomEvent('open-general-consult-modal'),
+                                );
+                              }}
+                              className="w-full px-1 py-2.5 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer hover:bg-gray-200 bg-gray-100 text-gray-700 whitespace-nowrap"
+                            >
+                              상담신청
+                            </button>
+                          ) : (
+                            <div className="flex rounded-lg overflow-hidden border border-gray-200">
+                              <button
+                                onClick={() => {
+                                  window.dispatchEvent(
+                                    new CustomEvent(
+                                      'open-general-consult-modal',
+                                    ),
+                                  );
+                                }}
+                                className="flex-1 px-1 py-2.5 text-[11px] font-semibold transition-colors cursor-pointer hover:bg-gray-100 bg-white text-gray-700 whitespace-nowrap"
+                              >
+                                상담신청
+                              </button>
+                              <span className="w-px bg-gray-200" />
+                              <a
+                                href="/membership/general"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 px-1 py-2.5 text-[11px] font-bold transition-opacity cursor-pointer text-center inline-flex items-center justify-center whitespace-nowrap hover:opacity-90"
+                                style={{
+                                  backgroundColor: BRAND_COLOR_LIGHT,
+                                  color: BRAND_COLOR,
+                                }}
+                              >
+                                80만원 혜택받기
+                              </a>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1111,6 +1302,10 @@ export function GeneralFuneral({
                   />
                 </div>
                 <div className="p-5">
+                  <h3 className="text-base font-bold text-gray-900 mb-2">
+                    {product.name}
+                    {product.subtitle ? ` (${product.subtitle})` : ''}
+                  </h3>
                   <p className="text-xs text-gray-500 mb-4 leading-relaxed whitespace-pre-line">
                     {product.desc}
                   </p>
@@ -1125,18 +1320,44 @@ export function GeneralFuneral({
                       → {product.discountPrice}
                     </span>
                   </div>
-                  <button
-                    onClick={() => {
-                      setProductInquiryTab(product.id);
-                      document
-                        .getElementById('inquiry')
-                        ?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-colors cursor-pointer hover:bg-gray-200 bg-gray-100 text-gray-700"
-                  >
-                    상품 상세 보기
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
+                  {product.subtitle === '무빈소' ? (
+                    <button
+                      onClick={() => {
+                        window.dispatchEvent(
+                          new CustomEvent('open-general-consult-modal'),
+                        );
+                      }}
+                      className="w-full py-2.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer hover:bg-gray-200 bg-gray-100 text-gray-700"
+                    >
+                      상담신청
+                    </button>
+                  ) : (
+                    <div className="flex rounded-lg overflow-hidden border border-gray-200">
+                      <button
+                        onClick={() => {
+                          window.dispatchEvent(
+                            new CustomEvent('open-general-consult-modal'),
+                          );
+                        }}
+                        className="flex-1 py-2.5 text-xs font-semibold transition-colors cursor-pointer hover:bg-gray-100 bg-white text-gray-700"
+                      >
+                        상담신청
+                      </button>
+                      <span className="w-px bg-gray-200" />
+                      <a
+                        href="/membership/general"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 py-2.5 text-xs font-bold transition-opacity cursor-pointer text-center inline-flex items-center justify-center hover:opacity-90"
+                        style={{
+                          backgroundColor: BRAND_COLOR_LIGHT,
+                          color: BRAND_COLOR,
+                        }}
+                      >
+                        80만원 혜택받기
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -2127,8 +2348,92 @@ export function GeneralFuneral({
         ctaLabel="후불제 상조 가입신청"
       />
 
+      {/* ── 5-2. 장례 가이드 ── */}
+      <section
+        id="sec-funeral-guide"
+        className="py-16 sm:py-24 bg-white overflow-hidden"
+      >
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-3">
+              장례 가이드
+            </h2>
+            <p className="text-gray-500 max-w-xl mx-auto leading-relaxed">
+              고인의 마지막을 禮를 다하여 모십니다.
+              <br />
+              예담라이프는 100% 후불제로 진행하여 유가족의 슬픔을 함께 나눕니다.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+            {[
+              {
+                label: '장례정보',
+                img: 'round_illust01.png',
+                href: '/funeral-guide/info',
+                modal: null as null | 'son-eopneun-nal' | '49je',
+              },
+              {
+                label: '장례절차',
+                img: 'round_illust02.png',
+                href: '/funeral-guide/procedure',
+                modal: null,
+              },
+              {
+                label: '손 없는 날',
+                img: 'round_illust03.png',
+                href: '#modal-son-eopneun-nal',
+                modal: 'son-eopneun-nal' as const,
+              },
+              {
+                label: '49재 계산',
+                img: 'round_illust04.png',
+                href: '#modal-49je',
+                modal: '49je' as const,
+              },
+            ].map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                onClick={(e) => {
+                  if (item.modal) {
+                    e.preventDefault();
+                    window.dispatchEvent(
+                      new CustomEvent('open-funeral-guide-modal', {
+                        detail: item.modal,
+                      }),
+                    );
+                  }
+                }}
+                className="group bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1 cursor-pointer"
+              >
+                <div
+                  className="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center mb-4 transition-transform group-hover:scale-105"
+                  style={{ backgroundColor: '#f5efe2' }}
+                >
+                  <img
+                    src={`https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/funeral_guide/${item.img}`}
+                    alt={item.label}
+                    className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
+                  />
+                </div>
+                <p className="text-base sm:text-lg font-bold text-gray-900 mb-1.5">
+                  {item.label}
+                </p>
+                <span className="text-xs sm:text-sm text-gray-500 underline underline-offset-4">
+                  자세히 보기
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── 6. 후기 ── */}
-      <section id="reviews" className="py-16 sm:py-24 overflow-hidden bg-white">
+      <section
+        id="reviews"
+        className="py-16 sm:py-24 overflow-hidden bg-gray-50"
+      >
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-3">
@@ -2146,7 +2451,7 @@ export function GeneralFuneral({
       {/* ── 8. 주요 고객사 ── */}
       <section
         id="sec-clients"
-        className="py-16 sm:py-20 bg-gray-50 overflow-hidden"
+        className="py-16 sm:py-20 bg-white overflow-hidden"
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
@@ -2238,7 +2543,7 @@ export function GeneralFuneral({
 
       <section
         id="sec-emergency"
-        className="py-12 sm:py-16 overflow-hidden bg-white"
+        className="py-12 sm:py-16 overflow-hidden bg-gray-50"
       >
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
@@ -2255,13 +2560,10 @@ export function GeneralFuneral({
                 가장 가까운 전담팀이 즉시 찾아갑니다
               </p>
               <div className="flex items-center gap-3 mb-5">
-                <Headphones
-                  className="w-7 h-7"
-                  style={{ color: BRAND_COLOR }}
-                />
+                <Headphones className="w-7 h-7" style={{ color: 'black' }} />
                 <span
                   className="text-2xl sm:text-3xl font-extrabold"
-                  style={{ color: BRAND_COLOR }}
+                  style={{ color: 'black' }}
                 >
                   1660.0959
                 </span>
@@ -2294,7 +2596,7 @@ export function GeneralFuneral({
       </section>
 
       {/* ── 13. 다이렉트 장례설계 ── */}
-      <section className="py-16 sm:py-24 bg-gray-50">
+      <section id="sec-direct-design" className="py-16 sm:py-24 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div>
             <div className="text-center mb-8">
@@ -2513,57 +2815,201 @@ export function GeneralFuneral({
       </section>
 
       {/* ══════════════ CTA ══════════════ */}
-      <CtaSection
+      <section
         id="contact"
-        title={
-          <>
-            가장 어려운 순간,
+        className="relative py-16 sm:py-24 overflow-hidden"
+        style={{
+          background: `linear-gradient(180deg, #fafbf7 0%, #ffffff 40%)`,
+        }}
+      >
+        <style>{`
+          @keyframes feedNameSwap {
+            0% {
+              opacity: 0;
+            }
+            100% {
+              opacity: 1;
+            }
+          }
+          @keyframes pulseDot {
+            0%,
+            100% {
+              opacity: 1;
+              transform: scale(1);
+              box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+            }
+            50% {
+              opacity: 0.85;
+              transform: scale(1.15);
+              box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+            }
+          }
+        `}</style>
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <h2
+            className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 leading-snug"
+            style={{
+              fontFamily:
+                "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
+            }}
+          >
+            지금 바로
             <br />
-            예담라이프가 함께합니다
-          </>
-        }
-        description={
-          <>
-            전문 상담사가 24시간 대기하고 있습니다.
+            무료 상담 신청하세요
+          </h2>
+          <p className="text-gray-600 mb-8 leading-relaxed text-sm sm:text-base">
+            사전 가입 상담 시{' '}
+            <span className="font-bold text-gray-900">20만원 할인 혜택</span>
             <br />
-            부담 없이 문의해 주세요.
-          </>
-        }
-        buttons={
-          <>
-            <button
-              type="button"
-              onClick={() => setShowConsultModal(true)}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
-            >
-              <ScrollText className="w-5 h-5" />
-              상담 신청하기
-            </button>
-            <a
-              href={membershipHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="relative w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl transition-colors shadow-lg cursor-pointer hover:opacity-90 overflow-hidden"
+            가입비 · 월 납입금 없는 100% 후불제 상조
+            <br />
+            365일 24시간 언제든 부담 없이 연락해 주세요
+          </p>
+
+          {/* 라이브 피드 */}
+          <ul className="mx-auto max-w-md mb-10 flex flex-col text-left">
+            {liveFeed.map((item, idx) => (
+              <li
+                key={idx}
+                className="flex items-center gap-3 px-2 py-3.5 border-b border-gray-200"
+              >
+                <span
+                  className="shrink-0 w-2 h-2 rounded-full bg-emerald-500"
+                  style={{ animation: 'pulseDot 2s ease-in-out infinite' }}
+                />
+                <span
+                  key={item.id}
+                  className="flex-1 text-[13.5px] sm:text-sm text-gray-800 font-medium"
+                  style={{
+                    animation: 'feedNameSwap 0.9s ease-out',
+                  }}
+                >
+                  {item.name}님 {item.status}
+                </span>
+                <span
+                  key={`time-${item.id}`}
+                  className="text-[11px] sm:text-xs text-gray-400"
+                  style={{
+                    animation: 'feedNameSwap 0.9s ease-out',
+                  }}
+                >
+                  {item.time}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex justify-center px-2">
+            <div
+              className="relative w-full max-w-2xl rounded-2xl overflow-hidden bg-white"
               style={{
-                backgroundColor: BRAND_COLOR_PREMIUM,
-                color: '#ffffff',
+                boxShadow:
+                  '0 1px 0 0 rgba(255,255,255,0.9) inset, 0 22px 48px -14px rgba(20,16,8,0.35), 0 8px 16px -6px rgba(20,16,8,0.18)',
               }}
             >
               <span
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background:
-                    'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
-                  animation: 'shimmer 2.5s ease-in-out infinite',
-                  width: '60%',
-                }}
+                aria-hidden
+                className="pointer-events-none absolute inset-x-10 top-0 h-px bg-linear-to-r from-transparent via-white to-transparent z-10"
               />
-              <FileText className="relative w-5 h-5" />
-              <span className="relative">가입증서 신청하기</span>
-            </a>
-          </>
-        }
-      />
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-0 bg-linear-to-r from-transparent via-yellow-50/60 to-transparent z-0"
+                style={{ animation: 'shimmer 3.5s ease-in-out infinite' }}
+              />
+
+              <div className="relative grid grid-cols-2 sm:flex sm:flex-row sm:items-stretch z-10">
+                {/* 전화 상담 */}
+                <a
+                  href="tel:1660-0959"
+                  className="group/phone flex items-center justify-center sm:flex-1 gap-2.5 px-4 py-3.5 sm:py-4 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80"
+                >
+                  <Phone
+                    className="shrink-0 w-[20px] h-[20px] text-gray-900 transition-transform duration-300 group-hover/phone:-rotate-12"
+                    strokeWidth={1.7}
+                  />
+                  <p className="text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
+                    <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
+                      24시간
+                    </span>
+                    <span className="block text-[13px] sm:text-[14px] font-extrabold text-gray-900">
+                      전화상담
+                    </span>
+                  </p>
+                </a>
+
+                <span className="hidden sm:block w-px bg-gray-200/80 self-stretch" />
+
+                {/* 상담 신청 */}
+                <button
+                  type="button"
+                  onClick={() => setShowConsultModal(true)}
+                  className="group/consult flex items-center justify-center sm:flex-1 gap-2.5 px-4 py-3.5 sm:py-4 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 border-l border-gray-200/80 sm:border-l-0"
+                >
+                  <ScrollText
+                    className="shrink-0 w-[20px] h-[20px] text-gray-900 transition-transform duration-300 group-hover/consult:scale-110"
+                    strokeWidth={1.7}
+                  />
+                  <p className="text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
+                    <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
+                      무료
+                    </span>
+                    <span className="block text-[13px] sm:text-[14px] font-extrabold text-gray-900">
+                      상담신청
+                    </span>
+                  </p>
+                </button>
+
+                <span className="hidden sm:block w-px bg-gray-200/80 self-stretch" />
+
+                {/* 가입 신청 */}
+                <a
+                  href={membershipHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group/join flex items-center justify-center sm:flex-1 gap-2.5 px-4 py-3.5 sm:py-4 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 border-t border-gray-200/80 sm:border-t-0"
+                >
+                  <FileText
+                    className="shrink-0 w-[20px] h-[20px] text-gray-900 transition-transform duration-300 group-hover/join:scale-110"
+                    strokeWidth={1.7}
+                  />
+                  <p className="text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
+                    <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
+                      20만원 할인
+                    </span>
+                    <span
+                      className="block text-[13px] sm:text-[14px] font-extrabold"
+                      style={{ color: BRAND_COLOR }}
+                    >
+                      가입신청
+                    </span>
+                  </p>
+                </a>
+
+                <span className="hidden sm:block w-px bg-gray-200/80 self-stretch" />
+
+                {/* 장례비용 계산 */}
+                <button
+                  onClick={() => setCostModalOpen(true)}
+                  className="group/calc flex items-center justify-center sm:flex-1 gap-2.5 px-4 py-3.5 sm:py-4 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 border-t border-l border-gray-200/80 sm:border-t-0 sm:border-l-0"
+                >
+                  <Calculator
+                    className="shrink-0 w-[20px] h-[20px] text-gray-900 transition-transform duration-300 group-hover/calc:-rotate-6 group-hover/calc:scale-110"
+                    strokeWidth={1.7}
+                  />
+                  <p className="text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
+                    <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
+                      30초
+                    </span>
+                    <span className="block text-[13px] sm:text-[14px] font-extrabold text-gray-900">
+                      장례비용 계산
+                    </span>
+                  </p>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* 이미지 확대 모달 */}
       {lightboxSrc && (

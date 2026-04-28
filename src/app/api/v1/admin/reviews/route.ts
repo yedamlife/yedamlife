@@ -9,16 +9,21 @@ export async function GET(request: Request) {
   const limit = Math.min(Number(searchParams.get('limit')) || 20, 100);
   const category = searchParams.get('category') || undefined;
   const search = searchParams.get('search') || undefined;
+  const hasTags = searchParams.get('has_tags') === 'true';
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
   let query = supabase
     .from(TABLE)
-    .select('id, uuid, category, author, written_at, title, is_active, display_order, created_at', {
+    .select('id, uuid, category, author, written_at, title, tags, is_active, display_order, created_at', {
       count: 'exact',
     });
 
   if (category) query = query.eq('category', category);
+
+  if (hasTags) {
+    query = query.not('tags', 'is', null).neq('tags', '{}');
+  }
 
   if (search) {
     query = query.or(
@@ -26,7 +31,7 @@ export async function GET(request: Request) {
     );
   }
 
-  query = query.order('created_at', { ascending: false }).range(from, to);
+  query = query.order('id', { ascending: false }).range(from, to);
 
   const { data, count, error } = await query;
 
@@ -75,6 +80,7 @@ export async function POST(request: Request) {
       written_at: body.written_at,
       title: body.title || null,
       content: body.content,
+      tags: Array.isArray(body.tags) ? body.tags : [],
       is_active: body.is_active ?? true,
     })
     .select('id, uuid')

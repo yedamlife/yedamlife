@@ -12,12 +12,28 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
+
+const CATEGORIES = ['공지', '이벤트', '안내', '보도자료'] as const;
+const CATEGORY_BADGE: Record<string, string> = {
+  공지: 'bg-gray-100 text-gray-700',
+  이벤트: 'bg-rose-100 text-rose-700',
+  안내: 'bg-blue-100 text-blue-700',
+  보도자료: 'bg-amber-100 text-amber-700',
+};
 
 interface Row {
   id: number;
   uuid: string;
   title: string;
+  category: string;
   is_active: boolean;
   sort_order: number;
   view_count: number;
@@ -46,6 +62,7 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   // drag & drop
   const dragIdx = useRef<number | null>(null);
@@ -62,6 +79,7 @@ export default function Page() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: '20' });
     if (debouncedSearch) params.set('search', debouncedSearch);
+    if (categoryFilter !== 'all') params.set('category', categoryFilter);
 
     const res = await fetch(`/api/v1/admin/notices?${params}`);
     const json = await res.json();
@@ -70,7 +88,7 @@ export default function Page() {
       setPagination(json.pagination);
     }
     setLoading(false);
-  }, [page, debouncedSearch]);
+  }, [page, debouncedSearch, categoryFilter]);
 
   useEffect(() => {
     fetchData();
@@ -173,6 +191,19 @@ export default function Page() {
             className="h-9 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-gray-400"
           />
         </div>
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="h-9 w-40">
+            <SelectValue placeholder="카테고리" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체 카테고리</SelectItem>
+            {CATEGORIES.map((c) => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white">
@@ -183,6 +214,9 @@ export default function Page() {
                 <th className="w-10 px-2 py-3" />
                 <th className="px-4 py-3 text-left font-medium text-gray-500">
                   ID
+                </th>
+                <th className="px-4 py-3 text-center font-medium text-gray-500">
+                  카테고리
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">
                   제목
@@ -204,13 +238,13 @@ export default function Page() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-gray-400">
+                  <td colSpan={8} className="py-12 text-center text-gray-400">
                     로딩 중...
                   </td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-gray-400">
+                  <td colSpan={8} className="py-12 text-center text-gray-400">
                     데이터가 없습니다.
                   </td>
                 </tr>
@@ -237,6 +271,15 @@ export default function Page() {
                       <GripVertical className="size-4 text-gray-300 cursor-grab active:cursor-grabbing mx-auto" />
                     </td>
                     <td className="px-4 py-3 text-gray-500">{row.id}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          CATEGORY_BADGE[row.category] ?? 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        {row.category ?? '공지'}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 font-medium text-gray-900 truncate max-w-[360px]">
                       {row.title}
                     </td>

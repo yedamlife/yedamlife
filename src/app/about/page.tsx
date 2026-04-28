@@ -62,6 +62,22 @@ function AboutPageContent() {
     };
   }, []);
 
+  // 해시(#iso 등)로 진입 시 해당 섹션으로 스크롤
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash.replace('#', '');
+    if (!hash) return;
+    const scrollToHash = () => {
+      const el = document.getElementById(hash);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setActiveSection(hash);
+      }
+    };
+    const t = setTimeout(scrollToHash, 150);
+    return () => clearTimeout(t);
+  }, []);
+
   useEffect(() => {
     // 카카오 지도 퍼가기 스크립트 로드
     const script = document.createElement('script');
@@ -99,8 +115,9 @@ function AboutPageContent() {
     <>
       <style>{`
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
-        html, body { scrollbar-width: none; -ms-overflow-style: none; overflow-x: clip; }
+        html, body { scrollbar-width: none; -ms-overflow-style: none; overflow-x: clip; scroll-padding-top: 96px; }
         html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+        section[id] { scroll-margin-top: 96px; }
         .root_daum_roughmap { width: 100% !important; }
         .root_daum_roughmap .wrap_map { width: 100% !important; height: 360px !important; }
         @media (max-width: 640px) {
@@ -136,37 +153,33 @@ function AboutPageContent() {
             </div>
 
             {/* 인사말 본문 */}
-            <div className="max-w-4xl mx-auto space-y-10 text-[15px] sm:text-base text-gray-700 leading-[1.9] text-center">
-              {/* 대표 사진 */}
-              <div>
+            <div className="max-w-4xl mx-auto space-y-10 text-[15px] sm:text-base text-gray-700 leading-[1.9] text-center md:text-left">
+              {/* 첫 단락 + 대표 사진 (PC에서 신문처럼 좌측 플로팅) */}
+              <div className="md:clear-both after:content-[''] after:block after:clear-both">
                 <img
-                  src={`${SUPABASE_BASE}/ceo-profile2.png`}
+                  src={`${SUPABASE_BASE}/ceo_profile3.jpeg`}
                   alt="예담라이프 대표"
-                  className="w-52 sm:w-72 mx-auto object-cover rounded-2xl"
+                  className="w-52 h-52 sm:w-72 sm:h-72 mx-auto md:mx-0 md:float-left md:mr-8 object-cover rounded-2xl mb-6 md:mb-4"
                 />
-              </div>
-
-              <div>
-                <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-6">
+                <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-6 text-center md:text-left">
                   준비 없던 장례 길잡이별, 후불제상조 예담라이프
                 </h3>
-                <p>
+                <p className="md:text-justify">
                   갑작스러운 이별 앞에서, 가장 먼저 달려가는 후불제 상조입니다.
-                </p>
-                <p className="mt-4">
-                  어느 날 갑자기 찾아온 이별.
-                  <br />
-                  뭐부터 해야 할지 모르겠고, 어디로 연락해야 하는지 조차
-                  막막하실 겁니다.
+                  어느 날 갑자기 찾아온 이별, 뭐부터 해야 할지 모르겠고 어디로
+                  연락해야 하는지조차 막막하실 겁니다.
                 </p>
                 <p className="text-lg sm:text-xl font-bold text-gray-900 mt-6">
                   그 마음, 저희가 압니다.
                 </p>
-                <p className="mt-4">
-                  예담라이프는 가입 절차도, 선불 납입도, 복잡한 서류도 필요
-                  없습니다.
-                  <br />
-                  전화 한 통이면, 바로 도와드립니다.
+                <p className="mt-4 md:text-justify">
+                  가입 절차도, 선불 납입도, 복잡한 서류도 필요 없습니다.
+                  전화 한 통이면 전문 장례지도사가 365일 24시간 달려가고,
+                  비용은 장례 후 이용하신 만큼만 정산합니다.
+                </p>
+                <p className="mt-4 md:text-justify">
+                  남은 가족의 짐은 저희가 덜겠습니다. 고인과의 마지막
+                  시간에만 온전히 집중하세요.
                 </p>
               </div>
 
@@ -175,13 +188,11 @@ function AboutPageContent() {
                   &ldquo;상조 가입에 둘게 없는데...&rdquo;
                 </p>
                 <p>
-                  아무것도 준비되어 있지 않아도 괜찮습니다.
-                  <br />
+                  아무것도 준비되어 있지 않아도 괜찮습니다.{'  '}
                   예담라이프는 사전 가입이 필요 없는 후불제 상조입니다.
-                  <br />
-                  장례가 필요한 바로 그 시점에 연락 주시면,
-                  <br />
-                  365일 24시간, 전국 어디든 전문장례지도사가 출동합니다.
+                  {'  '}장례가 필요한 바로 그 시점에 연락 주시면,
+                  {'  '}365일 24시간, 전국 어디든 전문장례지도사가
+                  출동합니다.
                 </p>
               </div>
 
@@ -191,11 +202,11 @@ function AboutPageContent() {
                 </p>
                 <p>
                   장례 후 정산합니다.
-                  <br />
+                  {'  '}
                   월 납입금 0원. 가입비 0원.
-                  <br />
+                  {'  '}
                   수년간 매달 돈을 넣어두실 필요 없습니다.
-                  <br />
+                  {'  '}
                   이용하신 서비스에 대해서만 정산하면 됩니다.
                 </p>
               </div>
@@ -207,19 +218,19 @@ function AboutPageContent() {
                 </p>
                 <p>
                   그럴수록, 더욱 도움이 필요합니다.
-                  <br />
+                  {'  '}
                   10년 이상 경력의 전문 장례지도사가 처음부터 끝까지 책임지고
                   도와드립니다.
-                  <br />
+                  {'  '}
                   담당 장례지도사가 고객 상황에 맞춰 꼭 필요한 요소만 선별하여
                   장례를 설계하고,
-                  <br />전 과정을 빠짐없이 진행합니다.
+                  {'  '}전 과정을 빠짐없이 진행합니다.
                 </p>
               </div>
 
               <p>
                 ISO 9001 품질인증을 받은 유일한 후불제 상조로서,
-                <br />
+                {'  '}
                 국제 기준에 따른 품격있는 서비스를 약속드립니다.
               </p>
 
@@ -229,13 +240,13 @@ function AboutPageContent() {
                 </p>
                 <p>
                   아무것도 하지 않으셔도 됩니다.
-                  <br />
+                  {'  '}
                   유족이 해야 할 일은 단 하나,
-                  <br />
+                  {'  '}
                   고인과의 마지막 시간에 집중하는 것입니다.
-                  <br />
+                  {'  '}
                   나머지 모든 절차는 예담라이프가
-                  <br />
+                  {'  '}
                   상주의 마음으로, 예를 다해 모시겠습니다.
                 </p>
               </div>
@@ -253,14 +264,14 @@ function AboutPageContent() {
                 </h4>
                 <p>
                   예담라이프는 서울특별시 지정 예비사회적기업으로
-                  <br />
+                  {'  '}
                   이윤보다 사람을 먼저 생각하며 수익금의 일부를 어려운 이웃에게
                   기부합니다.
-                  <br />
+                  {'  '}
                   고인의 마지막 가시는 길에 예를 담고,
-                  <br />
+                  {'  '}
                   남은 가족에게는 위로를 전하는 것
-                  <br />
+                  {'  '}
                   그것이 예담라이프의 시작이자, 존재의 이유입니다.
                 </p>
               </div>

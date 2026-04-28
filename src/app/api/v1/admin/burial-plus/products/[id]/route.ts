@@ -5,6 +5,7 @@ const TABLE = 'bp_products';
 
 const EDITABLE_FIELDS = [
   'categories',
+  'religions',
   'intro',
   'price',
   'photos',

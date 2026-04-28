@@ -5,7 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Check, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { BpProductForm, type BpProductFormValue } from '@/components/admin/bp-product-form';
+import {
+  BpProductForm,
+  type BpProductFormValue,
+} from '@/components/admin/bp-product-form';
 
 const BACK_HREF = '/admin/burial-plus/products';
 
@@ -27,6 +30,7 @@ export default function Page() {
         const d = json.data;
         const v: BpProductFormValue = {
           categories: d.categories ?? [],
+          religions: d.religions ?? [],
           intro: d.intro ?? {},
           price: d.price ?? {},
           photos: d.photos ?? [],
@@ -72,7 +76,9 @@ export default function Page() {
 
   const handleDelete = async () => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
-    const res = await fetch(`/api/v1/admin/burial-plus/products/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/v1/admin/burial-plus/products/${id}`, {
+      method: 'DELETE',
+    });
     if (res.ok) {
       toast.success('삭제되었습니다.');
       router.push(BACK_HREF);
@@ -82,11 +88,17 @@ export default function Page() {
   };
 
   if (loading) {
-    return <div className="flex h-64 items-center justify-center text-gray-400">로딩 중...</div>;
+    return (
+      <div className="flex h-64 items-center justify-center text-gray-400">
+        로딩 중...
+      </div>
+    );
   }
   if (!edited) {
     return (
-      <div className="flex h-64 items-center justify-center text-gray-400">데이터를 찾을 수 없습니다.</div>
+      <div className="flex h-64 items-center justify-center text-gray-400">
+        데이터를 찾을 수 없습니다.
+      </div>
     );
   }
 
@@ -94,7 +106,11 @@ export default function Page() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push(BACK_HREF)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push(BACK_HREF)}
+          >
             <ArrowLeft className="size-5" />
           </Button>
           <h2 className="text-xl font-bold text-gray-900">장지 상세</h2>

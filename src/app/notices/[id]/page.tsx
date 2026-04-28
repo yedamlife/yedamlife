@@ -3,8 +3,15 @@ import { ArrowLeft, Calendar, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { BRAND_COLOR } from '@/components/template/YedamLife/constants';
+import { NoticeViewTracker } from './view-tracker';
 
 export const revalidate = 60;
+
+const CATEGORY_STYLE: Record<string, { bg: string; color: string }> = {
+  이벤트: { bg: '#ffe4e6', color: '#be123c' },
+  안내: { bg: '#dbeafe', color: '#1d4ed8' },
+  보도자료: { bg: '#fef3c7', color: '#b45309' },
+};
 
 export default async function NoticeDetailPage({
   params,
@@ -15,15 +22,22 @@ export default async function NoticeDetailPage({
 
   const { data: notice } = await supabase
     .from('notices')
-    .select('id, title, content, created_at')
+    .select('id, title, content, category, created_at')
     .eq('id', id)
     .eq('is_active', true)
     .single();
 
   if (!notice) notFound();
 
+  const categoryStyle =
+    notice.category && CATEGORY_STYLE[notice.category]
+      ? CATEGORY_STYLE[notice.category]
+      : { bg: '#e8eddf', color: BRAND_COLOR };
+  const categoryLabel = notice.category || '공지사항';
+
   return (
     <div className="min-h-[calc(100vh-200px)] bg-gray-50">
+      <NoticeViewTracker id={notice.id} />
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
         <div className="mb-5">
           <Link
@@ -39,10 +53,13 @@ export default async function NoticeDetailPage({
           <div className="px-6 sm:px-10 pt-8 pb-6 border-b border-gray-100">
             <span
               className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold mb-4"
-              style={{ backgroundColor: '#e8eddf', color: BRAND_COLOR }}
+              style={{
+                backgroundColor: categoryStyle.bg,
+                color: categoryStyle.color,
+              }}
             >
               <Bell className="w-3 h-3" />
-              공지사항
+              {categoryLabel}
             </span>
 
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-5">

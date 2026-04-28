@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { ArrowLeft, Check, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ReviewEditor } from '@/components/admin/review-editor';
+import { TagInput } from '@/components/admin/tag-input';
 
 const BACK_HREF = '/admin/reviews';
 
@@ -33,6 +34,7 @@ interface ReviewData {
   written_at: string;
   title: string;
   content: string;
+  tags: string[];
   is_active: boolean;
 }
 
@@ -58,6 +60,7 @@ export default function Page() {
           written_at: d.written_at ?? '',
           title: d.title ?? '',
           content: d.content ?? '',
+          tags: Array.isArray(d.tags) ? d.tags : [],
           is_active: d.is_active ?? true,
         };
         setOriginal(v);
@@ -161,6 +164,15 @@ export default function Page() {
           <CardTitle className="text-base">기본 정보</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <Switch
+                checked={edited.is_active}
+                onCheckedChange={(checked) => update('is_active', checked)}
+              />
+              <span className="text-gray-700">활성</span>
+            </label>
+          </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-500">카테고리</label>
             <Select value={edited.category} onValueChange={(v) => update('category', v)}>
@@ -203,13 +215,11 @@ export default function Page() {
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <Switch
-                checked={edited.is_active}
-                onCheckedChange={(checked) => update('is_active', checked)}
-              />
-              <span className="text-gray-700">활성</span>
-            </label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-500">태그</label>
+            <TagInput
+              value={edited.tags}
+              onChange={(next) => update('tags', next)}
+            />
           </div>
         </CardContent>
       </Card>

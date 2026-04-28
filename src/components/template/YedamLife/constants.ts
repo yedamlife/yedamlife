@@ -134,7 +134,12 @@ export const categoryTabs = [
 export const topNavItems: {
   label: string;
   href: string;
-  subItems?: { label: string; href: string; external?: boolean }[];
+  subItems?: {
+    label: string;
+    href: string;
+    external?: boolean;
+    modal?: 'son-eopneun-nal' | '49je';
+  }[];
 }[] = [
   {
     label: '회사소개',
@@ -167,6 +172,16 @@ export const topNavItems: {
         href: '/membership/certificate',
         external: true,
       },
+    ],
+  },
+  {
+    label: '장례 가이드',
+    href: '',
+    subItems: [
+      { label: '장례정보', href: '/funeral-guide/info' },
+      { label: '장례절차', href: '/funeral-guide/procedure' },
+      { label: '손 없는 날', href: '#modal-son-eopneun-nal', modal: 'son-eopneun-nal' },
+      { label: '49재 계산', href: '#modal-49je', modal: '49je' },
     ],
   },
   {

@@ -20,11 +20,26 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// ── 가격 계산 (2명당 단가) ──
-const PRICE_PER_2: Record<string, number> = {
-  cremation: 300000, // 화장
-  burial: 360000,    // 매장
+// ── 가격 계산 (지역 × 장법 × 인원) ──
+const PRICE_TABLE: Record<
+  '수도권' | '비수도권',
+  Record<'cremation' | 'burial', Record<2 | 4 | 6 | 8, number>>
+> = {
+  수도권: {
+    cremation: { 2: 240_000, 4: 450_000, 6: 720_000, 8: 960_000 },
+    burial: { 2: 300_000, 4: 600_000, 6: 800_000, 8: 1_200_000 },
+  },
+  비수도권: {
+    cremation: { 2: 300_000, 4: 550_000, 6: 900_000, 8: 1_200_000 },
+    burial: { 2: 360_000, 4: 720_000, 6: 1_000_000, 8: 1_440_000 },
+  },
 };
+
+const METRO_KEYWORDS = ['서울', '경기', '인천'];
+const isMetroAddress = (addr: string) =>
+  !!addr && METRO_KEYWORDS.some((k) => addr.includes(k));
+
+const GUARD_SURCHARGE_PER_PERSON = 20_000;
 
 const PEOPLE_OPTIONS = ['2', '4', '6', '8'];
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) =>
@@ -159,11 +174,21 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
     document.head.appendChild(script);
   };
 
-  // 가격 계산: 인원 / 2 * 2명당 단가
-  const price =
-    form.people && form.funeralMethod
-      ? (Number(form.people) / 2) * (PRICE_PER_2[form.funeralMethod] ?? 0)
-      : 0;
+  // 가격 계산: 지역(수도권/비수도권) × 장법 × 인원 + 의장대 가산금
+  const price = (() => {
+    if (!form.people || !form.funeralMethod) return 0;
+    const peopleNum = Number(form.people) as 2 | 4 | 6 | 8;
+    if (![2, 4, 6, 8].includes(peopleNum)) return 0;
+    const method = form.funeralMethod as 'cremation' | 'burial';
+    if (method !== 'cremation' && method !== 'burial') return 0;
+    const region = isMetroAddress(form.funeralHallAddress)
+      ? '수도권'
+      : '비수도권';
+    const base = PRICE_TABLE[region][method][peopleNum] ?? 0;
+    const surcharge =
+      form.clothing === 'guard' ? peopleNum * GUARD_SURCHARGE_PER_PERSON : 0;
+    return base + surcharge;
+  })();
 
   const [submitting, setSubmitting] = useState(false);
 

@@ -13,7 +13,7 @@ const SORT_COLUMN: Record<string, string> = {
 };
 
 const SELECT_COLUMNS =
-  'id, company_name, sido_name, full_address, categories, photos, thumbnail_url, min_price, is_recommended, sort_all, sort_charnel, sort_tree, sort_park, sort_ocean';
+  'id, company_name, sido_name, full_address, public_label, categories, religions, photos, thumbnail_url, min_price, is_recommended, sort_all, sort_charnel, sort_tree, sort_park, sort_ocean';
 
 interface Cursor {
   sort: number;
@@ -45,6 +45,15 @@ export async function GET(request: Request) {
   const sido = searchParams.get('sido') || undefined;
   const sigungu = searchParams.get('sigungu') || undefined;
   const search = searchParams.get('search') || undefined;
+  const publicLabel = searchParams.get('public_label') || undefined;
+  const religionsParam = searchParams.get('religions') || undefined;
+  const religions = religionsParam
+    ? religionsParam.split(',').map((r) => r.trim()).filter(Boolean)
+    : [];
+  const minPriceParam = searchParams.get('min_price');
+  const maxPriceParam = searchParams.get('max_price');
+  const minPrice = minPriceParam != null ? Number(minPriceParam) : null;
+  const maxPrice = maxPriceParam != null ? Number(maxPriceParam) : null;
 
   const sortCol = SORT_COLUMN[category] ?? 'sort_all';
 
@@ -63,6 +72,21 @@ export async function GET(request: Request) {
 
   if (sigungu && sigungu !== '전체') {
     query = query.ilike('sido_name', `%${sigungu}%`);
+  }
+
+  if (publicLabel === '공설' || publicLabel === '사설') {
+    query = query.eq('public_label', publicLabel);
+  }
+
+  if (religions.length > 0) {
+    query = query.overlaps('religions', religions);
+  }
+
+  if (minPrice != null && Number.isFinite(minPrice)) {
+    query = query.gte('min_price', minPrice);
+  }
+  if (maxPrice != null && Number.isFinite(maxPrice)) {
+    query = query.lte('min_price', maxPrice);
   }
 
   if (search) {

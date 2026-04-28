@@ -6,8 +6,8 @@ import {
   Menu,
   X,
   Plus,
-  MessageCircle,
   Phone,
+  MapPin,
   ChevronDown,
   FileText,
   PenLine,
@@ -88,6 +88,29 @@ export function YedamLife({
   const headerRef = useRef<HTMLElement>(null);
   const inquirySectionRef = useRef<HTMLDivElement>(null);
   const [isFloatingOpen, setIsFloatingOpen] = useState(false);
+  const [showFloating, setShowFloating] = useState(false);
+
+  // 4.5 후불제 상조 소개 섹션부터 플로팅 사이드바 노출 (데스크탑)
+  useEffect(() => {
+    if (activeCategoryIdx !== 0 && activeCategoryIdx !== 1) return;
+    const targetId = activeCategoryIdx === 0 ? 'sec-about' : 'sec-corp-intro';
+    const checkScroll = () => {
+      const target = document.getElementById(targetId);
+      if (!target) {
+        setShowFloating(false);
+        return;
+      }
+      const rect = target.getBoundingClientRect();
+      setShowFloating(rect.top <= window.innerHeight * 0.5);
+    };
+    checkScroll();
+    window.addEventListener('scroll', checkScroll, { passive: true });
+    window.addEventListener('resize', checkScroll);
+    return () => {
+      window.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [activeCategoryIdx]);
 
   // 브라우저 타이틀 동기화
   useEffect(() => {
@@ -599,56 +622,77 @@ export function YedamLife({
 
         {!headerOnly && activeCategoryIdx === 5 && <PostCare />}
 
-        {/* ── PC 우측 플로팅 사이드바 (sm 이상) ── */}
+        {/* ── PC 우측 플로팅 사이드바 (sm 이상, 후불제 상조 소개 섹션부터) ── */}
         {(activeCategoryIdx === 0 || activeCategoryIdx === 1) && (
-          <div className="hidden sm:flex fixed right-4 bottom-6 z-50 flex-col gap-2">
+          <div
+            className="hidden sm:flex fixed right-4 top-1/2 z-50 flex-col bg-white rounded-[32px] shadow-xl border border-gray-200 overflow-hidden divide-y divide-gray-200 transition-all duration-500 ease-out"
+            style={{
+              opacity: showFloating ? 1 : 0,
+              transform: showFloating
+                ? 'translate(0, -50%)'
+                : 'translate(20px, -50%)',
+              pointerEvents: showFloating ? 'auto' : 'none',
+            }}
+          >
+            {activeCategoryIdx === 0 && (
+              <a
+                href="/burial-plus"
+                className="group relative flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer overflow-hidden"
+              >
+                <span className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-yellow-100/60 to-transparent" />
+                <span
+                  className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full animate-ping"
+                  style={{ backgroundColor: '#b8964e' }}
+                />
+                <span
+                  className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: '#b8964e' }}
+                />
+                <MapPin
+                  className="w-5 h-5 text-gray-700 animate-bounce transition-transform duration-300 group-hover:-translate-y-0.5"
+                />
+                <span className="text-[10px] font-bold text-gray-700 mt-1">
+                  장지+
+                </span>
+              </a>
+            )}
             <a
               href="tel:1660-0959"
-              className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
+              className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
             >
               <Phone className="w-5 h-5 text-gray-700" />
-              <span className="text-[9px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
+              <span className="text-[10px] font-bold text-gray-600 mt-1 leading-tight text-center">
                 전화 상담
               </span>
             </a>
             <button
               onClick={() => {
-                if (activeCategoryIdx === 0) {
-                  setInquiryMainTab('products');
-                  setTimeout(() => {
-                    document
-                      .getElementById('inquiry')
-                      ?.scrollIntoView({ behavior: 'smooth' });
-                  }, 50);
-                } else {
-                  document
-                    .getElementById('sec-corp-inquiry')
-                    ?.scrollIntoView({ behavior: 'smooth' });
-                }
+                window.dispatchEvent(
+                  new CustomEvent(
+                    activeCategoryIdx === 0
+                      ? 'open-general-consult-modal'
+                      : 'open-corp-consult-modal',
+                  ),
+                );
               }}
-              className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
-              style={{
-                backgroundColor: BRAND_COLOR_LIGHT,
-                color: BRAND_COLOR,
-              }}
+              className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
             >
-              <ScrollText className="w-5 h-5" />
-              <span className="text-[10px] font-bold mt-0.5">상담 신청</span>
+              <ScrollText className="w-5 h-5 text-gray-700" />
+              <span className="text-[10px] font-bold text-gray-600 mt-1">
+                상담 신청
+              </span>
             </button>
             {activeCategoryIdx === 0 && (
               <button
                 onClick={() => {
-                  setInquiryMainTab('design');
-                  setTimeout(() => {
-                    inquirySectionRef.current?.scrollIntoView({
-                      behavior: 'smooth',
-                    });
-                  }, 50);
+                  document
+                    .getElementById('sec-direct-design')
+                    ?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
+                className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 <PenLine className="w-5 h-5 text-gray-700" />
-                <span className="text-[10px] font-bold text-gray-600 mt-0.5">
+                <span className="text-[10px] font-bold text-gray-600 mt-1">
                   장례설계
                 </span>
               </button>
@@ -658,12 +702,12 @@ export function YedamLife({
               href="https://pf.kakao.com/_예담라이프"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-[#FEE500] shadow-lg border border-[#FEE500] hover:shadow-xl transition-shadow cursor-pointer"
+              className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#3C1E1E">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#374151">
                 <path d="M12 3C6.48 3 2 6.54 2 10.86c0 2.78 1.86 5.22 4.65 6.6l-.95 3.53c-.08.3.25.55.52.39l4.2-2.8c.51.07 1.04.1 1.58.1 5.52 0 10-3.54 10-7.86S17.52 3 12 3z" />
               </svg>
-              <span className="text-[9px] font-bold text-[#3C1E1E]/70 mt-0.5">
+              <span className="text-[10px] font-bold text-gray-700 mt-1">
                 친구추가
               </span>
             </a>
@@ -675,16 +719,17 @@ export function YedamLife({
               )}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer text-white"
-              style={{ backgroundColor: '#b8964e' }}
+              className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
             >
-              <FileText className="w-5 h-5" />
-              <span className="text-[10px] font-bold mt-0.5">가입신청</span>
+              <FileText className="w-5 h-5 text-gray-700" />
+              <span className="text-[10px] font-bold text-gray-700 mt-1">
+                가입신청
+              </span>
             </a>
           </div>
         )}
 
-        {/* ── 모바일 하단 고정 바 (sm 미만) ── */}
+{/* ── 모바일 하단 고정 바 (sm 미만) ── */}
         {(activeCategoryIdx === 0 || activeCategoryIdx === 1) && (
           <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#222] safe-area-bottom">
             <div className="flex items-center divide-x divide-white/20">
@@ -697,15 +742,13 @@ export function YedamLife({
               </a>
               <button
                 onClick={() => {
-                  if (activeCategoryIdx === 0) {
-                    window.dispatchEvent(
-                      new CustomEvent('open-general-consult-modal'),
-                    );
-                  } else {
-                    document
-                      .getElementById('sec-corp-inquiry')
-                      ?.scrollIntoView({ behavior: 'smooth' });
-                  }
+                  window.dispatchEvent(
+                    new CustomEvent(
+                      activeCategoryIdx === 0
+                        ? 'open-general-consult-modal'
+                        : 'open-corp-consult-modal',
+                    ),
+                  );
                 }}
                 className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
               >

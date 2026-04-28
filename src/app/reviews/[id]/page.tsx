@@ -30,7 +30,7 @@ export default async function ReviewDetailPage({
   const { id } = await params;
   const { data: review } = await supabase
     .from('reviews')
-    .select('id, category, author, written_at, title, content')
+    .select('id, category, author, written_at, title, content, tags')
     .eq('id', id)
     .eq('is_active', true)
     .single();
@@ -63,9 +63,27 @@ export default async function ReviewDetailPage({
             </span>
 
             {review.title && (
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-5">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-4">
                 {review.title}
               </h1>
+            )}
+
+            {Array.isArray(review.tags) && review.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-5">
+                {review.tags.map((tag: string) => (
+                  <span
+                    key={tag}
+                    className="inline-block px-2.5 py-1 rounded-full text-xs font-semibold border"
+                    style={{
+                      color: BRAND_COLOR,
+                      borderColor: '#e8eddf',
+                      backgroundColor: '#f7f9f1',
+                    }}
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
             )}
 
             <div className="flex items-center gap-4 text-sm text-gray-500">

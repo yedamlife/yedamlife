@@ -613,7 +613,7 @@ function PostCareConsultationModal({
               상담 유형 <span className="text-red-500">*</span>
             </label>
             <div className="flex flex-wrap gap-2">
-              {['심리 상담', '세무 상담', '상속 절차', '법률 지원'].map(
+              {['심리 상담', '세무 상담', '상속 절차', '법률 지원', '원스톱 통합 서비스'].map(
                 (type) => (
                   <button
                     key={type}
@@ -735,19 +735,19 @@ export function PostCare() {
                 전문가가 유족의 부담을 덜어드립니다.
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <div className="flex flex-row items-center justify-center gap-2 sm:gap-3">
                 <button
                   onClick={() => setShowConsultation(true)}
-                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white text-gray-900 text-base font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 px-5 sm:px-8 py-3 sm:py-3.5 bg-white text-gray-900 text-sm sm:text-base font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg cursor-pointer"
                 >
-                  <ScrollText className="w-5 h-5" />
+                  <ScrollText className="w-4 h-4 sm:w-5 sm:h-5" />
                   무료 상담 신청
                 </button>
                 <a
                   href="tel:1660-0959"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 border-2 border-white/70 text-white text-base font-bold rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 px-5 sm:px-8 py-3 sm:py-3.5 border-2 border-white/70 text-white text-sm sm:text-base font-bold rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
                 >
-                  <Phone className="w-5 h-5" />
+                  <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
                   전화 상담
                 </a>
               </div>
@@ -758,72 +758,46 @@ export function PostCare() {
         {/* 통계 바 */}
         <div className="bg-gray-100">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-            {/* 모바일: 상단 전문 인력 풀와이드 + 하단 2열 */}
-            <div className="flex flex-col gap-5 sm:hidden">
-              <div className="text-center">
-                <p className="text-base font-extrabold text-gray-900">
-                  심리상담사 · 세무사
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-5 sm:gap-y-0 sm:divide-x sm:divide-gray-200">
+              <div className="text-center px-2 sm:px-4">
+                <p className="text-sm sm:text-lg font-extrabold text-gray-900 leading-tight">
+                  심리상담사
                   <br />
-                  법무사 · 변호사
+                  세무사
                 </p>
-                <p className="text-xs text-gray-500 font-medium mt-1.5">
-                  전문 인력 보유
-                </p>
-              </div>
-              <div className="grid grid-cols-2 divide-x divide-gray-200">
-                <div className="text-center px-3">
-                  <CountUp
-                    end={98}
-                    suffix="%"
-                    className="text-2xl font-extrabold text-gray-900"
-                    duration={2000}
-                  />
-                  <p className="text-xs text-gray-500 font-medium mt-1.5">
-                    상담 만족도
-                  </p>
-                </div>
-                <div className="text-center px-3">
-                  <CountUp
-                    end={3141}
-                    suffix="건+"
-                    className="text-2xl font-extrabold text-gray-900"
-                    duration={2000}
-                  />
-                  <p className="text-xs text-gray-500 font-medium mt-1.5">
-                    누적 상담
-                  </p>
-                </div>
-              </div>
-            </div>
-            {/* PC: 3열 */}
-            <div className="hidden sm:grid grid-cols-3 divide-x divide-gray-200">
-              <div className="text-center px-4">
-                <p className="text-lg font-extrabold text-gray-900">
-                  심리상담사 · 세무사 · 법무사 · 변호사
-                </p>
-                <p className="text-sm text-gray-500 font-medium mt-1">
+                <p className="text-[11px] sm:text-sm text-gray-500 font-medium mt-1.5 sm:mt-1">
                   전문 인력
                 </p>
               </div>
-              <div className="text-center px-4">
+              <div className="text-center px-2 sm:px-4">
+                <p className="text-sm sm:text-lg font-extrabold text-gray-900 leading-tight">
+                  법무사
+                  <br />
+                  변호사
+                </p>
+                <p className="text-[11px] sm:text-sm text-gray-500 font-medium mt-1.5 sm:mt-1">
+                  전문 인력
+                </p>
+              </div>
+              <div className="text-center px-2 sm:px-4">
                 <CountUp
                   end={98}
                   suffix="%"
-                  className="text-2xl font-extrabold text-gray-900"
+                  className="text-xl sm:text-2xl font-extrabold text-gray-900"
                   duration={2000}
                 />
-                <p className="text-sm text-gray-500 font-medium mt-1">
+                <p className="text-[11px] sm:text-sm text-gray-500 font-medium mt-1.5 sm:mt-1">
                   상담 만족도
                 </p>
               </div>
-              <div className="text-center px-4">
+              <div className="text-center px-2 sm:px-4">
                 <CountUp
                   end={3141}
                   suffix="건+"
-                  className="text-2xl font-extrabold text-gray-900"
+                  className="text-xl sm:text-2xl font-extrabold text-gray-900"
                   duration={2000}
                 />
-                <p className="text-sm text-gray-500 font-medium mt-1">
+                <p className="text-[11px] sm:text-sm text-gray-500 font-medium mt-1.5 sm:mt-1">
                   누적 상담
                 </p>
               </div>
@@ -1161,28 +1135,37 @@ export function PostCare() {
         onClose={() => setShowConsultation(false)}
       />
 
-      {/* ── PC 우측 플로팅 버튼 (sm 이상) ── */}
-      <div className="hidden sm:flex fixed right-4 bottom-6 z-50 flex-col gap-2">
-        <button
-          onClick={() => setShowConsultation(true)}
-          className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
-          style={{
-            backgroundColor: BRAND_COLOR_LIGHT,
-            color: BRAND_COLOR,
-          }}
-        >
-          <ScrollText className="w-5 h-5" />
-          <span className="text-[10px] font-bold mt-0.5">상담 신청</span>
-        </button>
+      {/* ── PC 우측 플로팅 사이드바 (sm 이상) ── */}
+      <div className="hidden sm:flex fixed right-4 top-1/2 -translate-y-1/2 z-50 flex-col bg-white rounded-[32px] shadow-xl border border-gray-200 overflow-hidden divide-y divide-gray-200">
         <a
           href="tel:1660-0959"
-          className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
+          className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
         >
           <Phone className="w-5 h-5 text-gray-700" />
-          <span className="text-[9px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
-            빠른
-            <br />
+          <span className="text-[10px] font-bold text-gray-600 mt-1 leading-tight text-center">
+            전화 상담
+          </span>
+        </a>
+        <button
+          onClick={() => setShowConsultation(true)}
+          className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+        >
+          <ScrollText className="w-5 h-5 text-gray-700" />
+          <span className="text-[10px] font-bold text-gray-600 mt-1">
             상담 신청
+          </span>
+        </button>
+        <a
+          href="https://pf.kakao.com/_예담라이프"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#374151">
+            <path d="M12 3C6.48 3 2 6.54 2 10.86c0 2.78 1.86 5.22 4.65 6.6l-.95 3.53c-.08.3.25.55.52.39l4.2-2.8c.51.07 1.04.1 1.58.1 5.52 0 10-3.54 10-7.86S17.52 3 12 3z" />
+          </svg>
+          <span className="text-[10px] font-bold text-gray-700 mt-1">
+            친구추가
           </span>
         </a>
       </div>

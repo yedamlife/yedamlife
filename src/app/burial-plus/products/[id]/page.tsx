@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -18,6 +18,8 @@ import {
   ShoppingCart,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   BRAND_COLOR,
@@ -210,7 +212,19 @@ export default function BurialProductDetailPage() {
   const price = data.price ?? {};
   const facilities = intro.facilities ?? {};
   const relatedFacilities = data.related_facilities ?? [];
-  const heroImage = data.thumbnail_url || photos[0]?.fileurl_full;
+
+  const heroImages = (() => {
+    const list: string[] = [];
+    const seen = new Set<string>();
+    const push = (url?: string | null) => {
+      if (!url || seen.has(url)) return;
+      seen.add(url);
+      list.push(url);
+    };
+    push(data.thumbnail_url);
+    photos.forEach((p) => push(p.fileurl_full));
+    return list;
+  })();
 
   const facilityList = [
     {
@@ -260,15 +274,9 @@ export default function BurialProductDetailPage() {
         </div>
       </div>
 
-      {/* 히어로 이미지 */}
-      {heroImage && (
-        <div className="w-full aspect-21/9 sm:aspect-3/1 bg-gray-200 overflow-hidden">
-          <img
-            src={heroImage}
-            alt={data.company_name}
-            className="w-full h-full object-cover"
-          />
-        </div>
+      {/* 히어로 캐러셀 */}
+      {heroImages.length > 0 && (
+        <HeroCarousel images={heroImages} alt={data.company_name} />
       )}
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-12">
@@ -285,8 +293,8 @@ export default function BurialProductDetailPage() {
                   className="px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
                   style={
                     isActive
-                      ? { backgroundColor: BRAND_COLOR, color: '#fff' }
-                      : { backgroundColor: 'transparent', color: '#6b7280' }
+                      ? { backgroundColor: '#f3f4f6', color: '#374151' }
+                      : { backgroundColor: 'transparent', color: '#9ca3af' }
                   }
                 >
                   {tab.label}
@@ -330,38 +338,11 @@ export default function BurialProductDetailPage() {
               {data.company_name}
             </h2>
 
-            {data.min_price != null && data.min_price > 0 && (
-              <p
-                className="text-lg sm:text-xl font-extrabold mb-6"
-                style={{ color: BRAND_COLOR }}
-              >
-                {data.min_price.toLocaleString()}
-                <span className="text-sm font-normal text-gray-500">원~</span>
-              </p>
-            )}
-
-            <div className="space-y-3 text-sm text-gray-600">
+            <div className="space-y-3 text-sm text-gray-600 mt-4">
               {intro.fulladdress && (
                 <div className="flex items-start gap-2.5">
                   <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-gray-400" />
                   <span>{intro.fulladdress}</span>
-                </div>
-              )}
-              {intro.homepage && (
-                <div className="flex items-start gap-2.5">
-                  <Globe className="w-4 h-4 mt-0.5 shrink-0 text-gray-400" />
-                  <a
-                    href={
-                      intro.homepage.startsWith('http')
-                        ? intro.homepage
-                        : `https://${intro.homepage}`
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-gray-900 break-all"
-                  >
-                    {intro.homepage}
-                  </a>
                 </div>
               )}
             </div>
@@ -551,7 +532,7 @@ export default function BurialProductDetailPage() {
             className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
             <ScrollText className="w-5 h-5" />
-            <span className="text-base font-bold">상담 신청</span>
+            <span className="text-base font-bold">장지 상담</span>
           </button>
         </div>
       </div>
@@ -563,6 +544,124 @@ export default function BurialProductDetailPage() {
         productId={data.id}
         productName={data.company_name}
       />
+    </div>
+  );
+}
+
+function HeroCarousel({ images, alt }: { images: string[]; alt: string }) {
+  const [idx, setIdx] = useState(0);
+  const [drag, setDrag] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const total = images.length;
+  const single = total <= 1;
+  const startX = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const go = (next: number) => setIdx((next + total) % total);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (single) return;
+    startX.current = e.clientX;
+    setDrag(0);
+    setDragging(true);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (startX.current == null) return;
+    setDrag(e.clientX - startX.current);
+  };
+  const onPointerEnd = (e: React.PointerEvent) => {
+    if (startX.current == null) return;
+    const width = containerRef.current?.clientWidth ?? 1;
+    const ratio = drag / width;
+    const SWIPE_RATIO = 0.15;
+    if (ratio > SWIPE_RATIO) go(idx - 1);
+    else if (ratio < -SWIPE_RATIO) go(idx + 1);
+    startX.current = null;
+    setDrag(0);
+    setDragging(false);
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const width = containerRef.current?.clientWidth ?? 0;
+  const translatePct = -idx * 100 + (width > 0 ? (drag / width) * 100 : 0);
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full aspect-21/9 sm:aspect-3/1 bg-gray-200 overflow-hidden touch-pan-y select-none cursor-grab active:cursor-grabbing"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerEnd}
+      onPointerCancel={onPointerEnd}
+    >
+      <div
+        className="flex h-full"
+        style={{
+          width: `${total * 100}%`,
+          transform: `translate3d(${translatePct / total}%, 0, 0)`,
+          transition: dragging ? 'none' : 'transform 350ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+      >
+        {images.map((src, i) => (
+          <div key={i} className="h-full shrink-0" style={{ width: `${100 / total}%` }}>
+            <img
+              src={src}
+              alt={alt}
+              draggable={false}
+              className="w-full h-full object-cover pointer-events-none"
+            />
+          </div>
+        ))}
+      </div>
+
+      {!single && (
+        <>
+          <button
+            type="button"
+            onClick={() => go(idx - 1)}
+            aria-label="이전 사진"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/85 hover:bg-white shadow flex items-center justify-center cursor-pointer"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-800" />
+          </button>
+          <button
+            type="button"
+            onClick={() => go(idx + 1)}
+            aria-label="다음 사진"
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/85 hover:bg-white shadow flex items-center justify-center cursor-pointer"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-800" />
+          </button>
+
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setIdx(i)}
+                aria-label={`사진 ${i + 1}`}
+                className="cursor-pointer"
+                style={{
+                  width: i === idx ? 18 : 6,
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: i === idx ? '#fff' : 'rgba(255,255,255,0.55)',
+                  transition: 'all 0.25s ease',
+                  border: 'none',
+                  padding: 0,
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-black/45 text-white text-xs font-semibold tabular-nums">
+            {idx + 1} / {total}
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -8,6 +8,7 @@ const EDITABLE_FIELDS = [
   'written_at',
   'title',
   'content',
+  'tags',
   'is_active',
   'display_order',
 ] as const;

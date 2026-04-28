@@ -4,14 +4,23 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ArrowLeft, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { ReviewEditor } from '@/components/admin/review-editor';
 
 const BACK_HREF = '/admin/notices';
+const CATEGORIES = ['공지', '이벤트', '안내', '보도자료'] as const;
 
 export default function Page() {
   const router = useRouter();
+  const [category, setCategory] = useState<string>('공지');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
@@ -25,7 +34,7 @@ export default function Page() {
     const res = await fetch('/api/v1/admin/notices', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content }),
+      body: JSON.stringify({ title, content, category }),
     });
     if (res.ok) {
       const json = await res.json();
@@ -65,7 +74,24 @@ export default function Page() {
         <CardHeader>
           <CardTitle className="text-base">기본 정보</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="grid gap-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-500">
+              카테고리
+            </label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="w-full sm:w-60">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-500">
               제목

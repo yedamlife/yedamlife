@@ -641,7 +641,7 @@ export function BurialConsultationModal({
             </div>
           </div>
 
-          {/* 종교 & 희망 지역 */}
+          {/* 종교 & 예산 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-800 mb-1.5">
@@ -665,72 +665,72 @@ export function BurialConsultationModal({
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                희망 지역 선택 <span className="text-red-500">*</span>
+                예산
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                <Select
-                  value={form.region}
-                  onValueChange={(v) =>
-                    setForm((p) => ({ ...p, region: v, district: '' }))
-                  }
-                >
-                  <SelectTrigger className="h-auto px-4 py-3 rounded-lg border-gray-200 bg-white text-sm">
-                    <SelectValue placeholder="시/도" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[200]">
-                    {Object.keys(REGIONS).map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={form.district}
-                  onValueChange={(v) => setForm((p) => ({ ...p, district: v }))}
-                  disabled={!form.region}
-                >
-                  <SelectTrigger className="h-auto px-4 py-3 rounded-lg border-gray-200 bg-white text-sm">
-                    <SelectValue placeholder="시/구/군" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[200]">
-                    {(REGIONS[form.region] ?? []).map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {d}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select
+                value={form.budget}
+                onValueChange={(v) => setForm((p) => ({ ...p, budget: v }))}
+              >
+                <SelectTrigger className="h-auto px-4 py-3 rounded-lg border-gray-200 bg-white text-sm">
+                  <SelectValue placeholder="예산을 선택해 주세요" />
+                </SelectTrigger>
+                <SelectContent className="z-[200]">
+                  {[
+                    '100~300만원',
+                    '300~500만원',
+                    '500~700만원',
+                    '700~1,000만원',
+                    '1,000만원 이상',
+                  ].map((b) => (
+                    <SelectItem key={b} value={b}>
+                      {b}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {/* 예산 */}
+          {/* 희망 지역 */}
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-              예산
+              희망 지역 선택 <span className="text-red-500">*</span>
             </label>
-            <Select
-              value={form.budget}
-              onValueChange={(v) => setForm((p) => ({ ...p, budget: v }))}
-            >
-              <SelectTrigger className="h-auto px-4 py-3 rounded-lg border-gray-200 bg-white text-sm">
-                <SelectValue placeholder="예산을 선택해 주세요" />
-              </SelectTrigger>
-              <SelectContent className="z-[200]">
-                {[
-                  '100~300만원',
-                  '300~500만원',
-                  '500~700만원',
-                  '700~1,000만원',
-                  '1,000만원 이상',
-                ].map((b) => (
-                  <SelectItem key={b} value={b}>
-                    {b}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-2 gap-2">
+              <Select
+                value={form.region}
+                onValueChange={(v) =>
+                  setForm((p) => ({ ...p, region: v, district: '' }))
+                }
+              >
+                <SelectTrigger className="h-auto px-4 py-3 rounded-lg border-gray-200 bg-white text-sm">
+                  <SelectValue placeholder="시/도" />
+                </SelectTrigger>
+                <SelectContent className="z-[200]">
+                  {Object.keys(REGIONS).map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={form.district}
+                onValueChange={(v) => setForm((p) => ({ ...p, district: v }))}
+                disabled={!form.region}
+              >
+                <SelectTrigger className="h-auto px-4 py-3 rounded-lg border-gray-200 bg-white text-sm">
+                  <SelectValue placeholder="시/구/군" />
+                </SelectTrigger>
+                <SelectContent className="z-[200]">
+                  {(REGIONS[form.region] ?? []).map((d) => (
+                    <SelectItem key={d} value={d}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* 메세지 */}
@@ -779,7 +779,11 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
     '봉안당',
   );
   const [selectedRegion, setSelectedRegion] = useState('');
-  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedPublic, setSelectedPublic] = useState<'전체' | '공설' | '사설'>('전체');
+  const [selectedReligions, setSelectedReligions] = useState<string[]>([]);
+  const PRICE_MIN = 0;
+  const PRICE_MAX = 10_000_000;
+  const [priceRange, setPriceRange] = useState<[number, number]>([PRICE_MIN, PRICE_MAX]);
   const [showConsultation, setShowConsultation] = useState(false);
 
   const [products, setProducts] = useState<BurialProductRow[]>([]);
@@ -807,7 +811,10 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
 
     const qType = searchParams.get('category');
     const qRegion = searchParams.get('sido');
-    const qDistrict = searchParams.get('sigungu');
+    const qPublic = searchParams.get('public_label');
+    const qReligions = searchParams.get('religions');
+    const qMin = searchParams.get('min_price');
+    const qMax = searchParams.get('max_price');
 
     if (
       qType &&
@@ -816,7 +823,18 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
       setSelectedType(qType as BurialType | '전체');
     }
     if (qRegion) setSelectedRegion(qRegion);
-    if (qDistrict) setSelectedDistrict(qDistrict);
+    if (qPublic === '공설' || qPublic === '사설') setSelectedPublic(qPublic);
+    if (qReligions) {
+      setSelectedReligions(
+        qReligions.split(',').map((r) => r.trim()).filter(Boolean),
+      );
+    }
+    if (qMin != null || qMax != null) {
+      setPriceRange([
+        qMin != null ? Math.max(PRICE_MIN, Number(qMin) || PRICE_MIN) : PRICE_MIN,
+        qMax != null ? Math.min(PRICE_MAX, Number(qMax) || PRICE_MAX) : PRICE_MAX,
+      ]);
+    }
 
     // hash가 있으면 해당 섹션으로 스크롤, 없으면 쿼리 파라미터가 있으면 상품 섹션으로
     const hash = window.location.hash.replace('#', '');
@@ -824,7 +842,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
       setTimeout(() => {
         document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
       }, 300);
-    } else if (qType || qRegion || qDistrict) {
+    } else if (qType || qRegion || qPublic || qReligions || qMin || qMax) {
       setTimeout(() => {
         document
           .getElementById('sec-burial-products')
@@ -833,14 +851,23 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
     }
   }, [searchParams]);
 
-  // 필터 변경 시 URL 쿼리 파라미터 동기화 — 이벤트 핸들러에서 직접 호출
+  // 필터 변경 시 URL 쿼리 파라미터 동기화
   const syncFilterUrl = useCallback(
-    (type: BurialType | '전체', region: string, district: string) => {
+    (
+      type: BurialType | '전체',
+      region: string,
+      publicLabel: '전체' | '공설' | '사설',
+      religions: string[],
+      range: [number, number],
+    ) => {
       if (!initializedRef.current) return;
       const params = new URLSearchParams();
       if (type !== '봉안당') params.set('category', type);
       if (region && region !== 'all-regions') params.set('sido', region);
-      if (district && district !== '전체') params.set('sigungu', district);
+      if (publicLabel !== '전체') params.set('public_label', publicLabel);
+      if (religions.length > 0) params.set('religions', religions.join(','));
+      if (range[0] > PRICE_MIN) params.set('min_price', String(range[0]));
+      if (range[1] < PRICE_MAX) params.set('max_price', String(range[1]));
       const qs = params.toString();
       const url = qs ? `${pathnameRef.current}?${qs}` : pathnameRef.current;
       router.replace(url, { scroll: false });
@@ -855,11 +882,16 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
       if (selectedType !== '전체') params.set('category', selectedType);
       if (selectedRegion && selectedRegion !== 'all-regions')
         params.set('sido', selectedRegion);
-      if (selectedDistrict && selectedDistrict !== '전체')
-        params.set('sigungu', selectedDistrict);
+      if (selectedPublic !== '전체') params.set('public_label', selectedPublic);
+      if (selectedReligions.length > 0)
+        params.set('religions', selectedReligions.join(','));
+      if (priceRange[0] > PRICE_MIN)
+        params.set('min_price', String(priceRange[0]));
+      if (priceRange[1] < PRICE_MAX)
+        params.set('max_price', String(priceRange[1]));
       return params.toString();
     },
-    [selectedType, selectedRegion, selectedDistrict],
+    [selectedType, selectedRegion, selectedPublic, selectedReligions, priceRange],
   );
 
   useEffect(() => {
@@ -1143,7 +1175,13 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                   onClick={() => {
                     const next = isActive ? '전체' : bt.type;
                     setSelectedType(next);
-                    syncFilterUrl(next, selectedRegion, selectedDistrict);
+                    syncFilterUrl(
+                      next,
+                      selectedRegion,
+                      selectedPublic,
+                      selectedReligions,
+                      priceRange,
+                    );
                   }}
                   className={`relative flex flex-col items-center text-center px-4 py-6 sm:py-8 rounded-2xl border transition-all cursor-pointer ${
                     isActive
@@ -1182,7 +1220,9 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                         syncFilterUrl(
                           bt.type,
                           selectedRegion,
-                          selectedDistrict,
+                          selectedPublic,
+                          selectedReligions,
+                          priceRange,
                         );
                       }
                       setTimeout(
@@ -1211,17 +1251,22 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           {/* 필터 바 */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-8 shadow-sm">
-            <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-row sm:gap-4">
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-8 shadow-sm space-y-4">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-4">
               <Select
                 value={selectedRegion}
                 onValueChange={(v) => {
                   setSelectedRegion(v);
-                  setSelectedDistrict('');
-                  syncFilterUrl(selectedType, v, '');
+                  syncFilterUrl(
+                    selectedType,
+                    v,
+                    selectedPublic,
+                    selectedReligions,
+                    priceRange,
+                  );
                 }}
               >
-                <SelectTrigger className="h-auto px-3 py-3 rounded-xl border-gray-200 bg-white text-sm sm:w-48 sm:px-4">
+                <SelectTrigger className="h-auto px-3 py-3 rounded-xl border-gray-200 bg-white text-sm sm:px-4">
                   <SelectValue placeholder="시/도" />
                 </SelectTrigger>
                 <SelectContent className="z-[100]">
@@ -1235,35 +1280,21 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
               </Select>
 
               <Select
-                value={selectedDistrict}
-                onValueChange={(v) => {
-                  setSelectedDistrict(v);
-                  syncFilterUrl(selectedType, selectedRegion, v);
-                }}
-                disabled={!selectedRegion || selectedRegion === 'all-regions'}
-              >
-                <SelectTrigger className="h-auto px-3 py-3 rounded-xl border-gray-200 bg-white text-sm sm:w-48 sm:px-4">
-                  <SelectValue placeholder="시/군/구" />
-                </SelectTrigger>
-                <SelectContent className="z-[100]">
-                  {(REGIONS[selectedRegion] ?? []).map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select
                 value={selectedType === '전체' ? 'all-types' : selectedType}
                 onValueChange={(v) => {
                   const next = v === 'all-types' ? '전체' : (v as BurialType);
                   setSelectedType(next);
-                  syncFilterUrl(next, selectedRegion, selectedDistrict);
+                  syncFilterUrl(
+                    next,
+                    selectedRegion,
+                    selectedPublic,
+                    selectedReligions,
+                    priceRange,
+                  );
                 }}
               >
-                <SelectTrigger className="h-auto px-3 py-3 rounded-xl border-gray-200 bg-white text-sm sm:w-48 sm:px-4">
-                  <SelectValue placeholder="봉안(납골)당" />
+                <SelectTrigger className="h-auto px-3 py-3 rounded-xl border-gray-200 bg-white text-sm sm:px-4">
+                  <SelectValue placeholder="유형" />
                 </SelectTrigger>
                 <SelectContent className="z-[100]">
                   <SelectItem value="all-types">전체</SelectItem>
@@ -1273,6 +1304,105 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                   <SelectItem value="해양장">해양장</SelectItem>
                 </SelectContent>
               </Select>
+
+              <Select
+                value={selectedPublic}
+                onValueChange={(v) => {
+                  const next = v as '전체' | '공설' | '사설';
+                  setSelectedPublic(next);
+                  syncFilterUrl(
+                    selectedType,
+                    selectedRegion,
+                    next,
+                    selectedReligions,
+                    priceRange,
+                  );
+                }}
+              >
+                <SelectTrigger className="h-auto px-3 py-3 rounded-xl border-gray-200 bg-white text-sm sm:px-4">
+                  <SelectValue placeholder="공설/사설" />
+                </SelectTrigger>
+                <SelectContent className="z-[100]">
+                  <SelectItem value="전체">공설/사설</SelectItem>
+                  <SelectItem value="공설">공설</SelectItem>
+                  <SelectItem value="사설">사설</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 종교 + 금액 */}
+            <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
+              {/* 종교 (멀티) */}
+              <div className="sm:shrink-0">
+                <p className="text-xs font-semibold text-gray-500 mb-2">종교</p>
+                <div className="inline-flex rounded-lg border border-gray-200 bg-white overflow-hidden divide-x divide-gray-200">
+                  {(['무교', '기독교', '불교', '천주교'] as const).map((r) => {
+                    const on = selectedReligions.includes(r);
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => {
+                          const next = on
+                            ? selectedReligions.filter((x) => x !== r)
+                            : [...selectedReligions, r];
+                          setSelectedReligions(next);
+                          syncFilterUrl(
+                            selectedType,
+                            selectedRegion,
+                            selectedPublic,
+                            next,
+                            priceRange,
+                          );
+                        }}
+                        className="px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+                        style={
+                          on
+                            ? {
+                                backgroundColor: '#e5e7eb',
+                                color: '#1f2937',
+                              }
+                            : {
+                                backgroundColor: '#fff',
+                                color: '#6b7280',
+                              }
+                        }
+                      >
+                        {r}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 금액 range */}
+              <div className="sm:w-[280px] lg:w-[360px]">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-gray-500">금액</p>
+                  <p className="text-xs text-gray-700 tabular-nums">
+                    {(priceRange[0] / 10000).toLocaleString()}만 ~{' '}
+                    {priceRange[1] >= PRICE_MAX
+                      ? `${(PRICE_MAX / 10000).toLocaleString()}만+`
+                      : `${(priceRange[1] / 10000).toLocaleString()}만`}
+                  </p>
+                </div>
+                <PriceRangeSlider
+                  min={PRICE_MIN}
+                  max={PRICE_MAX}
+                  step={500_000}
+                  value={priceRange}
+                  onChange={setPriceRange}
+                  onCommit={(range) =>
+                    syncFilterUrl(
+                      selectedType,
+                      selectedRegion,
+                      selectedPublic,
+                      selectedReligions,
+                      range,
+                    )
+                  }
+                />
+              </div>
             </div>
           </div>
 
@@ -1657,7 +1787,8 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
       {reviews.length > 0 && (
         <section
           id="sec-burial-reviews"
-          className="py-16 sm:py-24 overflow-hidden bg-white"
+          className="py-16 sm:py-24 overflow-hidden"
+          style={{ backgroundColor: '#fafaf8' }}
         >
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="text-center mb-12">
@@ -1734,28 +1865,37 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
         onClose={() => setShowConsultation(false)}
       />
 
-      {/* ── PC 우측 플로팅 버튼 (sm 이상) ── */}
-      <div className="hidden sm:flex fixed right-4 bottom-6 z-50 flex-col gap-2">
-        <button
-          onClick={() => setShowConsultation(true)}
-          className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
-          style={{
-            backgroundColor: BRAND_COLOR_LIGHT,
-            color: BRAND_COLOR,
-          }}
-        >
-          <ScrollText className="w-5 h-5" />
-          <span className="text-[10px] font-bold mt-0.5">상담 신청</span>
-        </button>
+      {/* ── PC 우측 플로팅 사이드바 (sm 이상) ── */}
+      <div className="hidden sm:flex fixed right-4 top-1/2 -translate-y-1/2 z-50 flex-col bg-white rounded-[32px] shadow-xl border border-gray-200 overflow-hidden divide-y divide-gray-200">
         <a
           href="tel:1660-0959"
-          className="flex flex-col items-center justify-center w-[52px] h-[52px] rounded-xl bg-white shadow-lg border border-gray-200 hover:shadow-xl transition-shadow cursor-pointer"
+          className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
         >
           <Phone className="w-5 h-5 text-gray-700" />
-          <span className="text-[9px] font-bold text-gray-600 mt-0.5 leading-tight text-center">
-            빠른
-            <br />
+          <span className="text-[10px] font-bold text-gray-600 mt-1 leading-tight text-center">
+            전화 상담
+          </span>
+        </a>
+        <button
+          onClick={() => setShowConsultation(true)}
+          className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+        >
+          <ScrollText className="w-5 h-5 text-gray-700" />
+          <span className="text-[10px] font-bold text-gray-600 mt-1">
             상담 신청
+          </span>
+        </button>
+        <a
+          href="https://pf.kakao.com/_예담라이프"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#374151">
+            <path d="M12 3C6.48 3 2 6.54 2 10.86c0 2.78 1.86 5.22 4.65 6.6l-.95 3.53c-.08.3.25.55.52.39l4.2-2.8c.51.07 1.04.1 1.58.1 5.52 0 10-3.54 10-7.86S17.52 3 12 3z" />
+          </svg>
+          <span className="text-[10px] font-bold text-gray-700 mt-1">
+            친구추가
           </span>
         </a>
       </div>
@@ -1782,5 +1922,109 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
       {/* 모바일 하단 고정 바 높이만큼 여백 */}
       <div className="sm:hidden h-16" />
     </>
+  );
+}
+
+function PriceRangeSlider({
+  min,
+  max,
+  step,
+  value,
+  onChange,
+  onCommit,
+}: {
+  min: number;
+  max: number;
+  step: number;
+  value: [number, number];
+  onChange: (next: [number, number]) => void;
+  onCommit?: (next: [number, number]) => void;
+}) {
+  const [lo, hi] = value;
+  const span = max - min || 1;
+  const loPct = ((lo - min) / span) * 100;
+  const hiPct = ((hi - min) / span) * 100;
+
+  const handleLo = (v: number) => {
+    const clamped = Math.min(v, hi);
+    onChange([clamped, hi]);
+  };
+  const handleHi = (v: number) => {
+    const clamped = Math.max(v, lo);
+    onChange([lo, clamped]);
+  };
+
+  return (
+    <div className="relative h-6 select-none">
+      {/* 트랙 (회색) */}
+      <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 rounded-full bg-gray-200" />
+      {/* 활성 구간 */}
+      <div
+        className="absolute top-1/2 -translate-y-1/2 h-1 rounded-full"
+        style={{
+          left: `${loPct}%`,
+          width: `${Math.max(hiPct - loPct, 0)}%`,
+          backgroundColor: BRAND_COLOR,
+        }}
+      />
+      {/* 입력 — 두 개 겹침 */}
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={lo}
+        onChange={(e) => handleLo(Number(e.target.value))}
+        onMouseUp={() => onCommit?.(value)}
+        onTouchEnd={() => onCommit?.(value)}
+        onKeyUp={() => onCommit?.(value)}
+        className="bp-range bp-range-lo absolute inset-0 w-full appearance-none bg-transparent pointer-events-none"
+      />
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={hi}
+        onChange={(e) => handleHi(Number(e.target.value))}
+        onMouseUp={() => onCommit?.(value)}
+        onTouchEnd={() => onCommit?.(value)}
+        onKeyUp={() => onCommit?.(value)}
+        className="bp-range bp-range-hi absolute inset-0 w-full appearance-none bg-transparent pointer-events-none"
+      />
+      <style jsx>{`
+        .bp-range {
+          height: 100%;
+        }
+        .bp-range::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: #fff;
+          border: 2px solid ${BRAND_COLOR};
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+          cursor: pointer;
+          pointer-events: auto;
+        }
+        .bp-range::-moz-range-thumb {
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: #fff;
+          border: 2px solid ${BRAND_COLOR};
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+          cursor: pointer;
+          pointer-events: auto;
+        }
+        .bp-range::-webkit-slider-runnable-track {
+          background: transparent;
+        }
+        .bp-range::-moz-range-track {
+          background: transparent;
+        }
+      `}</style>
+    </div>
   );
 }

@@ -213,13 +213,22 @@ export function YedamHeader({
                                   }
                                 : {})}
                               onClick={(e) => {
+                                if (sub.modal) {
+                                  e.preventDefault();
+                                  window.dispatchEvent(
+                                    new CustomEvent('open-funeral-guide-modal', {
+                                      detail: sub.modal,
+                                    }),
+                                  );
+                                  return;
+                                }
                                 if (!sub.external) handleNavClick(e, sub.href);
                               }}
                               className="block px-4 py-2 text-sm text-gray-600 whitespace-nowrap transition-colors cursor-pointer"
                               onMouseEnter={(e) => {
                                 e.currentTarget.style.backgroundColor =
-                                  BRAND_COLOR_LIGHT;
-                                e.currentTarget.style.color = BRAND_COLOR;
+                                  '#f3f4f6';
+                                e.currentTarget.style.color = '#111827';
                               }}
                               onMouseLeave={(e) => {
                                 e.currentTarget.style.backgroundColor =
@@ -410,6 +419,22 @@ export function YedamHeader({
                             >
                               {sub.label}
                             </a>
+                          ) : sub.modal ? (
+                            <button
+                              key={sub.label}
+                              type="button"
+                              onClick={() => {
+                                setIsMobileMenuOpen(false);
+                                window.dispatchEvent(
+                                  new CustomEvent('open-funeral-guide-modal', {
+                                    detail: sub.modal,
+                                  }),
+                                );
+                              }}
+                              className="py-2 px-4 text-left text-sm text-gray-500 hover:bg-gray-50 rounded-r-lg transition-colors cursor-pointer"
+                            >
+                              {sub.label}
+                            </button>
                           ) : (
                             <a
                               key={sub.label}

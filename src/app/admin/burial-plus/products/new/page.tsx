@@ -11,6 +11,7 @@ const BACK_HREF = '/admin/burial-plus/products';
 
 const INITIAL: BpProductFormValue = {
   categories: [],
+  religions: [],
   intro: {
     companyname: '',
     publiccodeLabel: '사설',

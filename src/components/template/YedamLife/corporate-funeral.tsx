@@ -1,30 +1,24 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { Fragment, useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
-  Building2,
-  Briefcase,
   ArrowRight,
   ChevronLeft,
   ChevronRight,
   Download,
   FileText,
   ChevronDown,
+  Headphones,
   Info,
-  Settings,
-  Users,
-  MapPin,
-  PiggyBank,
   ScrollText,
+  X,
 } from 'lucide-react';
 
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
   BRAND_COLOR_PREMIUM,
-  corpConsultationData,
-  corpServiceData,
   corpFuneralProducts,
   corpComparisonData,
   clientLogoRow1,
@@ -34,13 +28,19 @@ import {
 } from './constants';
 
 import {
-  Ticker,
+  CountUp,
   CtaSection,
   MembershipSection,
   ReviewCarousel,
   ReviewItem,
 } from './components';
 import { ProposalModal } from './proposal-modal';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 const PRODUCT_IMG_BASE =
   'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/products';
@@ -51,6 +51,9 @@ const PRODUCT_LABEL_IMAGES: Record<string, { src: string; alt: string }[]> = {
   ],
   장례관리사: [
     { src: `${PRODUCT_IMG_BASE}/funeral_manager.avif`, alt: '장례관리사' },
+  ],
+  '접객 도우미': [
+    { src: `${PRODUCT_IMG_BASE}/funeral_manager2.png`, alt: '접객 도우미' },
   ],
   입관상례사: [
     {
@@ -137,6 +140,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
 
   // 제안서 문의 모달
   const [showProposalModal, setShowProposalModal] = useState(false);
+  const [showCorpConsultModal, setShowCorpConsultModal] = useState(false);
 
   // 상담 신청 폼 state
   const [corpConsultForm, setCorpConsultForm] = useState({
@@ -148,6 +152,13 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
     privacyAgreed: false,
   });
   const [corpConsultSubmitting, setCorpConsultSubmitting] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setShowCorpConsultModal(true);
+    window.addEventListener('open-corp-consult-modal', handler);
+    return () =>
+      window.removeEventListener('open-corp-consult-modal', handler);
+  }, []);
 
   // 모바일 캐러셀: 확장 배열 [last, ...all, first]
   const [corpCarouselIdx, setCorpCarouselIdx] = useState(1);
@@ -269,6 +280,24 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
   const [corpNoticeOpen, setCorpNoticeOpen] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
+  // A/B 뷰 전환: card(신규) / table(기존)
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [tooltipLabel, setTooltipLabel] = useState<string | null>(null);
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.metaKey && e.key === 'a') {
+        e.preventDefault();
+        setViewMode('card');
+      }
+      if (e.metaKey && e.key === 'b') {
+        e.preventDefault();
+        setViewMode('table');
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   const corpNoticeItems: { category: string; items: string[] }[] = [
     {
       category: '장례식장',
@@ -330,53 +359,59 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
             }}
           />
           <div className="absolute inset-0 bg-black/55" />
-          <div className="relative z-10 py-20 sm:py-28 lg:py-36 px-4 sm:px-6">
-            <div className="text-center max-w-3xl mx-auto">
-              <p
-                className="text-white/90 text-base sm:text-lg font-medium mb-4 sm:mb-6 tracking-wide"
-                style={{
-                  textShadow: '0 2px 6px rgba(0,0,0,0.6)',
-                  fontFamily: '"Nanum Myeongjo", serif',
-                }}
-              >
-                기업 복리후생의 새로운 기준
-              </p>
+          <div className="relative z-10 py-32 sm:py-36 lg:py-40 px-4 sm:px-6">
+            <div className="text-left max-w-3xl sm:mx-auto sm:max-w-5xl sm:pr-[20%] lg:pr-[25%]">
+              <div className="flex justify-start mb-8 sm:mb-10">
+                <span
+                  className="inline-flex items-center px-5 sm:px-6 py-2 sm:py-2.5 rounded-2xl"
+                  style={{
+                    backgroundColor: 'rgba(0,0,0,0.18)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <span
+                    className="font-bold leading-tight tracking-wide"
+                    style={{
+                      fontSize: '13px',
+                      color: '#ffffff',
+                      textShadow: '0 1px 3px rgba(0,0,0,0.6)',
+                      fontFamily: '"Nanum Myeongjo", serif',
+                    }}
+                  >
+                    기업 복리후생의 새로운 기준
+                  </span>
+                </span>
+              </div>
               <h1
-                className="text-2xl sm:text-[28px] lg:text-[36px] font-bold text-white leading-snug mb-2 sm:mb-3"
+                className="text-2xl sm:text-[28px] lg:text-[36px] font-bold leading-[1.8] sm:leading-[1.6] mb-12 sm:mb-14"
                 style={{
                   textShadow: '0 2px 8px rgba(0,0,0,0.6)',
                   fontFamily: '"Nanum Myeongjo", serif',
                 }}
               >
-                임직원과 그 가족을 위한
-              </h1>
-              <h1
-                className="text-2xl sm:text-[28px] lg:text-[36px] font-bold leading-snug mb-8 sm:mb-10"
-                style={{
-                  textShadow: '0 2px 8px rgba(0,0,0,0.6)',
-                  fontFamily: '"Nanum Myeongjo", serif',
-                }}
-              >
-                <span className="text-white">기업 맞춤형 상조 복지서비스 </span>
+                <span className="text-white">
+                  임직원과 그 가족을 위한
+                  <br />
+                  기업 맞춤형 상조 복지서비스
+                </span>
+                <br className="sm:hidden" />
+                <span className="hidden sm:inline text-white"> </span>
                 <span style={{ color: '#e8d5a3', fontWeight: 700 }}>
                   &ldquo;예담라이프&rdquo;
                 </span>
               </h1>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <div className="flex flex-wrap gap-3">
                 <button
-                  onClick={() => {
-                    document
-                      .getElementById('sec-corp-inquiry')
-                      ?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 bg-white text-gray-900 text-sm sm:text-base font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-lg cursor-pointer"
+                  onClick={() => setShowCorpConsultModal(true)}
+                  className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl shadow-lg bg-white text-gray-900 text-sm sm:text-base font-bold hover:bg-gray-100 transition-colors cursor-pointer"
                 >
                   <ScrollText className="w-4 h-4 sm:w-5 sm:h-5" />
                   기업상조 도입 상담
                 </button>
                 <button
                   onClick={() => setShowProposalModal(true)}
-                  className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 border-2 border-white/70 text-white text-sm sm:text-base font-bold rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl shadow-lg bg-transparent border border-white text-white text-sm sm:text-base font-bold hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   <Download className="w-4 h-4 sm:w-5 sm:h-5" />
                   기업상조 제안서 다운로드
@@ -389,89 +424,78 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
 
       {/* ══════════════ Tab 1: 기업 상조 콘텐츠 (14개 섹션) ══════════════ */}
 
-      {/* ── 2. 기업도입현황 + 서비스이용현황 티커 ── */}
-      <section
-        className="border-b border-gray-200 overflow-hidden"
-        style={{ backgroundColor: '#f7f7f7' }}
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
-            {/* 기업도입현황 */}
-            <div className="flex items-center gap-4 py-4 pr-0 md:pr-6">
-              <div className="flex items-center gap-2 shrink-0">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: BRAND_COLOR_LIGHT }}
-                >
-                  <Building2
-                    className="w-4 h-4"
-                    style={{ color: BRAND_COLOR }}
-                  />
-                </div>
-                <span className="text-sm font-bold text-gray-900 whitespace-nowrap">
-                  기업도입현황
+      {/* ── 2. 통계 섹션 ── */}
+      <section className="border-b border-gray-200 overflow-hidden bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-2 md:gap-y-0">
+            {/* 1. 가입건수 */}
+            <div className="flex flex-col items-center justify-center px-2 py-1.5 md:py-3 min-h-[58px] md:min-h-0 border-r border-gray-200">
+              <div className="flex items-baseline">
+                <CountUp
+                  end={1800}
+                  className="text-lg sm:text-3xl font-extrabold tracking-tight text-gray-900"
+                />
+                <span className="text-[13px] sm:text-lg font-extrabold ml-0.5 sm:ml-1 text-gray-900">
+                  건+
                 </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <Ticker
-                  data={corpConsultationData}
-                  interval={3500}
-                  renderItem={(item) => (
-                    <span className="text-sm text-gray-600 truncate">
-                      <span className="text-gray-400">{item.date}</span>{' '}
-                      {item.company} ({item.count}){' '}
-                      <span
-                        className="font-semibold"
-                        style={{
-                          color:
-                            item.status === '도입완료'
-                              ? BRAND_COLOR
-                              : '#d97706',
-                        }}
-                      >
-                        {item.status}
-                      </span>
-                    </span>
-                  )}
-                />
-              </div>
+              <p className="text-[11px] sm:text-sm text-gray-500 mt-1 text-center">
+                누적 가입 건수
+              </p>
             </div>
 
-            {/* 서비스이용현황 */}
-            <div className="flex items-center gap-4 py-4 pl-0 md:pl-6">
-              <div className="flex items-center gap-2 shrink-0">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: BRAND_COLOR_LIGHT }}
-                >
-                  <Briefcase
-                    className="w-4 h-4"
-                    style={{ color: BRAND_COLOR }}
-                  />
-                </div>
-                <span className="text-sm font-bold text-gray-900 whitespace-nowrap">
-                  서비스 이용현황
+            {/* 2. 상담신청 */}
+            <div className="flex flex-col items-center justify-center px-2 py-1.5 md:py-3 min-h-[58px] md:min-h-0 md:border-r border-gray-200">
+              <div className="flex items-baseline">
+                <CountUp
+                  end={5200}
+                  className="text-lg sm:text-3xl font-extrabold tracking-tight text-gray-900"
+                />
+                <span className="text-[13px] sm:text-lg font-extrabold ml-0.5 sm:ml-1 text-gray-900">
+                  건+
                 </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <Ticker
-                  data={corpServiceData}
-                  interval={4000}
-                  renderItem={(item) => (
-                    <span className="text-sm text-gray-600 truncate">
-                      <span className="text-gray-400">{item.date}</span>{' '}
-                      {item.company} ·{' '}
-                      <span className="font-medium">{item.service}</span>
-                    </span>
-                  )}
+              <p className="text-[11px] sm:text-sm text-gray-500 mt-1 text-center">
+                누적 상담신청
+              </p>
+            </div>
+
+            {/* 3. 전국 의전본부 */}
+            <div className="flex flex-col items-center justify-center px-2 py-1.5 md:py-3 min-h-[58px] md:min-h-0 border-r border-gray-200">
+              <div className="flex items-baseline">
+                <CountUp
+                  end={120}
+                  className="text-lg sm:text-3xl font-extrabold tracking-tight text-gray-900"
                 />
+                <span className="text-[13px] sm:text-lg font-extrabold ml-0.5 sm:ml-1 text-gray-900">
+                  개+
+                </span>
               </div>
+              <p className="text-[11px] sm:text-sm text-gray-500 mt-1 text-center">
+                전국 의전본부
+              </p>
+            </div>
+
+            {/* 4. 24시간 긴급출동 */}
+            <div className="flex flex-col items-center justify-center px-2 py-1.5 md:py-3 min-h-[58px] md:min-h-0">
+              <div className="flex items-baseline">
+                <CountUp
+                  end={24}
+                  className="text-lg sm:text-3xl font-extrabold tracking-tight text-gray-900"
+                />
+                <span className="text-[13px] sm:text-lg font-extrabold ml-0.5 sm:ml-1 text-gray-900">
+                  H
+                </span>
+              </div>
+              <p className="text-[11px] sm:text-sm text-gray-500 mt-1 text-center">
+                365일 긴급출동 서비스
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── 3. 기업상조 소개 (6개 카드) ── */}
+      {/* ── 3. 기업 복지 담당자의 고민 ── */}
       <section
         id="sec-corp-intro"
         className="py-16 sm:py-24 overflow-hidden bg-white"
@@ -479,39 +503,31 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
             <p className="text-sm sm:text-base font-semibold text-gray-400 mb-3 tracking-wide">
-              기업이 예담라이프를 선택하는 이유
+              기업 복지 담당자의 고민
             </p>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 leading-tight">
-              기업의 복리후생 경쟁력을 높이는
-              <br />
-              스마트한 선택
+              이런 어려움, 겪고 계시지 않나요?
             </h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               {
-                title: '맞춤형 복지 설계',
-                desc: '기업 규모·특성에 맞춘\n유연한 복지 플랜 설계',
+                title: '급작스러운 상황 대응',
+                desc: '야간·주말에도 즉시 의전팀을\n파견해야 하는 긴급성 부담',
                 image:
                   'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80',
               },
               {
-                title: '임직원 실질 혜택',
-                desc: '임직원과 가족 모두에게\n장례지원 및 복지 혜택 제공',
+                title: '상조 서비스 품질 관리',
+                desc: '도착 시간·장례지도사 응대 등\n서비스 퀄리티 유지·관리',
                 image:
                   'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600&q=80',
               },
               {
-                title: '전국 서비스망 운영',
-                desc: '전국 어디서나 동일한 품질의\n신속하고 안정적인 지원',
+                title: '비용의 합리성',
+                desc: '고비용·끼워팔기 선불제 상조로\n임직원에게 경제적 손실 우려',
                 image:
                   'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80',
-              },
-              {
-                title: '비용 절감 효과',
-                desc: '단체 계약 통한 합리적 비용으로\n고품질 복지 서비스 제공',
-                image:
-                  'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&q=80',
               },
             ].map((card) => (
               <div
@@ -539,13 +555,79 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
         </div>
       </section>
 
+      {/* ── 3-1. 기업상조 도입 프로세스 ── */}
+      <section className="py-16 sm:py-24 overflow-hidden bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-14">
+            <p className="text-sm sm:text-base font-semibold text-gray-400 mb-3 tracking-wide">
+              PROCESS
+            </p>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
+              기업상조 도입, 이렇게 간단합니다
+            </h2>
+            <p className="text-sm sm:text-base text-gray-500">
+              별도 비용 없이 MOU 협약만으로 바로 도입하세요
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+            {[
+              {
+                emoji: '💬',
+                step: 'STEP 01',
+                title: '사전 미팅',
+                desc: '기업 상황과 필요를 파악하고\n후불제 상조를 안내합니다',
+              },
+              {
+                emoji: '🎯',
+                step: 'STEP 02',
+                title: '맞춤 컨설팅',
+                desc: '계약 항목과 제공 내역을\n구체적으로 확정합니다',
+              },
+              {
+                emoji: '🤝',
+                step: 'STEP 03',
+                title: 'MOU 체결',
+                desc: '계약 체결 및 협약서를\n작성합니다',
+              },
+              {
+                emoji: '📢',
+                step: 'STEP 04',
+                title: '사내 공지',
+                desc: '기업상조 복지를\n임직원에게 안내합니다',
+              },
+              {
+                emoji: '📅',
+                step: 'STEP 05',
+                title: '정기 미팅',
+                desc: '개선점을 논의하며\n서비스를 보완합니다',
+              },
+            ].map((s) => (
+              <div
+                key={s.step}
+                className="bg-white rounded-2xl border border-gray-200 px-5 py-7 flex flex-col items-center text-center"
+              >
+                <div className="text-3xl mb-4">{s.emoji}</div>
+                <p
+                  className="text-[11px] font-bold tracking-[0.2em] mb-2"
+                  style={{ color: BRAND_COLOR }}
+                >
+                  {s.step}
+                </p>
+                <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">
+                  {s.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                  {s.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── 4. 기업 혜택가 비교 차트 ── */}
-      <section
-        className="py-20 sm:py-28 overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, #eef6fb 0%, #f7f7f7 100%)',
-        }}
-      >
+      <section className="py-20 sm:py-28 overflow-hidden bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
             <span className="inline-block text-sm sm:text-base font-semibold text-gray-500 mb-3 tracking-wide bg-white px-4 py-1.5 rounded-full">
@@ -577,117 +659,186 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
 
           {/* 차트: 예담라이프 vs 선불제상조 vs 장례식장 상조 비교 */}
           {(() => {
-            const corpPriceMap = [
-              { yedam: 220, prepaid: 370, funeral: 550 },
-              { yedam: 330, prepaid: 490, funeral: 700 },
+            const priceMap = [
+              {
+                facilityFee: 100,
+                yedamFee: 120,
+                prepaidFee: 270,
+                funeralHomeFee: 450,
+              },
+              {
+                facilityFee: 150,
+                yedamFee: 180,
+                prepaidFee: 340,
+                funeralHomeFee: 550,
+              },
             ];
-            const prices = corpPriceMap[corpChartProductIdx];
-            const maxPrice = prices.funeral;
-            const barHeight = (val: number) =>
-              Math.round((val / maxPrice) * 220);
+            const p = priceMap[corpChartProductIdx];
+            const totalYedam = p.facilityFee + p.yedamFee;
+            const totalPrepaid = p.facilityFee + p.prepaidFee;
+            const totalFuneral = p.facilityFee + p.funeralHomeFee;
+            const maxTotal = totalFuneral;
+            const maxBarH = 220;
+            const h = (val: number) => Math.round((val / maxTotal) * maxBarH);
             const savingPercent = Math.round(
-              ((prices.funeral - prices.yedam) / prices.funeral) * 100,
+              ((totalFuneral - totalYedam) / totalFuneral) * 100,
             );
+
+            const bars = [
+              {
+                label: '예담라이프',
+                total: totalYedam,
+                serviceFee: p.yedamFee,
+                darkColor: '#4a7fb5',
+                lightColor: '#e5e7eb',
+                isHighlight: true,
+              },
+              {
+                label: '선불제상조',
+                total: totalPrepaid,
+                serviceFee: p.prepaidFee,
+                darkColor: '#9ca3af',
+                lightColor: '#e5e7eb',
+                isHighlight: false,
+              },
+              {
+                label: '장례식장',
+                total: totalFuneral,
+                serviceFee: p.funeralHomeFee,
+                darkColor: '#6b7280',
+                lightColor: '#e5e7eb',
+                isHighlight: false,
+              },
+            ];
+
             return (
-              <div className="relative max-w-lg mx-auto mb-14 scale-[0.8] sm:scale-100 origin-top">
-                <div className="flex items-end justify-center gap-6 sm:gap-10 h-[280px] sm:h-[320px]">
-                  {/* 예담라이프 */}
-                  <div className="flex flex-col items-center gap-2 flex-1 max-w-[110px]">
-                    <div className="relative">
-                      <div
-                        className="px-3 py-1.5 rounded-lg text-sm font-bold text-white whitespace-nowrap"
-                        style={{ backgroundColor: '#4a7fb5' }}
-                      >
-                        {prices.yedam}만원
-                      </div>
-                      <div
-                        className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45"
-                        style={{ backgroundColor: '#4a7fb5' }}
-                      />
-                    </div>
-                    <div
-                      className="w-full rounded-t-xl transition-all duration-500"
-                      style={{
-                        height: `${barHeight(prices.yedam)}px`,
-                        backgroundColor: '#4a7fb5',
-                      }}
-                    />
-                    <span
-                      className="text-xs sm:text-sm font-bold text-center leading-tight"
-                      style={{ color: '#4a7fb5' }}
-                    >
-                      예담라이프
-                    </span>
-                  </div>
-
-                  {/* 선불제상조 */}
-                  <div className="flex flex-col items-center gap-2 flex-1 max-w-[110px]">
-                    <span className="text-sm font-bold text-gray-400">
-                      {prices.prepaid}만원
-                    </span>
-                    <div
-                      className="w-full rounded-t-xl transition-all duration-500"
-                      style={{
-                        height: `${barHeight(prices.prepaid)}px`,
-                        backgroundColor: '#d1d5db',
-                      }}
-                    />
-                    <span className="text-xs sm:text-sm font-medium text-gray-400 text-center leading-tight">
-                      선불제상조
-                    </span>
-                  </div>
-
-                  {/* 장례식장 상조 */}
-                  <div className="flex flex-col items-center gap-2 flex-1 max-w-[110px]">
-                    <span className="text-sm font-bold text-gray-400">
-                      {prices.funeral}만원
-                    </span>
-                    <div
-                      className="w-full rounded-t-xl transition-all duration-500"
-                      style={{
-                        height: `${barHeight(prices.funeral)}px`,
-                        backgroundColor: '#e5e7eb',
-                      }}
-                    />
-                    <span className="text-xs sm:text-sm font-medium text-gray-400 text-center leading-tight">
-                      장례식장
-                    </span>
-                  </div>
-
-                  {/* 절약 말풍선 */}
-                  <div className="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
-                    <div
-                      className="w-24 h-24 rounded-full flex items-center justify-center"
-                      style={{
-                        backgroundColor: BRAND_COLOR_LIGHT,
-                        animation: 'heartbeat 1.5s ease-in-out infinite',
-                      }}
-                    >
-                      <p
-                        className="text-xs font-bold text-center leading-tight"
-                        style={{ color: BRAND_COLOR }}
-                      >
-                        최대
-                        <br />
-                        <span className="text-sm font-extrabold">
-                          {savingPercent}% 절약
-                        </span>
-                        <br />
-                        월납입금 0원
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 점선 기준선 */}
+              <div className="max-w-xl mx-auto mb-14">
                 <div
-                  className="absolute left-0 right-0 border-t-2 border-dashed pointer-events-none transition-all duration-500"
+                  className="grid justify-center transition-all duration-500"
                   style={{
-                    bottom: `${barHeight(prices.yedam) + 35}px`,
-                    borderColor: '#4a7fb5',
-                    opacity: 0.6,
+                    gridTemplateColumns: 'repeat(3, minmax(70px, 110px)) auto',
+                    gap: '0 clamp(8px, 3vw, 40px)',
                   }}
-                />
+                >
+                  {/* Row 1: 상조 비용 (진한색) + 총합 라벨을 막대 바로 위에 */}
+                  {bars.map((bar) => (
+                    <div
+                      key={`s-${bar.label}`}
+                      className="self-end flex flex-col items-center"
+                    >
+                      {/* 총합 라벨 */}
+                      <div className="mb-2">
+                        {bar.isHighlight ? (
+                          <div
+                            className="relative"
+                            style={{
+                              animation: 'heartbeat 2s ease-in-out infinite',
+                            }}
+                          >
+                            <div
+                              className="px-3 py-1.5 rounded-lg text-sm font-bold text-white whitespace-nowrap text-center"
+                              style={{ backgroundColor: bar.darkColor }}
+                            >
+                              <span className="text-[10px] font-semibold text-white/80">
+                                최대 {savingPercent}% 절약
+                              </span>
+                              <br />
+                              {bar.total}만원
+                            </div>
+                            <div
+                              className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45"
+                              style={{ backgroundColor: bar.darkColor }}
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-sm font-bold text-gray-400 whitespace-nowrap">
+                            {bar.total}만원
+                          </span>
+                        )}
+                      </div>
+                      {/* 상조 비용 바 */}
+                      <div
+                        className="w-full rounded-t-xl flex items-center justify-center transition-all duration-500"
+                        style={{
+                          height: `${h(bar.serviceFee)}px`,
+                          backgroundColor: bar.darkColor,
+                        }}
+                      >
+                        {h(bar.serviceFee) > 24 && (
+                          <span className="text-xs sm:text-sm font-bold text-white/90">
+                            {bar.serviceFee}만
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {/* 우측: 상조 비용 라벨 — 가장 큰 막대(장례식장) 기준 중간 */}
+                  <div
+                    className="self-end pl-2"
+                    style={{
+                      paddingBottom: `${Math.round(h(bars[2].serviceFee) / 2 - 8)}px`,
+                    }}
+                  >
+                    <span className="text-[11px] sm:text-xs font-semibold text-gray-500 whitespace-nowrap">
+                      서비스별
+                      <br />
+                      상조 평균 비용
+                    </span>
+                  </div>
+
+                  {/* Row 3: 절취선 — 전체 너비 관통 */}
+                  <div
+                    className="border-t-[3px] border-dashed"
+                    style={{ gridColumn: '1 / -1', borderColor: '#7a6240' }}
+                  />
+
+                  {/* Row 4: 장례식장 비용 (연한색, 높이 동일) */}
+                  {bars.map((bar) => (
+                    <div key={`f-${bar.label}`}>
+                      <div
+                        className="w-full flex items-center justify-center transition-all duration-500"
+                        style={{
+                          height: `${h(p.facilityFee)}px`,
+                          backgroundColor: bar.lightColor,
+                        }}
+                      >
+                        {h(p.facilityFee) > 24 && (
+                          <span
+                            className="text-[10px] sm:text-xs font-bold"
+                            style={{ color: '#9ca3af' }}
+                          >
+                            {p.facilityFee}만
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {/* 우측: 장례식장 비용 라벨 */}
+                  <div className="self-center pl-2">
+                    <span className="text-[11px] sm:text-xs font-semibold text-gray-500 whitespace-nowrap">
+                      장례식장 평균 비용
+                    </span>
+                    <br />
+                    <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                      - 상조 금액과 별도
+                    </span>
+                  </div>
+
+                  {/* Row 5: 하단 라벨 */}
+                  {bars.map((bar) => (
+                    <div key={`l-${bar.label}`} className="text-center pt-2">
+                      <span
+                        className="text-xs sm:text-sm font-bold"
+                        style={{
+                          color: bar.isHighlight ? '#111827' : '#9ca3af',
+                        }}
+                      >
+                        {bar.label}
+                      </span>
+                    </div>
+                  ))}
+                  <div />
+                </div>
               </div>
             );
           })()}
@@ -712,297 +863,93 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
         </div>
       </section>
 
-      {/* ── 5. 기업상조 상품안내 (카드 리스트) ── */}
-      <section
-        id="sec-corp-products"
-        className="py-16 sm:py-24 overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, #ffffff 0%, #f9f9f9 100%)',
-        }}
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-14">
-            <p className="text-sm sm:text-base font-semibold text-gray-400 mb-3 tracking-wide">
-              기업상조 상품안내
-            </p>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 leading-tight">
-              기업 규모에 맞는 최적의
-              <br />
-              상조 플랜을 선택하세요
-            </h2>
-          </div>
-          {/* 모바일: 슬라이드 캐러셀 */}
-          <div className="sm:hidden -mx-4">
-            <div className="relative overflow-hidden">
-              <div
-                className="flex items-stretch"
-                style={{
-                  gap: 10,
-                  transition: corpCarouselTransition
-                    ? 'transform 0.35s ease-in-out'
-                    : 'none',
-                  transform: `translateX(calc(-${corpCarouselIdx} * (72vw + 10px) + (100vw - 72vw) / 2))`,
-                }}
-                {...swipeHandlers(
-                  handleCorpCarouselPrev,
-                  handleCorpCarouselNext,
-                )}
-              >
-                {extendedCorpProducts.map((product, i) => {
-                  const isActive = i === corpCarouselIdx;
-                  const originalIdx =
-                    (((i - 1) % corpFuneralProducts.length) +
-                      corpFuneralProducts.length) %
-                    corpFuneralProducts.length;
-                  return (
-                    <div
-                      key={`corp-carousel-${i}`}
-                      className="shrink-0"
-                      style={{
-                        width: '72vw',
-                        opacity: isActive ? 1 : 0.35,
-                        transform: isActive ? 'scale(1)' : 'scale(0.93)',
-                        transition: corpCarouselTransition
-                          ? 'opacity 0.35s ease, transform 0.35s ease'
-                          : 'none',
-                      }}
-                    >
-                      <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 h-full flex flex-col">
-                        <div className="relative h-44 overflow-hidden">
-                          <img
-                            src={corpFuneralProducts[originalIdx].image}
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                          />
-                          <span className="absolute top-0 right-4 bg-gray-800 text-white text-sm font-bold px-4 py-2 rounded-b-lg">
-                            {product.name}
-                          </span>
-                        </div>
-                        <div className="p-4 flex flex-col flex-1">
-                          <p className="text-xs text-gray-500 mb-3 leading-relaxed whitespace-pre-line">
-                            {product.desc}
-                          </p>
-                          <div className="flex items-center gap-2 mb-3 mt-auto">
-                            <span className="text-xs text-gray-400 line-through">
-                              {product.originalPrice}
-                            </span>
-                            <span
-                              className="text-base font-extrabold"
-                              style={{ color: BRAND_COLOR }}
-                            >
-                              → {product.discountPrice}
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => {
-                              setCorpTableFilter(
-                                product.id as 'corp-1' | 'corp-2',
-                              );
-                              document
-                                .getElementById('sec-corp-inquiry')
-                                ?.scrollIntoView({ behavior: 'smooth' });
-                            }}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-colors cursor-pointer hover:bg-gray-200 bg-gray-100 text-gray-700"
-                          >
-                            상품 상세 보기
-                            <ArrowRight className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* 좌우 화살표 */}
-              <button
-                onClick={handleCorpCarouselPrev}
-                className="absolute -left-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center cursor-pointer"
-                style={{
-                  width: 56,
-                  height: 56,
-                  background: 'transparent',
-                  border: 'none',
-                  minHeight: 'auto',
-                  touchAction: 'manipulation',
-                }}
-              >
-                <span
-                  className="flex items-center justify-center"
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: '50%',
-                    backgroundColor: 'rgba(255,255,255,0.9)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                  }}
-                >
-                  <ChevronLeft className="w-5 h-5 text-gray-700" />
-                </span>
-              </button>
-              <button
-                onClick={handleCorpCarouselNext}
-                className="absolute -right-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center cursor-pointer"
-                style={{
-                  width: 56,
-                  height: 56,
-                  background: 'transparent',
-                  border: 'none',
-                  minHeight: 'auto',
-                  touchAction: 'manipulation',
-                }}
-              >
-                <span
-                  className="flex items-center justify-center"
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: '50%',
-                    backgroundColor: 'rgba(255,255,255,0.9)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                  }}
-                >
-                  <ChevronRight className="w-5 h-5 text-gray-700" />
-                </span>
-              </button>
-            </div>
-
-            {/* 인디케이터 dot */}
-            <div className="flex items-center justify-center gap-2.5 mt-5">
-              {corpFuneralProducts.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleCorpDotClick(idx)}
-                  className="cursor-pointer"
-                  style={{
-                    width: realCorpProductIdx === idx ? 24 : 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor:
-                      realCorpProductIdx === idx ? BRAND_COLOR : '#d1d5db',
-                    transition: 'all 0.3s ease',
-                    border: 'none',
-                    padding: 0,
-                    minHeight: 'auto',
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* 데스크탑: 그리드 */}
-          <div className="hidden sm:grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            {corpFuneralProducts.map((product) => (
-              <div
-                key={product.id}
-                className="bg-white rounded-2xl overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow flex flex-col"
-              >
-                <div className="relative h-44 overflow-hidden">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                  <span className="absolute top-0 right-4 bg-gray-800 text-white text-sm font-bold px-4 py-2 rounded-b-lg">
-                    {product.name}
-                  </span>
-                </div>
-                <div className="p-5 flex flex-col flex-1">
-                  <p className="text-xs text-gray-500 mb-4 leading-relaxed whitespace-pre-line">
-                    {product.desc}
-                  </p>
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-xs text-gray-400 line-through">
-                      {product.originalPrice}
-                    </span>
-                    <span
-                      className="text-base font-extrabold"
-                      style={{ color: BRAND_COLOR }}
-                    >
-                      → {product.discountPrice}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setCorpTableFilter(product.id as 'corp-1' | 'corp-2');
-                      document
-                        .getElementById('sec-corp-inquiry')
-                        ?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-colors cursor-pointer hover:bg-gray-200 bg-gray-100 text-gray-700 mt-auto"
-                  >
-                    상품 상세 보기
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── 6. 3030α 기업상조 복지서비스 ── */}
       <section
         id="sec-corp-welfare"
-        className="py-16 sm:py-24 overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, #f5f7f2 0%, #f5f7f3 100%)',
-        }}
+        className="py-16 sm:py-24 overflow-hidden bg-gray-50"
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
-            <p className="text-sm sm:text-base font-semibold text-gray-400 mb-3 tracking-wide">
-              예담라이프 3030α 기업상조 복지서비스
+            <p
+              className="text-sm sm:text-base font-semibold mb-3 tracking-[0.2em]"
+              style={{ color: BRAND_COLOR }}
+            >
+              3030A BENEFIT
             </p>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 leading-tight">
-              경제성, 실질적인 임직원의 혜택,
-              <br />
-              기업 맞춤형 지원까지 모두 갖춘 스마트한 선택
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
+              기업상조 3030α 복지서비스
             </h2>
+            <p className="text-sm sm:text-base text-gray-500">
+              MOU 협약만으로 임직원에게 즉시 제공되는 상조 복지 혜택
+            </p>
           </div>
 
           {/* 3개 핵심 포인트 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-16">
+          <div className="flex flex-col sm:flex-row items-stretch justify-center gap-4 sm:gap-2 mb-12">
             {[
               {
                 num: '30',
                 color: '#1e3a5f',
-                line1: '기본 상조 상품가격에서',
-                line2: '30만원 즉시 공제',
+                title: '임직원 30만원 공제',
+                line1: '기업상조 상품가에서',
+                line2: '30만원 즉시 할인',
               },
               {
-                num: '30',
-                color: '#2d7d46',
-                line1: '타 상조 대비',
-                line2: '30% 이상 비용절감',
+                num: '30%',
+                color: '#b59c4d',
+                title: '장례비용 절감',
+                line1: '선불제 상조 대비',
+                line2: '30% 경제적',
               },
               {
                 num: 'α',
-                color: '#c0392b',
-                line1: '기업 선택형',
-                line2: '추가 혜택(α) 제공',
+                color: '#a44a3f',
+                title: '상품별 추가혜택',
+                line1: '조사용품·근조화환',
+                line2: '현금지원 등 택1~2',
               },
-            ].map((item) => (
-              <div
-                key={item.line2}
-                className="bg-white rounded-2xl border border-gray-200 py-8 px-6 text-center flex flex-col items-center"
-              >
+            ].map((item, idx, arr) => (
+              <Fragment key={item.title}>
                 <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center mb-5"
+                  className="flex-1 rounded-2xl py-10 px-6 text-center flex flex-col items-center justify-center text-white"
                   style={{ backgroundColor: item.color }}
                 >
-                  <span className="text-2xl font-extrabold text-white">
+                  <span className="text-5xl sm:text-6xl font-extrabold mb-6">
                     {item.num}
                   </span>
+                  <p className="text-lg sm:text-xl font-bold mb-3">
+                    {item.title}
+                  </p>
+                  <p className="text-sm opacity-90 leading-relaxed">
+                    {item.line1}
+                    <br />
+                    {item.line2}
+                  </p>
                 </div>
-                <p className="text-base text-gray-500 mb-1">{item.line1}</p>
-                <p className="text-xl font-extrabold text-gray-900">
-                  {item.line2}
-                </p>
-              </div>
+                {idx < arr.length - 1 && (
+                  <div className="flex items-center justify-center text-2xl font-bold text-gray-400 sm:px-1">
+                    +
+                  </div>
+                )}
+              </Fragment>
             ))}
           </div>
 
+          <div className="text-center space-y-2">
+            <p className="text-xs sm:text-sm text-gray-500">
+              ※ 임직원 가족뿐만 아니라 친인척도 사전 가입 시 20만원 할인 + VIP
+              MEMBERSHIP 패키지 제공
+            </p>
+            <p className="text-xs sm:text-sm text-gray-500">
+              ※ 기업에 별도 비용 부담 없이, MOU 협약만으로 도입 가능
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 6-2. 기업 지원 추가혜택 (구) ── */}
+      <section className="hidden">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
           {/* 기업 지원 추가혜택 */}
           <div className="text-center mb-10">
             <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900">
@@ -1155,185 +1102,6 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
         </div>
       </section>
 
-      {/* ── 7. 기업 상조서비스의 도입효과 ── */}
-      <section
-        id="sec-corp-effect"
-        className="py-16 sm:py-24 bg-white overflow-hidden"
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-              기업 상조서비스의 도입효과
-            </h2>
-          </div>
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <button
-              onClick={() => setCorpEffectTab('company')}
-              className={`px-6 py-2.5 rounded-full text-sm font-bold transition-colors cursor-pointer ${corpEffectTab === 'company' ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'}`}
-            >
-              기업 측면
-            </button>
-            <button
-              onClick={() => setCorpEffectTab('employee')}
-              className={`px-6 py-2.5 rounded-full text-sm font-bold transition-colors cursor-pointer ${corpEffectTab === 'employee' ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'}`}
-            >
-              임직원 측면
-            </button>
-          </div>
-          {(() => {
-            const effectItems =
-              corpEffectTab === 'company'
-                ? [
-                    {
-                      num: '01',
-                      title: '임직원 복리증진 및 사기 진작',
-                      desc: '임직원 또는 회사에서 지원함으로써 임직원의 애사심과 충성심 고취',
-                    },
-                    {
-                      num: '02',
-                      title: '유족 및 조문객에게 기업이미지 제고',
-                      desc: '장례지도사 및 장례관리사가 명찰 착용으로 책임을 다하여 장례서비스 제공',
-                    },
-                    {
-                      num: '03',
-                      title: '장례 관련 업무 통합으로 업무 효율성 제고',
-                      desc: '장례 관련 행사 업무는 예담라이프에서 모든 업무 진행! 기업에서는 조문과 위로만으로 임직원 장례복지에서 자유로움!',
-                    },
-                  ]
-                : [
-                    {
-                      num: '01',
-                      title: '경제적 부담 경감',
-                      desc: '협약된 금액으로 장례 진행, 추가 비용 부담 없음',
-                    },
-                    {
-                      num: '02',
-                      title: '전문 장례 서비스',
-                      desc: '전문 장례지도사가 처음부터 끝까지 체계적으로 진행',
-                    },
-                    {
-                      num: '03',
-                      title: '퇴사 후에도 혜택 유지',
-                      desc: '퇴사 후에도 협약 금액으로 장례행사 제공 보장',
-                    },
-                  ];
-            return (
-              <>
-                {/* 모바일: 좌측 번호 + 우측 내용 */}
-                <div className="sm:hidden space-y-5">
-                  {effectItems.map((item) => (
-                    <div key={item.num} className="flex items-start gap-4">
-                      <div
-                        className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: BRAND_COLOR_LIGHT }}
-                      >
-                        <span
-                          className="font-extrabold text-sm"
-                          style={{ color: BRAND_COLOR }}
-                        >
-                          {item.num}
-                        </span>
-                      </div>
-                      <div className="flex-1 pt-0.5">
-                        <h3 className="text-base font-bold text-gray-900 mb-1">
-                          {item.title}
-                        </h3>
-                        <p className="text-sm text-gray-500 leading-relaxed">
-                          {item.desc}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* 데스크탑: 3열 중앙 정렬 */}
-                <div className="hidden sm:grid sm:grid-cols-3 gap-6">
-                  {effectItems.map((item) => (
-                    <div
-                      key={item.num}
-                      className="flex flex-col items-center text-center"
-                    >
-                      <div
-                        className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
-                        style={{ backgroundColor: BRAND_COLOR_LIGHT }}
-                      >
-                        <span
-                          className="font-extrabold text-base"
-                          style={{ color: BRAND_COLOR }}
-                        >
-                          {item.num}
-                        </span>
-                      </div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-2">
-                        {item.title}
-                      </h3>
-                      <p className="text-sm text-gray-500 leading-relaxed">
-                        {item.desc}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </>
-            );
-          })()}
-        </div>
-      </section>
-
-      {/* ── 8. 업무 제휴 시 제공 서비스 ── */}
-      <section
-        className="py-16 sm:py-24 overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%)',
-        }}
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col lg:flex-row lg:items-start gap-10 lg:gap-16">
-            {/* 좌측 타이틀 */}
-            <div className="lg:w-1/3 shrink-0">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
-                업무 제휴 시
-                <br />
-                제공 서비스
-              </h2>
-              <p className="mt-3 text-sm text-gray-500">
-                기업과의 업무 제휴를 통해 다양한 서비스를 제공합니다
-              </p>
-            </div>
-
-            {/* 우측 리스트 */}
-            <div className="flex-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  '사전가입 시 관내 고인 이송 지원',
-                  '조사용품 200인분 1BOX 또는 근조화환 제공',
-                  '부고 알림 문자',
-                  '화장장 예약',
-                  '장지 상담',
-                  '유품정리 할인',
-                  '상속관련 법률자문 할인',
-                  '임직원 복지의 지속성을 위해 퇴사 후에도 협약된 금액으로 장례행사 제공 보장',
-                ].map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-start gap-3 p-4 bg-white rounded-xl border border-gray-200"
-                  >
-                    <span
-                      className="text-sm font-extrabold shrink-0 mt-0.5"
-                      style={{ color: BRAND_COLOR }}
-                    >
-                      {String(idx + 1).padStart(2, '0')}
-                    </span>
-                    <span className="text-sm text-gray-700 leading-relaxed">
-                      {item}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ── 9. 기업 멤버십 혜택 ── */}
       <MembershipSection
         background="bg-white"
@@ -1341,158 +1109,1064 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
         ctaLabel="기업 상조 가입신청"
       />
 
-      {/* ── 10. 장례 복지 혜택 진행과정 (마일스톤) ── */}
+      {/* ── 5. 기업상조 상품안내 (카드 리스트) ── */}
       <section
-        className="py-16 sm:py-24 overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%)',
-        }}
+        id="sec-corp-products"
+        className="py-16 sm:py-24 overflow-hidden bg-gray-50"
       >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
-              기업 상조 복지 혜택 진행과정
-            </h2>
-            <p className="text-sm sm:text-base text-gray-500 mt-3">
-              기업 부담{' '}
-              <span className="font-bold" style={{ color: BRAND_COLOR }}>
-                ZERO
-              </span>
-              , 간단한 3단계로 도입됩니다
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-14">
+            <p className="text-sm sm:text-base font-semibold text-gray-400 mb-3 tracking-wide">
+              기업상조 상품안내
             </p>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 leading-tight">
+              기업 규모에 맞는 최적의
+              <br />
+              상조 플랜을 선택하세요
+            </h2>
           </div>
-
-          {/* 데스크탑: 가로 마일스톤 */}
-          <div className="hidden md:block">
-            <div className="relative">
-              {/* 연결선 */}
-              <div className="absolute top-7 left-[16.67%] right-[16.67%] h-0.5 bg-gray-300" />
+          {/* 모바일: 슬라이드 캐러셀 */}
+          <div className="sm:hidden -mx-4">
+            <div className="relative overflow-hidden">
               <div
-                className="absolute top-7 left-[16.67%] h-0.5"
-                style={{ backgroundColor: BRAND_COLOR, width: '66.66%' }}
-              />
-
-              <div className="grid grid-cols-3 gap-6">
-                {[
-                  {
-                    step: 1,
-                    title: 'MOU 체결 & 공지',
-                    desc: '업무협약(MOU)을 맺고 임직원에게 상조 제휴회사임을 공지하여 장례 발생 시 접수를 진행합니다.',
-                  },
-                  {
-                    step: 2,
-                    title: '장례 복지 제공',
-                    desc: '귀사에서는 어떠한 비용도 발생하지 않으며, 임직원과 가족들까지 장례 복지 혜택을 받을 수 있습니다.',
-                  },
-                  {
-                    step: 3,
-                    title: '장례 후 정산',
-                    desc: '장례 종료 후, 협약된 금액으로 장례를 치루신 임직원 가족분들께서 직접 정산하시면 완료됩니다.',
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.step}
-                    className="flex flex-col items-center text-center"
-                  >
+                className="flex items-stretch"
+                style={{
+                  gap: 10,
+                  transition: corpCarouselTransition
+                    ? 'transform 0.35s ease-in-out'
+                    : 'none',
+                  transform: `translateX(calc(-${corpCarouselIdx} * (72vw + 10px) + (100vw - 72vw) / 2))`,
+                }}
+                {...swipeHandlers(
+                  handleCorpCarouselPrev,
+                  handleCorpCarouselNext,
+                )}
+              >
+                {extendedCorpProducts.map((product, i) => {
+                  const isActive = i === corpCarouselIdx;
+                  const originalIdx =
+                    (((i - 1) % corpFuneralProducts.length) +
+                      corpFuneralProducts.length) %
+                    corpFuneralProducts.length;
+                  return (
                     <div
-                      className="relative z-10 w-14 h-14 rounded-full flex items-center justify-center shadow-md"
-                      style={{ backgroundColor: BRAND_COLOR }}
+                      key={`corp-carousel-${i}`}
+                      className="shrink-0"
+                      style={{
+                        width: '72vw',
+                        opacity: isActive ? 1 : 0.35,
+                        transform: isActive ? 'scale(1)' : 'scale(0.93)',
+                        transition: corpCarouselTransition
+                          ? 'opacity 0.35s ease, transform 0.35s ease'
+                          : 'none',
+                      }}
                     >
-                      <span className="text-white font-extrabold text-lg">
-                        {item.step}
-                      </span>
+                      <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 h-full flex flex-col">
+                        <div className="relative h-44 overflow-hidden">
+                          <img
+                            src={corpFuneralProducts[originalIdx].image}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <span className="absolute top-0 right-4 bg-gray-800 text-white text-sm font-bold px-4 py-2 rounded-b-lg">
+                            {product.name}
+                          </span>
+                        </div>
+                        <div className="p-4 flex flex-col flex-1">
+                          <p className="text-xs text-gray-500 mb-3 leading-relaxed whitespace-pre-line">
+                            {product.desc}
+                          </p>
+                          <div className="flex items-center gap-2 mb-3 mt-auto">
+                            <span className="text-xs text-gray-400 line-through">
+                              {product.originalPrice}
+                            </span>
+                            <span
+                              className="text-base font-extrabold"
+                              style={{ color: BRAND_COLOR }}
+                            >
+                              → {product.discountPrice}
+                            </span>
+                          </div>
+                          {product.id === 'corp-1' ? (
+                            <button
+                              onClick={() => {
+                                setCorpConsultForm((p) => ({
+                                  ...p,
+                                  product: 'corp-1',
+                                }));
+                                setShowCorpConsultModal(true);
+                              }}
+                              className="w-full px-1 py-2.5 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer hover:bg-gray-200 bg-gray-100 text-gray-700 whitespace-nowrap"
+                            >
+                              상담신청
+                            </button>
+                          ) : (
+                            <div className="flex rounded-lg overflow-hidden border border-gray-200">
+                              <button
+                                onClick={() => {
+                                  setCorpConsultForm((p) => ({
+                                    ...p,
+                                    product: product.id,
+                                  }));
+                                  setShowCorpConsultModal(true);
+                                }}
+                                className="flex-1 px-1 py-2.5 text-[11px] font-semibold transition-colors cursor-pointer hover:bg-gray-100 bg-white text-gray-700 whitespace-nowrap"
+                              >
+                                상담신청
+                              </button>
+                              <span className="w-px bg-gray-200" />
+                              <a
+                                href="/membership/corporate"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 px-1 py-2.5 text-[11px] font-bold transition-opacity cursor-pointer text-center inline-flex items-center justify-center whitespace-nowrap hover:opacity-90"
+                                style={{
+                                  backgroundColor: BRAND_COLOR_LIGHT,
+                                  color: BRAND_COLOR,
+                                }}
+                              >
+                                80만원 혜택받기
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="mt-5 text-lg font-bold text-gray-900">
-                      {item.title}
-                    </h3>
-                    <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[280px]">
-                      {item.desc}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
+
+              {/* 좌우 화살표 */}
+              <button
+                onClick={handleCorpCarouselPrev}
+                className="absolute -left-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center cursor-pointer"
+                style={{
+                  width: 56,
+                  height: 56,
+                  background: 'transparent',
+                  border: 'none',
+                  minHeight: 'auto',
+                  touchAction: 'manipulation',
+                }}
+              >
+                <span
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  }}
+                >
+                  <ChevronLeft className="w-5 h-5 text-gray-700" />
+                </span>
+              </button>
+              <button
+                onClick={handleCorpCarouselNext}
+                className="absolute -right-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center cursor-pointer"
+                style={{
+                  width: 56,
+                  height: 56,
+                  background: 'transparent',
+                  border: 'none',
+                  minHeight: 'auto',
+                  touchAction: 'manipulation',
+                }}
+              >
+                <span
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  }}
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-700" />
+                </span>
+              </button>
+            </div>
+
+            {/* 인디케이터 dot */}
+            <div className="flex items-center justify-center gap-2.5 mt-5">
+              {corpFuneralProducts.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleCorpDotClick(idx)}
+                  className="cursor-pointer"
+                  style={{
+                    width: realCorpProductIdx === idx ? 24 : 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor:
+                      realCorpProductIdx === idx ? BRAND_COLOR : '#d1d5db',
+                    transition: 'all 0.3s ease',
+                    border: 'none',
+                    padding: 0,
+                    minHeight: 'auto',
+                  }}
+                />
+              ))}
             </div>
           </div>
 
-          {/* 모바일: 세로 타임라인 */}
-          <div className="md:hidden">
-            <div className="relative pl-8">
-              {/* 세로 연결선 */}
+          {/* 데스크탑: 그리드 */}
+          <div className="hidden sm:grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            {corpFuneralProducts.map((product) => (
               <div
-                className="absolute left-[15px] top-0 bottom-0 w-0.5"
-                style={{ backgroundColor: BRAND_COLOR }}
-              />
-
-              <div className="space-y-10">
-                {[
-                  {
-                    step: 1,
-                    title: 'MOU 체결 & 공지',
-                    desc: '업무협약(MOU)을 맺고 임직원에게 상조 제휴회사임을 공지하여 장례 발생 시 접수를 진행합니다.',
-                  },
-                  {
-                    step: 2,
-                    title: '장례 복지 제공',
-                    desc: '귀사에서는 어떠한 비용도 발생하지 않으며, 임직원과 가족들까지 장례 복지 혜택을 받을 수 있습니다.',
-                  },
-                  {
-                    step: 3,
-                    title: '장례 후 정산',
-                    desc: '장례 종료 후, 협약된 금액으로 장례를 치루신 임직원 가족분들께서 직접 정산하시면 완료됩니다.',
-                  },
-                ].map((item) => (
-                  <div key={item.step} className="relative">
-                    <div
-                      className="absolute -left-8 top-0 w-[31px] h-[31px] rounded-full flex items-center justify-center border-3 border-white shadow-md"
-                      style={{ backgroundColor: BRAND_COLOR }}
+                key={product.id}
+                className="bg-white rounded-2xl overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow flex flex-col"
+              >
+                <div className="relative h-44 overflow-hidden">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <span className="absolute top-0 right-4 bg-gray-800 text-white text-sm font-bold px-4 py-2 rounded-b-lg">
+                    {product.name}
+                  </span>
+                </div>
+                <div className="p-5 flex flex-col flex-1">
+                  <p className="text-xs text-gray-500 mb-4 leading-relaxed whitespace-pre-line">
+                    {product.desc}
+                  </p>
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-xs text-gray-400 line-through">
+                      {product.originalPrice}
+                    </span>
+                    <span
+                      className="text-base font-extrabold"
+                      style={{ color: BRAND_COLOR }}
                     >
-                      <span className="text-white font-bold text-sm">
-                        {item.step}
-                      </span>
-                    </div>
-                    <div className="ml-2">
-                      <h3 className="text-base font-bold text-gray-900">
-                        {item.title}
-                      </h3>
-                      <p className="mt-1.5 text-sm text-gray-500 leading-relaxed">
-                        {item.desc}
-                      </p>
-                    </div>
+                      → {product.discountPrice}
+                    </span>
                   </div>
-                ))}
+                  <div className="mt-auto">
+                    {product.id === 'corp-1' ? (
+                      <button
+                        onClick={() => {
+                          setCorpConsultForm((p) => ({
+                            ...p,
+                            product: 'corp-1',
+                          }));
+                          setShowCorpConsultModal(true);
+                        }}
+                        className="w-full py-2.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer hover:bg-gray-200 bg-gray-100 text-gray-700"
+                      >
+                        상담신청
+                      </button>
+                    ) : (
+                      <div className="flex rounded-lg overflow-hidden border border-gray-200">
+                        <button
+                          onClick={() => {
+                            setCorpConsultForm((p) => ({
+                              ...p,
+                              product: product.id,
+                            }));
+                            setShowCorpConsultModal(true);
+                          }}
+                          className="flex-1 py-2.5 text-xs font-semibold transition-colors cursor-pointer hover:bg-gray-100 bg-white text-gray-700"
+                        >
+                          상담신청
+                        </button>
+                        <span className="w-px bg-gray-200" />
+                        <a
+                          href="/membership/corporate"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 py-2.5 text-xs font-bold transition-opacity cursor-pointer text-center inline-flex items-center justify-center hover:opacity-90"
+                          style={{
+                            backgroundColor: BRAND_COLOR_LIGHT,
+                            color: BRAND_COLOR,
+                          }}
+                        >
+                          80만원 혜택받기
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── 11. 기업 도입 후기 ── */}
-      {reviews.length > 0 && (
-        <section
-          id="sec-corp-reviews"
-          className="py-16 sm:py-24 bg-white overflow-hidden"
-        >
-          <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="text-center mb-12">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-3">
-                기업 도입 후기
-              </h2>
-              <p className="text-gray-500 max-w-lg mx-auto">
-                예담라이프 기업상조를 도입한 기업들의 생생한 후기입니다
-              </p>
-            </div>
-            <ReviewCarousel reviews={reviews} />
-          </div>
-        </section>
-      )}
-
-      {/* ── 12. 주요 고객사 (로고 캐러셀) ── */}
+      {/* ── 13. 장례상품 안내 ── */}
       <section
-        className="py-16 sm:py-20 overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%)',
-        }}
+        id="sec-corp-inquiry"
+        className="py-16 sm:py-24 bg-white overflow-hidden"
       >
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+              예담라이프 장례상품 안내
+            </h2>
+            <p className="text-sm sm:text-base text-gray-500 mt-3">
+              가족의 마음을 담아 정성스럽게 예담라이프가 준비해드립니다
+            </p>
+          </div>
+
+          {/* Sticky 탭 */}
+          <div className="sticky top-0 z-20 pt-2 pb-4">
+            <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
+              <button
+                onClick={() => setCorpTableFilter('all')}
+                className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${corpTableFilter === 'all' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              >
+                전체비교
+              </button>
+              {corpFuneralProducts.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() =>
+                    setCorpTableFilter(p.id as 'corp-1' | 'corp-2')
+                  }
+                  className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${corpTableFilter === p.id ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                  {p.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ===== 카드 UI (신규 — 기본 표시) ===== */}
+          {viewMode === 'card' && (
+            <div className="mt-8">
+              {/* 전체비교 탭 — 카드 그리드 */}
+              {corpTableFilter === 'all' && (
+                <div>
+                  {corpComparisonData.map((section) => (
+                    <div
+                      key={section.category}
+                      className="mb-10 max-w-3xl mx-auto"
+                    >
+                      <div
+                        className="w-8 h-1 rounded-full mb-3"
+                        style={{ backgroundColor: BRAND_COLOR }}
+                      />
+                      <h3 className="text-lg sm:text-xl font-extrabold text-gray-900 mb-5">
+                        {section.category.replace(/\n/g, ' ')}
+                      </h3>
+                      <div className="grid gap-x-4 sm:gap-x-6 gap-y-6 justify-items-center grid-cols-3 sm:grid-cols-4">
+                        {section.items.map((item) => {
+                          const images = PRODUCT_LABEL_IMAGES[item.label];
+                          return (
+                            <div
+                              key={item.label}
+                              className="flex flex-col items-center text-center w-full"
+                            >
+                              {images ? (
+                                <div
+                                  className="w-full aspect-square rounded-lg overflow-hidden bg-gray-50 cursor-pointer"
+                                  onClick={() => setLightboxSrc(images[0].src)}
+                                >
+                                  <img
+                                    src={images[0].src}
+                                    alt={images[0].alt}
+                                    className="w-full h-full object-cover hover:scale-105 transition-transform"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-full aspect-square rounded-lg bg-gray-100 flex items-center justify-center">
+                                  <span className="text-2xl text-gray-300">
+                                    {section.category.includes('인력')
+                                      ? '👤'
+                                      : section.category.includes('차량')
+                                        ? '🚐'
+                                        : section.category.includes('상복')
+                                          ? '👔'
+                                          : '📦'}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="mt-2 w-full min-w-0">
+                                <div className="relative flex items-center justify-center gap-1 mb-1.5">
+                                  <h4 className="text-sm font-medium text-gray-500">
+                                    {item.label}
+                                  </h4>
+                                  {'sub' in item && item.sub && (
+                                    <button
+                                      type="button"
+                                      className="shrink-0 cursor-pointer"
+                                      onClick={() =>
+                                        setTooltipLabel(
+                                          tooltipLabel === item.label
+                                            ? null
+                                            : item.label,
+                                        )
+                                      }
+                                    >
+                                      <Info className="w-3.5 h-3.5 text-gray-500 hover:text-gray-700 transition-colors" />
+                                    </button>
+                                  )}
+                                  {tooltipLabel === item.label &&
+                                    'sub' in item &&
+                                    item.sub && (
+                                      <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 z-10 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
+                                        {item.sub}
+                                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45" />
+                                      </div>
+                                    )}
+                                </div>
+                                {item.values.every((v, i) => i === 0 || !v) &&
+                                item.values[0] ? (
+                                  <p className="text-xs font-bold text-gray-900 mt-1">
+                                    {item.values[0]}
+                                  </p>
+                                ) : (
+                                  <ul className="border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-100">
+                                    {corpFuneralProducts.map((p, idx) => (
+                                      <li
+                                        key={p.id}
+                                        className="flex items-center justify-between gap-2 px-2 py-1.5 text-xs"
+                                      >
+                                        <span className="text-gray-500 whitespace-nowrap shrink-0">
+                                          {p.name}
+                                        </span>
+                                        <span
+                                          className={`font-semibold text-right ${item.values[idx] && item.values[idx] !== '-' ? 'text-gray-700' : 'text-gray-300'}`}
+                                        >
+                                          {item.values[idx] || '-'}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 상품별 탭 — 카드 그리드 */}
+              {corpTableFilter !== 'all' &&
+                (() => {
+                  const product = corpFuneralProducts.find(
+                    (p) => p.id === corpTableFilter,
+                  );
+                  if (!product) return null;
+                  const valIdx = corpTableFilter === 'corp-1' ? 0 : 1;
+                  return (
+                    <div className="max-w-3xl mx-auto">
+                      {/* 추천 대상 */}
+                      <div className="mb-10">
+                        <div
+                          className="w-8 h-1 rounded-full mb-3"
+                          style={{ backgroundColor: BRAND_COLOR }}
+                        />
+                        <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-snug mb-4">
+                          {product.name},
+                          <br />
+                          다음과 같은 분께 추천드립니다.
+                        </h3>
+                        <ul className="space-y-2">
+                          {product.summary.map((rec, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2 text-sm text-gray-600"
+                            >
+                              <span className="text-gray-400 shrink-0 mt-0.5">
+                                ·
+                              </span>
+                              <span>{rec}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* 카테고리별 이미지 카드 그리드 */}
+                      {corpComparisonData.map((section) => {
+                        const filtered = section.items.filter(
+                          (item) =>
+                            item.values[valIdx] &&
+                            item.values[valIdx] !== '-' &&
+                            item.values[valIdx] !== 'x',
+                        );
+                        if (filtered.length === 0) return null;
+                        return (
+                          <div key={section.category} className="mb-10">
+                            <div
+                              className="w-8 h-1 rounded-full mb-3"
+                              style={{ backgroundColor: BRAND_COLOR }}
+                            />
+                            <h3 className="text-lg sm:text-xl font-extrabold text-gray-900 mb-5">
+                              {section.category.replace(/\n/g, ' ')}
+                            </h3>
+                            <div className="grid gap-x-4 sm:gap-x-6 gap-y-6 justify-items-center grid-cols-3 sm:grid-cols-4">
+                              {filtered.map((item) => {
+                                const images = PRODUCT_LABEL_IMAGES[item.label];
+                                return (
+                                  <div
+                                    key={item.label}
+                                    className="flex flex-col items-center text-center w-full"
+                                  >
+                                    {images ? (
+                                      <div
+                                        className="w-full aspect-square rounded-lg overflow-hidden bg-gray-50 cursor-pointer"
+                                        onClick={() =>
+                                          setLightboxSrc(images[0].src)
+                                        }
+                                      >
+                                        <img
+                                          src={images[0].src}
+                                          alt={images[0].alt}
+                                          className="w-full h-full object-cover hover:scale-105 transition-transform"
+                                        />
+                                      </div>
+                                    ) : (
+                                      <div className="w-full aspect-square rounded-lg bg-gray-100 flex items-center justify-center">
+                                        <span className="text-2xl text-gray-300">
+                                          📦
+                                        </span>
+                                      </div>
+                                    )}
+                                    <div className="mt-2">
+                                      <div className="relative flex items-center justify-center gap-1">
+                                        <h4 className="text-sm font-medium text-gray-500">
+                                          {item.label}
+                                        </h4>
+                                        {'sub' in item && item.sub && (
+                                          <button
+                                            type="button"
+                                            className="shrink-0 cursor-pointer"
+                                            onClick={() =>
+                                              setTooltipLabel(
+                                                tooltipLabel === item.label
+                                                  ? null
+                                                  : item.label,
+                                              )
+                                            }
+                                          >
+                                            <Info className="w-3.5 h-3.5 text-gray-500 hover:text-gray-700 transition-colors" />
+                                          </button>
+                                        )}
+                                        {tooltipLabel === item.label &&
+                                          'sub' in item &&
+                                          item.sub && (
+                                            <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 z-10 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
+                                              {item.sub}
+                                              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45" />
+                                            </div>
+                                          )}
+                                      </div>
+                                      <p className="text-sm font-bold mt-0.5 whitespace-pre-line text-gray-900">
+                                        {item.values[valIdx]}
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {/* 안내사항 */}
+                      <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
+                        <button
+                          type="button"
+                          className="w-full flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                          onClick={() => setCorpNoticeOpen((prev) => !prev)}
+                        >
+                          <Info className="w-4 h-4 text-red-600 shrink-0" />
+                          <span className="text-sm font-medium text-gray-600">
+                            주요정보 안내사항
+                          </span>
+                          <ChevronDown
+                            className="w-4 h-4 text-gray-400 ml-auto transition-transform"
+                            style={{
+                              transform: corpNoticeOpen
+                                ? 'rotate(180deg)'
+                                : 'rotate(0deg)',
+                            }}
+                          />
+                        </button>
+                        {corpNoticeOpen && (
+                          <div className="px-4 py-3">
+                            {corpNoticeItems.map((section) => (
+                              <div
+                                key={section.category}
+                                className="mb-3 last:mb-0"
+                              >
+                                <p className="text-sm font-bold text-gray-700 mb-1">
+                                  {section.category}
+                                </p>
+                                {section.items.map((item, idx) => (
+                                  <p
+                                    key={idx}
+                                    className="text-sm text-gray-600 leading-relaxed pl-2"
+                                  >
+                                    · {item}
+                                  </p>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+            </div>
+          )}
+
+          {/* ===== 테이블 UI (기존 — Cmd+B로 전환) ===== */}
+          {viewMode === 'table' && (
+            <>
+              {/* 전체 비교표 탭 */}
+              {corpTableFilter === 'all' && (
+                <div>
+                  <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                    <table className="min-w-[700px] w-full border-collapse text-sm">
+                      <thead>
+                        <tr>
+                          <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-24">
+                            항목
+                          </th>
+                          <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-56">
+                            내용
+                          </th>
+                          {corpFuneralProducts.map((p) => (
+                            <th
+                              key={p.id}
+                              className="p-3 text-center border border-gray-200 font-bold text-gray-900"
+                              style={{ backgroundColor: '#f5f0eb' }}
+                            >
+                              <div>{p.name}</div>
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {corpComparisonData.map((section) =>
+                          section.items.map((item, itemIdx) => (
+                            <tr
+                              key={`${section.category}-${item.label}`}
+                              className="hover:bg-gray-50"
+                            >
+                              {itemIdx === 0 && (
+                                <td
+                                  className="p-3 border border-gray-200 font-bold text-gray-700 whitespace-pre-line align-middle"
+                                  rowSpan={section.items.length}
+                                >
+                                  {section.category}
+                                </td>
+                              )}
+                              <td className="p-3 border border-gray-200 text-gray-700 text-center">
+                                <div className="font-medium">{item.label}</div>
+                                {'sub' in item && item.sub && (
+                                  <div className="text-xs text-gray-400">
+                                    {item.sub}
+                                  </div>
+                                )}
+                                {PRODUCT_LABEL_IMAGES[item.label] && (
+                                  <div className="flex justify-center gap-2 mt-2">
+                                    {PRODUCT_LABEL_IMAGES[item.label].map(
+                                      (img) => (
+                                        <div
+                                          key={img.alt}
+                                          className="w-24 h-24 rounded overflow-hidden cursor-pointer"
+                                          onClick={() =>
+                                            setLightboxSrc(img.src)
+                                          }
+                                        >
+                                          <img
+                                            src={img.src}
+                                            alt={img.alt}
+                                            className="w-full h-full object-cover scale-110"
+                                          />
+                                        </div>
+                                      ),
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+                              {item.values[0] && item.values[1] === '' ? (
+                                <td
+                                  className="p-3 border border-gray-200 text-center text-gray-600 align-middle"
+                                  colSpan={2}
+                                >
+                                  {item.values[0]}
+                                </td>
+                              ) : (
+                                item.values.map((val, vi) => (
+                                  <td
+                                    key={vi}
+                                    className="p-3 border border-gray-200 text-center text-gray-600 whitespace-pre-line align-middle"
+                                  >
+                                    {val || '-'}
+                                  </td>
+                                ))
+                              )}
+                            </tr>
+                          )),
+                        )}
+                        {/* 가격 행 */}
+                        <tr className="bg-gray-50">
+                          <td
+                            className="p-3 border border-gray-200 font-bold text-gray-700"
+                            colSpan={2}
+                          >
+                            사전가입 시, 할인가
+                          </td>
+                          {corpFuneralProducts.map((p) => (
+                            <td
+                              key={p.id}
+                              className="p-3 border border-gray-200 text-center"
+                            >
+                              <div className="text-xs text-gray-400 line-through">
+                                {p.originalPrice}
+                              </div>
+                              <div
+                                className="text-base font-extrabold"
+                                style={{ color: BRAND_COLOR }}
+                              >
+                                → {p.discountPrice}
+                              </div>
+                            </td>
+                          ))}
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* 상품별 탭 */}
+              {corpTableFilter !== 'all' &&
+                (() => {
+                  const product = corpFuneralProducts.find(
+                    (p) => p.id === corpTableFilter,
+                  );
+                  if (!product) return null;
+                  const valIdx = corpTableFilter === 'corp-1' ? 0 : 1;
+                  return (
+                    <div>
+                      {/* 추천 대상 */}
+                      <div className="mb-10">
+                        <div className="flex items-start gap-6 flex-col sm:flex-row">
+                          <div className="shrink-0">
+                            <div
+                              className="w-8 h-1 rounded-full mb-3"
+                              style={{ backgroundColor: BRAND_COLOR }}
+                            />
+                            <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-snug">
+                              {product.name},
+                              <br />
+                              다음과 같은 분께 추천드립니다.
+                            </h3>
+                          </div>
+                          <ul className="space-y-2 pt-1">
+                            {product.summary.map((rec, i) => (
+                              <li
+                                key={i}
+                                className="flex items-start gap-2 text-sm text-gray-600"
+                              >
+                                <span className="text-gray-400 shrink-0 mt-0.5">
+                                  ·
+                                </span>
+                                <span>{rec}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      {/* 상품 정보 테이블 */}
+                      <div className="mb-10">
+                        <div
+                          className="w-8 h-1 rounded-full mb-3"
+                          style={{ backgroundColor: BRAND_COLOR }}
+                        />
+                        <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-6">
+                          {product.name} 상품정보
+                        </h3>
+
+                        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                          <table className="min-w-[500px] w-full border-collapse text-sm">
+                            <thead>
+                              <tr>
+                                <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700 w-24">
+                                  구분
+                                </th>
+                                <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700">
+                                  필수항목
+                                </th>
+                                <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700">
+                                  내용
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {corpComparisonData.map((section) => {
+                                const filtered = section.items.filter(
+                                  (item) =>
+                                    item.values[valIdx] &&
+                                    item.values[valIdx] !== '-' &&
+                                    item.values[valIdx] !== 'x',
+                                );
+                                if (filtered.length === 0) return null;
+                                return filtered.map((item, itemIdx) => (
+                                  <tr
+                                    key={`${section.category}-${item.label}-${itemIdx}`}
+                                    className="border-b border-gray-200"
+                                  >
+                                    {itemIdx === 0 && (
+                                      <td
+                                        className="p-3 text-center font-bold text-gray-700 whitespace-pre-line align-middle border-r border-gray-200 w-24"
+                                        rowSpan={filtered.length}
+                                      >
+                                        {section.category}
+                                      </td>
+                                    )}
+                                    <td className="p-3 text-center text-gray-700 align-middle border-r border-gray-200">
+                                      <div className="font-medium">
+                                        {item.label}
+                                      </div>
+                                      {'sub' in item && item.sub && (
+                                        <div className="text-xs text-gray-400 whitespace-pre-line">
+                                          {item.sub}
+                                        </div>
+                                      )}
+                                      {PRODUCT_LABEL_IMAGES[item.label] && (
+                                        <div className="flex justify-center gap-2 mt-2">
+                                          {PRODUCT_LABEL_IMAGES[item.label].map(
+                                            (img) => (
+                                              <div
+                                                key={img.alt}
+                                                className="w-24 h-24 rounded overflow-hidden cursor-pointer"
+                                                onClick={() =>
+                                                  setLightboxSrc(img.src)
+                                                }
+                                              >
+                                                <img
+                                                  src={img.src}
+                                                  alt={img.alt}
+                                                  className="w-full h-full object-cover scale-110"
+                                                />
+                                              </div>
+                                            ),
+                                          )}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="p-3 text-center text-gray-900 font-medium align-middle whitespace-pre-line">
+                                      {item.values[valIdx] || '-'}
+                                    </td>
+                                  </tr>
+                                ));
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* 주요정보 안내사항 - 접기/펼치기 */}
+                        <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
+                          <button
+                            type="button"
+                            className="w-full flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                            onClick={() => setCorpNoticeOpen((prev) => !prev)}
+                          >
+                            <Info className="w-4 h-4 text-red-600 shrink-0" />
+                            <span className="text-sm font-medium text-gray-600">
+                              주요정보 안내사항
+                            </span>
+                            <ChevronDown
+                              className="w-4 h-4 text-gray-400 ml-auto transition-transform"
+                              style={{
+                                transform: corpNoticeOpen
+                                  ? 'rotate(180deg)'
+                                  : 'rotate(0deg)',
+                              }}
+                            />
+                          </button>
+                          {corpNoticeOpen && (
+                            <div className="overflow-x-auto">
+                              <table className="w-full border-collapse text-sm">
+                                <tbody>
+                                  {corpNoticeItems.map((section) =>
+                                    section.items.map((item, idx) => (
+                                      <tr
+                                        key={`${section.category}-${idx}`}
+                                        className="border-t border-gray-200"
+                                      >
+                                        {idx === 0 && (
+                                          <td
+                                            className="p-3 sm:p-4 text-center font-bold text-gray-700 align-middle border-r border-gray-200 w-20 sm:w-28 bg-gray-50 whitespace-nowrap"
+                                            rowSpan={section.items.length}
+                                          >
+                                            {section.category}
+                                          </td>
+                                        )}
+                                        <td className="p-3 sm:p-4 text-gray-600 align-middle leading-relaxed">
+                                          · {item}
+                                        </td>
+                                      </tr>
+                                    )),
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+            </>
+          )}
+
+          {/* 상담 신청 CTA */}
+          <div className="mt-8 text-center">
+            <button
+              onClick={() => setShowCorpConsultModal(true)}
+              className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-10 py-4 text-base sm:text-lg font-bold text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
+              style={{ backgroundColor: BRAND_COLOR }}
+            >
+              <ScrollText className="w-5 h-5" />
+              기업상조 상담 신청하기
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 10. 장례 발생 시 진행 절차 ── */}
+      <section className="py-16 sm:py-24 overflow-hidden bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12 sm:mb-16">
+            <p className="text-sm sm:text-base font-semibold text-gray-400 mb-3 tracking-[0.25em]">
+              FUNERAL PROCESS
+            </p>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
+              장례 발생 시 진행 절차
+            </h2>
+            <p className="text-sm sm:text-base text-gray-500">
+              365일 24시간, 전화 한 통이면 전문 장례지도사가 모든 것을
+              책임집니다
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
+            {[
+              {
+                day: '1일차',
+                items: [
+                  { emoji: '📞', label: '장례 접수 (24시간)' },
+                  { emoji: '🏥', label: '장례식장 이송·호실 예약' },
+                  { emoji: '👔', label: '장례지도사 파견' },
+                  { emoji: '🕯️', label: '제단 설치·부고 알림' },
+                ],
+              },
+              {
+                day: '2일차',
+                items: [
+                  { emoji: '🙏', label: '염습 진행' },
+                  { emoji: '💐', label: '입관식' },
+                  { emoji: '👕', label: '성복례' },
+                  { emoji: '🤝', label: '문상객 접객' },
+                ],
+              },
+              {
+                day: '3일차',
+                items: [
+                  { emoji: '🚐', label: '발인' },
+                  { emoji: '⛰️', label: '화장/매장·장지이동' },
+                  { emoji: '🕊️', label: '안치·사후 관리' },
+                  { emoji: '💰', label: '비용 정산' },
+                ],
+              },
+            ].map((col) => (
+              <div key={col.day} className="flex flex-col">
+                <div className="mb-5">
+                  <span className="inline-block px-5 py-1.5 rounded-full text-sm font-bold text-white bg-gray-800">
+                    {col.day}
+                  </span>
+                </div>
+                <ul className="flex flex-col gap-3">
+                  {col.items.map((it, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-center gap-3 px-4 py-3.5 bg-white rounded-xl border border-gray-200"
+                    >
+                      <span className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-base bg-gray-100">
+                        {it.emoji}
+                      </span>
+                      <span className="text-sm font-semibold text-gray-800">
+                        {it.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 365일 24시간 긴급출동서비스 ── */}
+      <section
+        id="sec-emergency"
+        className="py-12 sm:py-16 overflow-hidden bg-white"
+      >
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+            {/* 좌측: 텍스트 */}
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-3">
+                365일 24시간
+                <br />
+                긴급출동서비스
+              </h2>
+              <p className="text-gray-600 text-sm sm:text-base mb-6 leading-relaxed">
+                예기치 못한 상황에도 흔들림 없이
+                <br />
+                가장 가까운 전담팀이 즉시 찾아갑니다
+              </p>
+              <div className="flex items-center gap-3 mb-5">
+                <Headphones className="w-7 h-7" style={{ color: 'black' }} />
+                <span
+                  className="text-2xl sm:text-3xl font-extrabold"
+                  style={{ color: 'black' }}
+                >
+                  1660.0959
+                </span>
+              </div>
+              <a
+                href="https://accounts.kakao.com/login/?continue=http%3A%2F%2Fpf.kakao.com%2F_VLVJxj%2Fchat#login"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 px-5 py-2 rounded-lg font-bold text-xs sm:text-sm cursor-pointer hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: '#FEE500', color: '#3C1E1E' }}
+              >
+                <img
+                  src="https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/kakao_icon.png"
+                  alt="카카오톡"
+                  className="w-4 h-4 object-contain"
+                />
+                카카오톡으로 상담하기
+              </a>
+            </div>
+            {/* 우측: 전국 본부 현황 지도 */}
+            <div className="relative flex items-center justify-center">
+              <img
+                src="https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/map.png"
+                alt="전국 본부 현황 지도"
+                className="w-full max-w-[200px] sm:max-w-[240px] lg:max-w-[280px]"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+      {/* ── 12. 주요 고객사 (로고 캐러셀) ── */}
+      <section className="py-16 sm:py-20 overflow-hidden bg-gray-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
@@ -1578,453 +2252,88 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
           </div>
         </div>
       </section>
+      {/* ── 11. 기업 도입 후기 ── */}
+      {reviews.length > 0 && (
+        <section
+          id="sec-corp-reviews"
+          className="py-16 sm:py-24 bg-white overflow-hidden"
+        >
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-3">
+                기업 도입 후기
+              </h2>
+              <p className="text-gray-500 max-w-lg mx-auto">
+                예담라이프 기업상조를 도입한 기업들의 생생한 후기입니다
+              </p>
+            </div>
+            <ReviewCarousel reviews={reviews} />
+          </div>
+        </section>
+      )}
 
-      {/* ── 13. 장례상품 비교 테이블 + 신청폼 ── */}
-      <section
-        id="sec-corp-inquiry"
-        className="py-16 sm:py-24 bg-white overflow-hidden"
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-              예담라이프 장례상품 안내
-            </h2>
-            <p className="text-sm sm:text-base text-gray-500 mt-3">
-              가족의 마음을 담아 정성스럽게 예담라이프가 준비해드립니다
+      {/* ── FAQ ── */}
+      <section className="py-16 sm:py-24 bg-gray-50">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12">
+            <p
+              className="text-xs sm:text-sm font-bold tracking-[0.2em] mb-3"
+              style={{ color: BRAND_COLOR }}
+            >
+              FAQ
             </p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+              자주 묻는 질문
+            </h2>
           </div>
 
-          {/* 상품 필터 탭 */}
-          <div
-            className="flex items-center gap-2 overflow-x-auto pb-4 mb-6"
-            style={{ scrollbarWidth: 'none' } as React.CSSProperties}
-          >
-            <button
-              onClick={() => setCorpTableFilter('all')}
-              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${corpTableFilter === 'all' ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'}`}
-            >
-              전체 상품 비교
-            </button>
-            <button
-              onClick={() => setCorpTableFilter('corp-1')}
-              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${corpTableFilter === 'corp-1' ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'}`}
-            >
-              예담 기업 1호
-            </button>
-            <button
-              onClick={() => setCorpTableFilter('corp-2')}
-              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${corpTableFilter === 'corp-2' ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'}`}
-            >
-              예담 기업 2호
-            </button>
-          </div>
-
-          {/* 전체 비교표 */}
-          {corpTableFilter === 'all' && (
-            <div>
-              <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                <table className="min-w-[700px] w-full border-collapse text-sm">
-                  <thead>
-                    <tr>
-                      <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-[80px] sm:w-[100px]">
-                        항목
-                      </th>
-                      <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-[140px] sm:w-[180px]">
-                        내용
-                      </th>
-                      <th
-                        className="p-3 text-center border border-gray-200 font-bold text-gray-900"
-                        style={{ backgroundColor: '#f5f0eb' }}
-                      >
-                        <div>예담 기업 1호</div>
-                      </th>
-                      <th
-                        className="p-3 text-center border border-gray-200 font-bold text-gray-900"
-                        style={{ backgroundColor: '#f5f0eb' }}
-                      >
-                        <div>예담 기업 2호</div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {corpComparisonData.map((section) =>
-                      section.items.map((item, itemIdx) => (
-                        <tr
-                          key={`${section.category}-${item.label}`}
-                          className="hover:bg-gray-50"
-                        >
-                          {itemIdx === 0 && (
-                            <td
-                              className="p-3 border border-gray-200 font-bold text-gray-700 whitespace-pre-line align-middle"
-                              rowSpan={section.items.length}
-                            >
-                              {section.category}
-                            </td>
-                          )}
-                          <td className="p-3 border border-gray-200 text-gray-700 text-center">
-                            <div className="font-medium">{item.label}</div>
-                            {item.sub && (
-                              <div className="text-xs text-gray-400">
-                                {item.sub}
-                              </div>
-                            )}
-                            {PRODUCT_LABEL_IMAGES[item.label] && (
-                              <div className="flex justify-center gap-2 mt-2">
-                                {PRODUCT_LABEL_IMAGES[item.label].map((img) => (
-                                  <div
-                                    key={img.alt}
-                                    className="w-24 h-24 rounded overflow-hidden cursor-pointer"
-                                    onClick={() => setLightboxSrc(img.src)}
-                                  >
-                                    <img
-                                      src={img.src}
-                                      alt={img.alt}
-                                      className="w-full h-full object-cover scale-110"
-                                    />
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </td>
-                          {item.values[0] && item.values[1] === '' ? (
-                            <td
-                              className="p-3 border border-gray-200 text-center text-gray-600 align-middle"
-                              colSpan={2}
-                            >
-                              {item.values[0]}
-                            </td>
-                          ) : (
-                            item.values.map((val, vi) => (
-                              <td
-                                key={vi}
-                                className="p-3 border border-gray-200 text-center text-gray-600 whitespace-pre-line align-middle"
-                              >
-                                {val || '-'}
-                              </td>
-                            ))
-                          )}
-                        </tr>
-                      )),
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* 개별 상품 탭 */}
-          {corpTableFilter !== 'all' &&
-            (() => {
-              const valIdx = corpTableFilter === 'corp-1' ? 0 : 1;
-              return (
-                <div>
-                  <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                    <table className="min-w-[500px] w-full border-collapse text-sm">
-                      <thead>
-                        <tr>
-                          <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700 w-[80px] sm:w-[100px]">
-                            구분
-                          </th>
-                          <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700 w-[140px] sm:w-[180px]">
-                            항목
-                          </th>
-                          <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700">
-                            내용
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {corpComparisonData.map((section) =>
-                          section.items.map((item, itemIdx) => (
-                            <tr
-                              key={`${section.category}-${item.label}`}
-                              className="border-b border-gray-200"
-                            >
-                              {itemIdx === 0 && (
-                                <td
-                                  className="p-3 text-center font-bold text-gray-700 whitespace-pre-line align-middle border-r border-gray-200"
-                                  rowSpan={section.items.length}
-                                >
-                                  {section.category}
-                                </td>
-                              )}
-                              <td className="p-3 text-center text-gray-700 align-middle border-r border-gray-200">
-                                <div className="font-medium">{item.label}</div>
-                                {item.sub && (
-                                  <div className="text-xs text-gray-400 whitespace-pre-line">
-                                    {item.sub}
-                                  </div>
-                                )}
-                                {PRODUCT_LABEL_IMAGES[item.label] && (
-                                  <div className="flex justify-center gap-2 mt-2">
-                                    {PRODUCT_LABEL_IMAGES[item.label].map(
-                                      (img) => (
-                                        <div
-                                          key={img.alt}
-                                          className="w-24 h-24 rounded overflow-hidden cursor-pointer"
-                                          onClick={() =>
-                                            setLightboxSrc(img.src)
-                                          }
-                                        >
-                                          <img
-                                            src={img.src}
-                                            alt={img.alt}
-                                            className="w-full h-full object-cover scale-110"
-                                          />
-                                        </div>
-                                      ),
-                                    )}
-                                  </div>
-                                )}
-                              </td>
-                              <td className="p-3 text-center text-gray-900 font-medium align-middle whitespace-pre-line">
-                                {item.values[valIdx] || '-'}
-                              </td>
-                            </tr>
-                          )),
-                        )}
-                      </tbody>
-                    </table>
+          <Accordion type="single" collapsible className="w-full">
+            {[
+              {
+                q: '후불제 상조는 정말 추가 비용이 없나요?',
+                a: '네, 예담라이프는 정찰제로 운영됩니다. 유가족의 상황을 고려하여 상조상품을 추천 드리며, 부가 상품 권유 없이 투명하게 장례를 진행합니다. 발인 전 비용을 정산하며, 대부분 부의금으로 정산이 가능합니다.',
+              },
+              {
+                q: '이미 다른 상조에 가입되어 있는데 추가 가입 가능한가요?',
+                a: '가능합니다. 기존 가입된 상조는 그대로 납입하여 만기 시 환급받으시고, 30% 비용 절감된 예담라이프에 별도로 가입하시면 됩니다.',
+              },
+              {
+                q: '기업 상조 MOU 협약 시 회사에 비용 부담이 있나요?',
+                a: '전혀 없습니다. MOU 협약만으로 도입되며, 기업에 별도 비용이 발생하지 않습니다. 실제 장례 발생 시 해당 임직원(유가족)이 후불로 정산합니다.',
+              },
+              {
+                q: '사전 가입 없이도 서비스를 받을 수 있나요?',
+                a: '네, 장례 발생 후 즉시 상담·이용이 가능합니다. 다만 사전 가입 시 앰뷸런스 관내 무료 지원 등 추가 혜택이 있으므로 미리 가입해두시는 것을 권해드립니다.',
+              },
+              {
+                q: '임직원 가족 외 친인척도 혜택을 받을 수 있나요?',
+                a: '네, 친인척도 사전 가입 시 20만원 할인 혜택과 VIP MEMBERSHIP 패키지를 제공해 드립니다.',
+              },
+            ].map((item, idx) => (
+              <AccordionItem
+                key={idx}
+                value={`faq-${idx}`}
+                className="border-b border-gray-200"
+              >
+                <AccordionTrigger className="py-6 hover:no-underline cursor-pointer">
+                  <div className="flex items-start gap-4 flex-1">
+                    <span
+                      className="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-bold"
+                      style={{ backgroundColor: BRAND_COLOR }}
+                    >
+                      Q
+                    </span>
+                    <span className="text-base sm:text-lg font-bold text-gray-900 text-left">
+                      {item.q}
+                    </span>
                   </div>
-                </div>
-              );
-            })()}
-
-          {/* 주요정보 안내사항 - 접기/펼치기 */}
-          <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
-            <button
-              type="button"
-              className="w-full flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-              onClick={() => setCorpNoticeOpen((prev) => !prev)}
-            >
-              <Info className="w-4 h-4 text-red-600 shrink-0" />
-              <span className="text-sm font-medium text-gray-600">
-                주요정보 안내사항
-              </span>
-              <ChevronDown
-                className="w-4 h-4 text-gray-400 ml-auto transition-transform"
-                style={{
-                  transform: corpNoticeOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}
-              />
-            </button>
-            {corpNoticeOpen && (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm">
-                  <tbody>
-                    {corpNoticeItems.map((section) =>
-                      section.items.map((item, idx) => (
-                        <tr
-                          key={`${section.category}-${idx}`}
-                          className="border-t border-gray-200"
-                        >
-                          {idx === 0 && (
-                            <td
-                              className="p-3 sm:p-4 text-center font-bold text-gray-700 align-middle border-r border-gray-200 w-20 sm:w-28 bg-gray-50 whitespace-nowrap"
-                              rowSpan={section.items.length}
-                            >
-                              {section.category}
-                            </td>
-                          )}
-                          <td className="p-3 sm:p-4 text-gray-600 align-middle leading-relaxed">
-                            · {item}
-                          </td>
-                        </tr>
-                      )),
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* 공통 문의 폼 */}
-          <div className="mt-8 p-6 bg-gray-50 rounded-2xl border border-gray-200">
-            <p className="text-sm font-bold text-gray-700 mb-4">상담 신청</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-              <Select
-                value={corpConsultForm.product}
-                onValueChange={(v) =>
-                  setCorpConsultForm((p) => ({ ...p, product: v }))
-                }
-              >
-                <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer">
-                  <SelectValue placeholder="상품을 선택해주세요." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="corp-1">예담 기업 1호</SelectItem>
-                  <SelectItem value="corp-2">예담 기업 2호</SelectItem>
-                </SelectContent>
-              </Select>
-              <input
-                type="text"
-                placeholder="이름"
-                value={corpConsultForm.name}
-                onChange={(e) =>
-                  setCorpConsultForm((p) => ({ ...p, name: e.target.value }))
-                }
-                className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white"
-              />
-              <input
-                type="tel"
-                placeholder="-를 제외한 숫자만 입력해주세요"
-                value={corpConsultForm.phone}
-                onChange={(e) =>
-                  setCorpConsultForm((p) => ({ ...p, phone: e.target.value }))
-                }
-                className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white"
-              />
-              <Select
-                value={corpConsultForm.region}
-                onValueChange={(v) =>
-                  setCorpConsultForm((p) => ({ ...p, region: v }))
-                }
-              >
-                <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer">
-                  <SelectValue placeholder="시/도 선택해주세요." />
-                </SelectTrigger>
-                <SelectContent>
-                  {[
-                    '서울',
-                    '부산',
-                    '대구',
-                    '인천',
-                    '광주',
-                    '대전',
-                    '울산',
-                    '세종',
-                    '경기',
-                    '강원',
-                    '충북',
-                    '충남',
-                    '전북',
-                    '전남',
-                    '경북',
-                    '경남',
-                    '제주',
-                    '미정',
-                  ].map((v) => (
-                    <SelectItem key={v} value={v}>
-                      {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="sm:col-span-2">
-                <Select
-                  value={corpConsultForm.timeSlot}
-                  onValueChange={(v) =>
-                    setCorpConsultForm((p) => ({ ...p, timeSlot: v }))
-                  }
-                >
-                  <SelectTrigger className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer w-full">
-                    <SelectValue placeholder="상담시간을 선택해주세요." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[
-                      '00:00~06:00',
-                      '06:00~08:00',
-                      '08:00~10:00',
-                      '10:00~12:00',
-                      '12:00~14:00',
-                      '14:00~16:00',
-                      '16:00~18:00',
-                      '18:00~20:00',
-                      '20:00~22:00',
-                      '22:00~24:00',
-                    ].map((v) => (
-                      <SelectItem key={v} value={v}>
-                        {v}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={corpConsultForm.privacyAgreed}
-                  onChange={(e) =>
-                    setCorpConsultForm((p) => ({
-                      ...p,
-                      privacyAgreed: e.target.checked,
-                    }))
-                  }
-                  className="w-4 h-4 rounded cursor-pointer"
-                  style={{ accentColor: BRAND_COLOR }}
-                />
-                <span className="text-xs text-gray-500">
-                  개인정보 수집 및 이용 동의
-                </span>
-              </label>
-              <button
-                disabled={corpConsultSubmitting}
-                onClick={async () => {
-                  if (!corpConsultForm.product) {
-                    toast.warning('상품을 선택해주세요.');
-                    return;
-                  }
-                  if (
-                    !corpConsultForm.name.trim() ||
-                    !corpConsultForm.phone.trim()
-                  ) {
-                    toast.warning('이름과 연락처를 입력해주세요.');
-                    return;
-                  }
-                  if (!corpConsultForm.privacyAgreed) {
-                    toast.warning('개인정보 수집 및 이용에 동의해주세요.');
-                    return;
-                  }
-                  setCorpConsultSubmitting(true);
-                  try {
-                    const res = await fetch(
-                      '/api/v1/corporate-funeral/consultation',
-                      {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          product: corpConsultForm.product,
-                          name: corpConsultForm.name,
-                          phone: corpConsultForm.phone,
-                          region: corpConsultForm.region || '미정',
-                          preferred_time: corpConsultForm.timeSlot || '미정',
-                          privacy_agreed: corpConsultForm.privacyAgreed,
-                        }),
-                      },
-                    );
-                    const result = await res.json();
-                    if (result.success) {
-                      toast.success(
-                        '상담 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.',
-                      );
-                      setCorpConsultForm({
-                        product: '',
-                        name: '',
-                        phone: '',
-                        region: '',
-                        timeSlot: '',
-                        privacyAgreed: false,
-                      });
-                    } else {
-                      toast.error(result.message || '오류가 발생했습니다.');
-                    }
-                  } catch {
-                    toast.error(
-                      '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
-                    );
-                  } finally {
-                    setCorpConsultSubmitting(false);
-                  }
-                }}
-                className="px-8 py-3 text-white text-sm font-bold rounded-xl cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50"
-                style={{ backgroundColor: BRAND_COLOR }}
-              >
-                {corpConsultSubmitting ? '신청 중...' : '상담 신청'}
-              </button>
-            </div>
-          </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-6 pl-11 pr-4 text-sm sm:text-base text-gray-600 leading-relaxed">
+                  {item.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       </section>
 
@@ -2083,6 +2392,253 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
         open={showProposalModal}
         onClose={() => setShowProposalModal(false)}
       />
+
+      {/* ══════════════ 기업상조 상담 신청 모달 ══════════════ */}
+      {showCorpConsultModal && (
+        <div
+          className="fixed inset-0 z-100 flex items-center justify-center bg-black/50"
+          onClick={() => setShowCorpConsultModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 flex items-center justify-between bg-gray-100 rounded-t-2xl shrink-0">
+              <span className="font-bold text-gray-800">
+                기업상조 상담 신청
+              </span>
+              <button
+                onClick={() => setShowCorpConsultModal(false)}
+                className="p-1 hover:bg-black/5 rounded-lg cursor-pointer transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-1.5">
+                  상품
+                </label>
+                <Select
+                  value={corpConsultForm.product}
+                  onValueChange={(v) =>
+                    setCorpConsultForm((p) => ({ ...p, product: v }))
+                  }
+                >
+                  <SelectTrigger className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white cursor-pointer">
+                    <SelectValue placeholder="상품을 선택해주세요." />
+                  </SelectTrigger>
+                  <SelectContent className="z-200">
+                    <SelectItem value="corp-1">예담 기업 1호</SelectItem>
+                    <SelectItem value="corp-2">예담 기업 2호</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-1.5">
+                    이름 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="이름을 입력해주세요"
+                    value={corpConsultForm.name}
+                    onChange={(e) =>
+                      setCorpConsultForm((p) => ({
+                        ...p,
+                        name: e.target.value,
+                      }))
+                    }
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-1.5">
+                    연락처 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="-를 제외한 숫자만 입력해주세요"
+                    value={corpConsultForm.phone}
+                    onChange={(e) =>
+                      setCorpConsultForm((p) => ({
+                        ...p,
+                        phone: e.target.value,
+                      }))
+                    }
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-1.5">
+                    지역
+                  </label>
+                  <Select
+                    value={corpConsultForm.region}
+                    onValueChange={(v) =>
+                      setCorpConsultForm((p) => ({ ...p, region: v }))
+                    }
+                  >
+                    <SelectTrigger className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white cursor-pointer">
+                      <SelectValue placeholder="시/도 선택해주세요." />
+                    </SelectTrigger>
+                    <SelectContent className="z-200">
+                      {[
+                        '서울',
+                        '부산',
+                        '대구',
+                        '인천',
+                        '광주',
+                        '대전',
+                        '울산',
+                        '세종',
+                        '경기',
+                        '강원',
+                        '충북',
+                        '충남',
+                        '전북',
+                        '전남',
+                        '경북',
+                        '경남',
+                        '제주',
+                        '미정',
+                      ].map((v) => (
+                        <SelectItem key={v} value={v}>
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-1.5">
+                    상담 희망 시간
+                  </label>
+                  <Select
+                    value={corpConsultForm.timeSlot}
+                    onValueChange={(v) =>
+                      setCorpConsultForm((p) => ({ ...p, timeSlot: v }))
+                    }
+                  >
+                    <SelectTrigger className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white cursor-pointer">
+                      <SelectValue placeholder="상담시간을 선택해주세요." />
+                    </SelectTrigger>
+                    <SelectContent className="z-200">
+                      {[
+                        '00:00~06:00',
+                        '06:00~08:00',
+                        '08:00~10:00',
+                        '10:00~12:00',
+                        '12:00~14:00',
+                        '14:00~16:00',
+                        '16:00~18:00',
+                        '18:00~20:00',
+                        '20:00~22:00',
+                        '22:00~24:00',
+                      ].map((v) => (
+                        <SelectItem key={v} value={v}>
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer pt-1">
+                <input
+                  type="checkbox"
+                  checked={corpConsultForm.privacyAgreed}
+                  onChange={(e) =>
+                    setCorpConsultForm((p) => ({
+                      ...p,
+                      privacyAgreed: e.target.checked,
+                    }))
+                  }
+                  className="w-4 h-4 rounded cursor-pointer"
+                  style={{ accentColor: BRAND_COLOR }}
+                />
+                <span className="text-xs text-gray-500">
+                  개인정보 수집 및 이용 동의
+                </span>
+              </label>
+            </div>
+
+            <div className="px-6 py-4 shrink-0">
+              <button
+                disabled={corpConsultSubmitting}
+                onClick={async () => {
+                  if (!corpConsultForm.product) {
+                    toast.warning('상품을 선택해주세요.');
+                    return;
+                  }
+                  if (
+                    !corpConsultForm.name.trim() ||
+                    !corpConsultForm.phone.trim()
+                  ) {
+                    toast.warning('이름과 연락처를 입력해주세요.');
+                    return;
+                  }
+                  if (!corpConsultForm.privacyAgreed) {
+                    toast.warning('개인정보 수집 및 이용에 동의해주세요.');
+                    return;
+                  }
+                  setCorpConsultSubmitting(true);
+                  try {
+                    const res = await fetch(
+                      '/api/v1/corporate-funeral/consultation',
+                      {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          product: corpConsultForm.product,
+                          name: corpConsultForm.name,
+                          phone: corpConsultForm.phone,
+                          region: corpConsultForm.region || '미정',
+                          preferred_time: corpConsultForm.timeSlot || '미정',
+                          privacy_agreed: corpConsultForm.privacyAgreed,
+                        }),
+                      },
+                    );
+                    const result = await res.json();
+                    if (result.success) {
+                      toast.success(
+                        '상담 신청이 완료되었습니다.\n담당자가 빠르게 연락드리겠습니다.',
+                      );
+                      setCorpConsultForm({
+                        product: '',
+                        name: '',
+                        phone: '',
+                        region: '',
+                        timeSlot: '',
+                        privacyAgreed: false,
+                      });
+                      setShowCorpConsultModal(false);
+                    } else {
+                      toast.error(result.message || '오류가 발생했습니다.');
+                    }
+                  } catch {
+                    toast.error(
+                      '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                    );
+                  } finally {
+                    setCorpConsultSubmitting(false);
+                  }
+                }}
+                className="w-full py-4 rounded-xl text-white font-bold text-base cursor-pointer hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundColor: BRAND_COLOR }}
+              >
+                {corpConsultSubmitting ? '신청 중...' : '상담 신청하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 이미지 확대 모달 */}
       {lightboxSrc && (

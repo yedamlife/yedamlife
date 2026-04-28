@@ -5,15 +5,24 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ArrowLeft, Check, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ReviewEditor } from '@/components/admin/review-editor';
 
 const BACK_HREF = '/admin/notices';
+const CATEGORIES = ['공지', '이벤트', '안내', '보도자료'] as const;
 
 interface NoticeData {
   title: string;
   content: string;
+  category: string;
   is_active: boolean;
 }
 
@@ -36,6 +45,7 @@ export default function Page() {
         const v: NoticeData = {
           title: d.title ?? '',
           content: d.content ?? '',
+          category: d.category ?? '공지',
           is_active: d.is_active ?? true,
         };
         setOriginal(v);
@@ -149,6 +159,26 @@ export default function Page() {
           <CardTitle className="text-base">기본 정보</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-500">
+              카테고리
+            </label>
+            <Select
+              value={edited.category}
+              onValueChange={(v) => update('category', v)}
+            >
+              <SelectTrigger className="w-full sm:w-60">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-500">
               제목
