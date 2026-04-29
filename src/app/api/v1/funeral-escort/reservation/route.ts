@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { sendAlimtalk } from '@/lib/alimtalk';
 
 export async function POST(request: Request) {
   try {
@@ -65,6 +66,32 @@ export async function POST(request: Request) {
         { status: 500 },
       );
     }
+
+    const GENDER_LABEL: Record<string, string> = { male: '남성', female: '여성' };
+    const METHOD_LABEL: Record<string, string> = { cremation: '화장', burial: '매장' };
+    const CLOTHING_LABEL: Record<string, string> = { suit: '정장', guard: '의장대' };
+
+    sendAlimtalk(
+      'FE_RESERVE',
+      {
+        작성자: body.writer_name,
+        작성자연락처: body.writer_phone,
+        고인명: body.deceased_name,
+        고인성별: GENDER_LABEL[body.deceased_gender] ?? body.deceased_gender,
+        장례식장: body.funeral_hall,
+        장례식장주소: body.funeral_hall_address,
+        호실: body.room_name,
+        발인일: body.departure_date,
+        발인시: body.departure_hour,
+        발인분: body.departure_minute,
+        장례방법: METHOD_LABEL[body.funeral_method] ?? body.funeral_method,
+        도착지주소: body.destination_address,
+        도착지상세: body.destination_detail,
+        복장: CLOTHING_LABEL[body.clothing] ?? body.clothing,
+        인원: body.people,
+      },
+      { customerPhone: body.writer_phone, host: request.headers.get('host') },
+    ).catch(() => {});
 
     return NextResponse.json({ success: true, data: { id: data.id } }, { status: 201 });
   } catch {

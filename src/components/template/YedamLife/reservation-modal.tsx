@@ -36,8 +36,11 @@ const PRICE_TABLE: Record<
 };
 
 const METRO_KEYWORDS = ['서울', '경기', '인천'];
-const isMetroAddress = (addr: string) =>
-  !!addr && METRO_KEYWORDS.some((k) => addr.includes(k));
+const isMetroAddress = (addr: string) => {
+  if (!addr) return false;
+  const sido = addr.trim().split(/\s+/)[0] ?? '';
+  return METRO_KEYWORDS.some((k) => sido.startsWith(k));
+};
 
 const GUARD_SURCHARGE_PER_PERSON = 20_000;
 
@@ -83,12 +86,23 @@ const INITIAL_FORM: ReservationForm = {
   people: '',
 };
 
+interface ReservationDefaults {
+  funeralMethod?: 'cremation' | 'burial';
+  people?: '2' | '4' | '6' | '8';
+  region?: '수도권' | '비수도권';
+}
+
 interface ReservationModalProps {
   open: boolean;
   onClose: () => void;
+  defaults?: ReservationDefaults;
 }
 
-export function ReservationModal({ open, onClose }: ReservationModalProps) {
+export function ReservationModal({
+  open,
+  onClose,
+  defaults,
+}: ReservationModalProps) {
   const [form, setForm] = useState<ReservationForm>(INITIAL_FORM);
   const [showPostcode, setShowPostcode] = useState(false);
   const postcodeRef = useRef<HTMLDivElement>(null);
@@ -96,10 +110,14 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
 
   useEffect(() => {
     if (open) {
-      setForm(INITIAL_FORM);
+      setForm({
+        ...INITIAL_FORM,
+        funeralMethod: defaults?.funeralMethod ?? '',
+        people: defaults?.people ?? '',
+      });
       setShowPostcode(false);
     }
-  }, [open]);
+  }, [open, defaults]);
 
   // body scroll lock
   useEffect(() => {
@@ -174,16 +192,20 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
     document.head.appendChild(script);
   };
 
-  // 가격 계산: 지역(수도권/비수도권) × 장법 × 인원 + 의장대 가산금
+  // 적용 지역: 장례식장 주소가 있으면 주소 기준, 없으면 카드에서 전달된 default
+  const region: '수도권' | '비수도권' = form.funeralHallAddress
+    ? isMetroAddress(form.funeralHallAddress)
+      ? '수도권'
+      : '비수도권'
+    : (defaults?.region ?? '비수도권');
+
+  // 가격 계산: 지역 × 장법 × 인원 + 의장대 가산금
   const price = (() => {
     if (!form.people || !form.funeralMethod) return 0;
     const peopleNum = Number(form.people) as 2 | 4 | 6 | 8;
     if (![2, 4, 6, 8].includes(peopleNum)) return 0;
     const method = form.funeralMethod as 'cremation' | 'burial';
     if (method !== 'cremation' && method !== 'burial') return 0;
-    const region = isMetroAddress(form.funeralHallAddress)
-      ? '수도권'
-      : '비수도권';
     const base = PRICE_TABLE[region][method][peopleNum] ?? 0;
     const surcharge =
       form.clothing === 'guard' ? peopleNum * GUARD_SURCHARGE_PER_PERSON : 0;
@@ -192,20 +214,37 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
 
   const [submitting, setSubmitting] = useState(false);
 
+  const fieldRefs = useRef<Partial<Record<keyof ReservationForm, HTMLElement | null>>>({});
+  const setFieldRef = useCallback(
+    (key: keyof ReservationForm) => (el: HTMLElement | null) => {
+      fieldRefs.current[key] = el;
+    },
+    [],
+  );
+
   const handleSubmit = async () => {
-    const required: (keyof ReservationForm)[] = [
-      'writerName',
-      'writerPhone',
-      'deceasedName',
-      'funeralHall',
-      'departureDate',
-      'funeralMethod',
-      'clothing',
-      'people',
+    const required: { key: keyof ReservationForm; label: string }[] = [
+      { key: 'writerName', label: '작성자명' },
+      { key: 'writerPhone', label: '작성자 연락처' },
+      { key: 'deceasedName', label: '고인명' },
+      { key: 'funeralHall', label: '장례식장명' },
+      { key: 'departureDate', label: '발인 날짜' },
+      { key: 'funeralMethod', label: '장례 방법' },
+      { key: 'clothing', label: '복장' },
+      { key: 'people', label: '운구 인원' },
     ];
-    const missing = required.some((k) => !form[k].trim());
-    if (missing) {
-      toast.warning('필수 항목을 모두 입력해주세요.');
+    const firstMissing = required.find((r) => !form[r.key].trim());
+    if (firstMissing) {
+      toast.warning(`${firstMissing.label}을(를) 입력해주세요.`);
+      const el = fieldRefs.current[firstMissing.key];
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const focusable =
+          el.tagName === 'INPUT' || el.tagName === 'BUTTON' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA'
+            ? (el as HTMLElement)
+            : el.querySelector<HTMLElement>('input, button, [tabindex]');
+        focusable?.focus({ preventScroll: true });
+      }
       return;
     }
 
@@ -288,6 +327,7 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
+                ref={setFieldRef('writerName')}
                 type="text"
                 placeholder="홍길동"
                 value={form.writerName}
@@ -295,6 +335,7 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
                 className={inputClass}
               />
               <input
+                ref={setFieldRef('writerPhone')}
                 type="tel"
                 placeholder="-를 제외한 숫자만 입력해주세요"
                 value={form.writerPhone}
@@ -311,6 +352,7 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
+                ref={setFieldRef('deceasedName')}
                 type="text"
                 placeholder="고인명"
                 value={form.deceasedName}
@@ -348,6 +390,7 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
                   장례식장 검색
                 </button>
                 <input
+                  ref={setFieldRef('funeralHall')}
                   type="text"
                   placeholder="장례식장명을 입력해주세요"
                   value={form.funeralHall}
@@ -381,6 +424,7 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
               <Popover>
                 <PopoverTrigger asChild>
                   <button
+                    ref={setFieldRef('departureDate')}
                     type="button"
                     className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm cursor-pointer hover:bg-gray-100 transition-colors"
                   >
@@ -466,7 +510,10 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
               value={form.funeralMethod}
               onValueChange={(v) => update('funeralMethod', v)}
             >
-              <SelectTrigger className="h-auto px-4 py-3 rounded-xl border-gray-200 bg-gray-50 text-sm">
+              <SelectTrigger
+                ref={setFieldRef('funeralMethod')}
+                className="h-auto px-4 py-3 rounded-xl border-gray-200 bg-gray-50 text-sm"
+              >
                 <SelectValue placeholder="장례 방법 선택" />
               </SelectTrigger>
               <SelectContent className="z-200">
@@ -518,7 +565,10 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
                 value={form.clothing}
                 onValueChange={(v) => update('clothing', v)}
               >
-                <SelectTrigger className="h-auto px-4 py-3 rounded-xl border-gray-200 bg-gray-50 text-sm">
+                <SelectTrigger
+                  ref={setFieldRef('clothing')}
+                  className="h-auto px-4 py-3 rounded-xl border-gray-200 bg-gray-50 text-sm"
+                >
                   <SelectValue placeholder="복장 선택" />
                 </SelectTrigger>
                 <SelectContent className="z-200">
@@ -537,7 +587,10 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
                 value={form.people}
                 onValueChange={(v) => update('people', v)}
               >
-                <SelectTrigger className="h-auto px-4 py-3 rounded-xl border-gray-200 bg-gray-50 text-sm">
+                <SelectTrigger
+                  ref={setFieldRef('people')}
+                  className="h-auto px-4 py-3 rounded-xl border-gray-200 bg-gray-50 text-sm"
+                >
                   <SelectValue placeholder="인원 선택" />
                 </SelectTrigger>
                 <SelectContent className="z-200">
@@ -555,11 +608,20 @@ export function ReservationModal({ open, onClose }: ReservationModalProps) {
 
         {/* 하단 (고정) */}
         <div className="px-6 py-4 border-t border-gray-100 shrink-0 space-y-3">
-          <div className="text-right">
+          <div className="flex items-center justify-end gap-2">
+            <span
+              className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold"
+              style={{
+                backgroundColor: BRAND_COLOR_LIGHT,
+                color: BRAND_COLOR,
+              }}
+            >
+              {region}
+            </span>
             <span className="text-2xl font-extrabold text-gray-900">
               {price.toLocaleString()}
             </span>
-            <span className="text-sm text-gray-500 ml-1">원</span>
+            <span className="text-sm text-gray-500">원</span>
           </div>
           <button
             onClick={handleSubmit}

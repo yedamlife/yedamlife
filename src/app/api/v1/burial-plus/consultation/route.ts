@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { sendAlimtalk } from '@/lib/alimtalk';
 
 export async function POST(request: Request) {
   try {
@@ -44,6 +45,31 @@ export async function POST(request: Request) {
         { status: 500 },
       );
     }
+
+    let productName: string | null = null;
+    if (body.product_id) {
+      const { data: prod } = await supabase
+        .from('bp_products')
+        .select('company_name')
+        .eq('id', body.product_id)
+        .single();
+      productName = prod?.company_name ?? null;
+    }
+
+    sendAlimtalk(
+      'BP_CONSULT',
+      {
+        선택장지: productName,
+        고객명: body.name,
+        연락처: body.phone,
+        종교: body.religion,
+        시도: body.region,
+        시구군: body.district,
+        예산: body.budget,
+        메시지: body.message,
+      },
+      { customerPhone: body.phone, host: request.headers.get('host') },
+    ).catch(() => {});
 
     return NextResponse.json({ success: true, data: { id: data.id } }, { status: 201 });
   } catch {

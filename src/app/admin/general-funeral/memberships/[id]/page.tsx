@@ -2,8 +2,10 @@
 
 import { use } from 'react';
 import { DetailPage } from '@/components/admin/detail-page';
+import { productLabel } from '@/lib/alimtalk/products';
 
 const fields = [
+  { key: 'membership_no', label: '회원번호', editable: false },
   { key: 'name', label: '이름' },
   { key: 'phone', label: '연락처' },
   { key: 'birth_date', label: '생년월일' },
@@ -14,7 +16,16 @@ const fields = [
   { key: 'guardian_phone', label: '보호자 연락처' },
   { key: 'address', label: '주소' },
   { key: 'address_detail', label: '상세 주소' },
-  { key: 'product', label: '상품' },
+  {
+    key: 'product',
+    label: '상품',
+    editable: false,
+    render: (value: unknown) => (
+      <span className="text-sm text-gray-900">
+        {productLabel(value as string | null | undefined)}
+      </span>
+    ),
+  },
   { key: 'referrer', label: '추천인' },
 ];
 

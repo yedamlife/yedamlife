@@ -2,10 +2,12 @@
 
 import { ServiceListPage } from '@/components/admin/service-list-page';
 import type { Column } from '@/components/admin/data-table';
+import { productLabel } from '@/lib/alimtalk/products';
 
 interface Row {
   id: number;
   status?: string;
+  membership_no: string | null;
   name: string;
   phone: string;
   product: string;
@@ -15,9 +17,10 @@ interface Row {
 
 const columns: Column<Row>[] = [
   { key: 'id', label: 'ID' },
+  { key: 'membership_no', label: '회원번호' },
   { key: 'name', label: '이름' },
   { key: 'phone', label: '연락처' },
-  { key: 'product', label: '상품' },
+  { key: 'product', label: '상품', render: (row) => productLabel(row.product) },
   { key: 'address', label: '주소' },
   {
     key: 'created_at',

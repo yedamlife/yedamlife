@@ -1,4 +1,5 @@
 'use client';
+import { CONTACT_TEL_HREF } from '@/constants/contact';
 
 import { useState, useEffect, useRef } from 'react';
 import {
@@ -2116,7 +2117,7 @@ export function EstateCleanup(_props: { googleFormUrl: string }) {
               <span className="relative">견적 상담</span>
             </button>
             <a
-              href="tel:1660-0959"
+              href={CONTACT_TEL_HREF}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
             >
               <Phone className="w-5 h-5" />

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { sendAlimtalk } from '@/lib/alimtalk';
 
 const VALID_SERVICE_TYPES = [
   '심리 상담',
@@ -53,6 +54,19 @@ export async function POST(request: Request) {
         { status: 500 },
       );
     }
+
+    sendAlimtalk(
+      'PC_CONSULT',
+      {
+        고객명: body.name,
+        연락처: body.phone,
+        시도: body.region,
+        시구군: body.district,
+        상담유형: body.service_type,
+        상담내용: body.message,
+      },
+      { customerPhone: body.phone, host: request.headers.get('host') },
+    ).catch(() => {});
 
     return NextResponse.json({ success: true, data: { id: data.id } }, { status: 201 });
   } catch {

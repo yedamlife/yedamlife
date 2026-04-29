@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Download, X } from 'lucide-react';
 import { ProposalModal } from './proposal-modal';
+import { CONTACT_PHONE, CONTACT_TEL_HREF } from '@/constants/contact';
 
 const SUPABASE_BASE =
   'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife';
@@ -46,8 +47,8 @@ export function YedamFooter() {
             </p>
             <p>
               TEL :{' '}
-              <a href="tel:1660-0959" className="hover:underline">
-                1660-0959
+              <a href={CONTACT_TEL_HREF} className="hover:underline">
+                {CONTACT_PHONE}
               </a>{' '}
               / Email : sun8227@hanmail.net
             </p>

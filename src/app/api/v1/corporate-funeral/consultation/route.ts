@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { sendAlimtalk, productLabel } from '@/lib/alimtalk';
 
 export async function POST(request: Request) {
   try {
@@ -50,6 +51,18 @@ export async function POST(request: Request) {
         { status: 500 },
       );
     }
+
+    sendAlimtalk(
+      'CF_CONSULT',
+      {
+        상품: productLabel(body.product),
+        고객명: body.name,
+        연락처: body.phone,
+        지역: body.region,
+        상담시간: body.preferred_time,
+      },
+      { customerPhone: body.phone, host: request.headers.get('host') },
+    ).catch(() => {});
 
     return NextResponse.json({ success: true, data: { id: data.id } }, { status: 201 });
   } catch {

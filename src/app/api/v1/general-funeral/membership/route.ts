@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { sendAlimtalk, productLabel } from '@/lib/alimtalk';
 
 export async function POST(request: Request) {
   try {
@@ -57,6 +58,25 @@ export async function POST(request: Request) {
         { status: 500 },
       );
     }
+
+    sendAlimtalk(
+      'GF_MEMBER',
+      {
+        고객명: body.name,
+        연락처: body.phone,
+        생년월일: body.birth_date,
+        성별: body.gender,
+        종교: body.religion,
+        보호자명: body.guardian_name,
+        보호자관계: body.guardian_relation,
+        보호자연락처: body.guardian_phone,
+        주소: body.address,
+        상세주소: body.address_detail,
+        상품: productLabel(body.product),
+        추천인: body.referrer,
+      },
+      { customerPhone: body.phone, host: request.headers.get('host') },
+    ).catch(() => {});
 
     return NextResponse.json({ success: true, data: { id: data.id } }, { status: 201 });
   } catch {

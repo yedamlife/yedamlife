@@ -3,6 +3,7 @@ import { Toaster } from 'sonner';
 import { GlobalHeader } from '@/components/global-header';
 import { FuneralGuideModals } from '@/components/funeral-guide-modals';
 import { KakaoSDK } from '@/components/kakao-sdk';
+import { TelClickTracker } from '@/components/tel-click-tracker';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -18,6 +19,7 @@ export default function RootLayout({
     <html lang="ko">
       <body>
         <KakaoSDK />
+        <TelClickTracker />
         <GlobalHeader />
         {children}
         <FuneralGuideModals />

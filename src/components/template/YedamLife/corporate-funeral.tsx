@@ -1,4 +1,5 @@
 'use client';
+import { CONTACT_PHONE } from '@/constants/contact';
 
 import { Fragment, useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -2136,7 +2137,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                   className="text-2xl sm:text-3xl font-extrabold"
                   style={{ color: 'black' }}
                 >
-                  1660.0959
+                  {CONTACT_PHONE}
                 </span>
               </div>
               <a

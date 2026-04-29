@@ -17,8 +17,8 @@ YDM{도메인}{용도}V{버전}
 | 구성 | 설명 | 예 |
 |------|------|-----|
 | `YDM`  | 브랜드 접두사 (예담)                  | 고정 |
-| `{도메인}` | 업무 영역 코드 (DB 테이블 prefix와 동일) | `GF`, `CF`, `EC`, `FE`, `BP`, `PC`, `TEL` |
-| `{용도}`   | 목적                               | `CONSULT`, `MEMBER`, `ESTIMATE`, `RESERVE`, `CALL` |
+| `{도메인}` | 업무 영역 코드 (DB 테이블 prefix와 동일) | `GF`, `CF`, `EC`, `FE`, `BP`, `PC`, `TEL`, `MC` |
+| `{용도}`   | 목적                               | `CONSULT`, `MEMBER`, `ESTIMATE`, `RESERVE`, `CALL`, `CARD` |
 | `V{버전}`  | 버전                               | `V1`, `V2` … |
 
 **도메인 코드표**
@@ -31,6 +31,7 @@ YDM{도메인}{용도}V{버전}
 | `FE`  | 운구의전 (Funeral Escort)       | `fe_` |
 | `BP`  | 장지+ (Burial Plus)            | `bp_` |
 | `PC`  | 사후 행정케어 (Post Care)       | `pc_` |
+| `MC`  | 멤버십 카드 (Membership Card)   | `mc_` |
 | `TEL` | 전화 상담 클릭 트래킹            | —     |
 
 ### 템플릿 명 (관리용 · 한글 허용)
@@ -335,6 +336,40 @@ YDM{도메인}{용도}V{버전}
 
 ---
 
+### 2-3. 멤버십 카드 신청 내역
+
+기존 가입자가 가입증서 결과 페이지에서 **실물 멤버십 카드 발송**을 신청한 내역을 고객에게 안내합니다.
+
+**폼 경로**: `/membership/certificate` 가입증서 조회 → `/membership/certificate/result` → `멤버십 카드 신청` 모달
+**수집 항목**: 회원번호 *, 이름 *, 연락처 *, 우편번호, 주소 *, 상세주소
+
+| 항목 | 값 |
+|------|-----|
+| **템플릿 코드** | `YDMMCCARDV1` |
+| **템플릿 명**   | `멤버십카드_신청내역_v1` |
+| **발송 시점**   | `POST /api/v1/membership/card-request` 성공 시 |
+| **수신자**     | `phone` |
+
+**본문**
+```
+[예담라이프] 멤버십 카드 신청 접수
+
+#{고객명}님, 멤버십 카드 신청이 정상 접수되었습니다.
+영업일 기준 3~5일 내 등기로 발송됩니다.
+
+■ 회원번호: #{회원번호}
+■ 이름: #{고객명}
+■ 연락처: #{연락처}
+■ 배송지: (#{우편번호}) #{주소} #{상세주소}
+■ 접수일시: #{접수일시}
+```
+
+**변수 매핑**: `#{회원번호}=member_no`, `#{고객명}=name`, `#{연락처}=phone`, `#{우편번호}=zonecode`, `#{주소}=address`, `#{상세주소}=detail_address`, `#{접수일시}=now`
+
+> 우편번호/상세주소가 비어있으면 발송 로직에서 `-` 로 치환합니다.
+
+---
+
 ## 3. 전화 상담 클릭 알림톡 (관리자 발송)
 
 고객이 각 카테고리 페이지에서 전화 상담 버튼(`tel:` 링크)을 클릭하면,
@@ -463,6 +498,7 @@ export const ALIMTALK_TEMPLATES = {
   PC_CONSULT: 'YDMPCCONSULTV1',
   GF_MEMBER: 'YDMGFMEMBERV1',
   CF_MEMBER: 'YDMCFMEMBERV1',
+  MC_CARD: 'YDMMCCARDV1',
   FC_RESULT: 'YEDAMFCRESULTV1',
   TEL_CALL: 'YDMTELCALLV1',
 } as const;
@@ -475,7 +511,95 @@ export const ALIMTALK_RECIPIENTS = {
 
 ---
 
-## 7. 체크리스트 (템플릿 등록 시)
+## 7. 발송 내역 저장 (`alimtalk_logs`)
+
+모든 알림톡(및 SMS 폴백) 발송 시도를 한 줄씩 기록합니다. 운영 모니터링 / 재발송 / 고객 문의 추적용.
+
+**마이그레이션**: [`scripts/migrate-alimtalk-logs.sql`](../../scripts/migrate-alimtalk-logs.sql)
+
+### 컬럼 요약
+
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `id` | `BIGSERIAL` | PK |
+| `uuid` | `UUID` | 외부 노출용 식별자 |
+| `template_code` | `TEXT` | 카카오 템플릿 코드 (`YDMGFCONSULTV1` 등) |
+| `template_name` | `TEXT` | 관리용 한글명 |
+| `domain` | `TEXT` | `GF / CF / EC / FE / BP / PC / TEL / FC` |
+| `purpose` | `TEXT` | `CONSULT / MEMBER / ESTIMATE / RESERVE / CALL / RESULT` |
+| `recipient_phone` | `TEXT` | 수신 번호 |
+| `recipient_role` | `TEXT` | `customer / admin / dev_override` |
+| `variables` | `JSONB` | `#{변수명} → 값` 매핑 |
+| `rendered_body` | `TEXT` | 치환 후 본문 (감사용) |
+| `status` | `TEXT` | `pending / success / failed / rejected / fallback_sms` |
+| `channel` | `TEXT` | `alimtalk / sms / lms` |
+| `vendor` | `TEXT` | 벤더 식별 (kakao / solapi / aligo …) |
+| `vendor_message_id` | `TEXT` | 벤더 측 메시지 ID |
+| `vendor_response` | `JSONB` | 벤더 raw response |
+| `error_code`, `error_message` | `TEXT` | 실패 사유 |
+| `fallback_of` | `BIGINT FK` | SMS 폴백인 경우 원본 알림톡 `id` |
+| `source_table`, `source_id` | `TEXT, BIGINT` | 원본 레코드 (예: `gf_consultations`, `42`) |
+| `is_dev` | `BOOLEAN` | 로컬/개발 환경 발송 여부 |
+| `requested_at`, `sent_at`, `created_at`, `updated_at` | `TIMESTAMPTZ` | 시각 정보 |
+
+### 인덱스
+
+- `template_code`, `domain`, `status`, `recipient_phone`
+- `(source_table, source_id)` 복합
+- `created_at DESC`
+
+### 운영 쿼리 예시
+
+**도메인별 일자별 성공/실패 집계**
+```sql
+SELECT
+  date_trunc('day', created_at) AS day,
+  domain,
+  status,
+  count(*) AS cnt
+FROM alimtalk_logs
+WHERE created_at >= now() - interval '30 days'
+GROUP BY day, domain, status
+ORDER BY day DESC, domain, status;
+```
+
+**특정 접수 건의 발송 이력**
+```sql
+SELECT id, template_code, status, channel, error_message, created_at
+FROM alimtalk_logs
+WHERE source_table = 'fe_reservations' AND source_id = 42
+ORDER BY id;
+```
+
+**최근 실패 건과 폴백 SMS 매칭**
+```sql
+SELECT
+  f.id          AS sms_log_id,
+  f.recipient_phone,
+  f.status      AS sms_status,
+  o.id          AS original_alimtalk_id,
+  o.template_code,
+  o.error_message
+FROM alimtalk_logs f
+JOIN alimtalk_logs o ON o.id = f.fallback_of
+WHERE f.channel IN ('sms', 'lms')
+  AND f.created_at >= now() - interval '7 days'
+ORDER BY f.id DESC;
+```
+
+### 발송 코드 연동 메모
+
+`src/lib/alimtalk/send.ts` (가칭) 에서 발송 흐름:
+
+1. `INSERT alimtalk_logs (... status='pending')` → `id` 확보
+2. 벤더 API 호출
+3. 성공: `UPDATE ... SET status='success', sent_at=now(), vendor_message_id=...`
+4. 실패: `UPDATE ... SET status='failed', error_*=...` 후
+   SMS 폴백 시 별도 row 추가 (`fallback_of = 원본 id`, `channel='sms'`)
+
+---
+
+## 8. 체크리스트 (템플릿 등록 시)
 
 - [ ] 본문 1,000자 이하
 - [ ] 변수는 `#{변수명}` 형태

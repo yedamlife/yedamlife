@@ -1,4 +1,5 @@
 'use client';
+import { CONTACT_TEL_HREF } from '@/constants/contact';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Phone, MapPin, X, ScrollText, Loader2, Share2 } from 'lucide-react';
@@ -1029,7 +1030,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
                   <span className="relative">상담 신청</span>
                 </button>
                 <a
-                  href="tel:1660-0959"
+                  href={CONTACT_TEL_HREF}
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
                 >
                   <Phone className="w-5 h-5" />
@@ -1848,7 +1849,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
               <span className="relative">상담 신청</span>
             </button>
             <a
-              href="tel:1660-0959"
+              href={CONTACT_TEL_HREF}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
               style={{ fontFamily: 'Pretendard, sans-serif' }}
             >
@@ -1868,7 +1869,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
       {/* ── PC 우측 플로팅 사이드바 (sm 이상) ── */}
       <div className="hidden sm:flex fixed right-4 top-1/2 -translate-y-1/2 z-50 flex-col bg-white rounded-[32px] shadow-xl border border-gray-200 overflow-hidden divide-y divide-gray-200">
         <a
-          href="tel:1660-0959"
+          href={CONTACT_TEL_HREF}
           className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
         >
           <Phone className="w-5 h-5 text-gray-700" />
@@ -1904,7 +1905,7 @@ export function BurialPlus({ googleFormUrl }: { googleFormUrl: string }) {
       <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#222] safe-area-bottom">
         <div className="flex items-center divide-x divide-white/20">
           <a
-            href="tel:1660-0959"
+            href={CONTACT_TEL_HREF}
             className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
             <Phone className="w-5 h-5" />

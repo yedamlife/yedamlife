@@ -1,4 +1,5 @@
 'use client';
+import { CONTACT_PHONE, CONTACT_TEL_HREF } from '@/constants/contact';
 
 import { useState, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -8,7 +9,6 @@ import { toast } from 'sonner';
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
-  BRAND_COLOR_PREMIUM,
 } from '@/components/template/YedamLife/constants';
 
 // ── 기업상조 상품 옵션 ──
@@ -193,7 +193,7 @@ function MembershipCorporatePageContent() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#faf8f5] to-white px-4">
+      <div className="min-h-screen flex items-center justify-center bg-white px-4">
         <div className="text-center max-w-md">
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
@@ -235,7 +235,6 @@ function MembershipCorporatePageContent() {
         html, body {
           scrollbar-width: none;
           -ms-overflow-style: none;
-          overflow-x: hidden;
         }
         html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
       `}</style>
@@ -247,17 +246,7 @@ function MembershipCorporatePageContent() {
         {/* ════════════════════════════════════════════ */}
         {/* PAGE 1: 기업상조 가입신청서                      */}
         {/* ════════════════════════════════════════════ */}
-        <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#faf8f5] via-[#f5f0ea] to-white" />
-          <div
-            className="absolute top-0 right-0 w-[400px] h-[400px] opacity-[0.07] rounded-full blur-3xl"
-            style={{ backgroundColor: BRAND_COLOR }}
-          />
-          <div
-            className="absolute bottom-0 left-0 w-[300px] h-[300px] opacity-[0.05] rounded-full blur-3xl"
-            style={{ backgroundColor: BRAND_COLOR_PREMIUM }}
-          />
-
+        <section className="relative overflow-hidden bg-white">
           <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-12 sm:pb-16">
             {/* 타이틀 */}
             <div className="text-center mb-6">
@@ -289,18 +278,9 @@ function MembershipCorporatePageContent() {
 
             {/* 신청 폼 카드 */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div
-                className="px-5 sm:px-6 py-3 sm:py-4 flex items-center gap-2 rounded-t-2xl"
-                style={{ backgroundColor: BRAND_COLOR, minHeight: 'auto' }}
-              >
-                <FileText
-                  className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/70"
-                  style={{ minHeight: 'auto' }}
-                />
-                <span
-                  className="text-white/90 font-medium text-xs sm:text-sm tracking-wide"
-                  style={{ minHeight: 'auto' }}
-                >
+              <div className="px-5 sm:px-6 py-3 sm:py-4 flex items-center gap-2 rounded-t-2xl bg-gray-200">
+                <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
+                <span className="text-gray-800 font-medium text-xs sm:text-sm tracking-wide">
                   가입 정보 입력
                 </span>
               </div>
@@ -496,64 +476,36 @@ function MembershipCorporatePageContent() {
             </div>
 
             {/* 기업상조 가입 시 지원 혜택 */}
-            <div
-              className="mt-8 rounded-2xl p-6 sm:p-8 border"
-              style={{
-                backgroundColor: BRAND_COLOR_LIGHT,
-                borderColor: `${BRAND_COLOR}20`,
-              }}
-            >
+            <div className="mt-8 rounded-2xl p-6 sm:p-8 border border-gray-200 bg-gray-50">
               <div className="flex items-center gap-2 mb-4">
-                <Gift
-                  className="w-5 h-5 shrink-0"
-                  style={{ color: BRAND_COLOR }}
-                />
+                <Gift className="w-5 h-5 shrink-0 text-rose-700" />
                 <h3 className="font-bold text-gray-900">
-                  기업상조 가입 시{' '}
-                  <span style={{ color: BRAND_COLOR }}>지원 혜택</span>
+                  기업상조 가입 시 지원 혜택
                 </h3>
               </div>
               <ul className="space-y-2 text-sm text-gray-700">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2
-                    className="w-4 h-4 shrink-0 mt-0.5"
-                    style={{ color: BRAND_COLOR }}
-                  />
+                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-gray-500" />
                   업무 협약시 – 예담 기업1호(30만원 공제), 기업2호(40만원 공제)
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2
-                    className="w-4 h-4 shrink-0 mt-0.5"
-                    style={{ color: BRAND_COLOR }}
-                  />
+                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-gray-500" />
                   조사용품(200인분) 1BOX 제공 (15만원 상당)
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2
-                    className="w-4 h-4 shrink-0 mt-0.5"
-                    style={{ color: BRAND_COLOR }}
-                  />
+                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-gray-500" />
                   고급 근조 3단화환 제공 (10만원 상당)
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2
-                    className="w-4 h-4 shrink-0 mt-0.5"
-                    style={{ color: BRAND_COLOR }}
-                  />
+                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-gray-500" />
                   입관 시 관 꽃장식 제공 (20만원 상당)
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2
-                    className="w-4 h-4 shrink-0 mt-0.5"
-                    style={{ color: BRAND_COLOR }}
-                  />
+                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-gray-500" />
                   앰뷸런스 관내 이송서비스 (10만원 상당)
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2
-                    className="w-4 h-4 shrink-0 mt-0.5"
-                    style={{ color: BRAND_COLOR }}
-                  />
+                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-gray-500" />
                   협력 장례식장 및 장지 할인 혜택 제공
                 </li>
               </ul>
@@ -563,22 +515,18 @@ function MembershipCorporatePageContent() {
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
               <div className="text-center sm:text-left">
                 <p className="text-xs text-gray-400 mb-1">
-                  후불제 상조기업 예담라이프
+                  후불제 상조기업 예담라이프장례비용 알아보기
                 </p>
-                <p
-                  className="text-lg font-extrabold"
-                  style={{ color: BRAND_COLOR }}
-                >
+                <p className="text-lg font-extrabold text-gray-900">
                   전국 365일 24시간 긴급출동
                 </p>
               </div>
               <a
-                href="tel:1660-0959"
-                className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-white transition-all hover:opacity-90"
-                style={{ backgroundColor: BRAND_COLOR }}
+                href={CONTACT_TEL_HREF}
+                className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-white bg-gray-800 hover:bg-gray-900 transition-colors"
               >
                 <Phone className="w-4 h-4" />
-                대표번호 1660-0959
+                대표번호 {CONTACT_PHONE}
               </a>
             </div>
 
@@ -718,29 +666,22 @@ function MembershipCorporatePageContent() {
               ))}
             </div>
 
-            <div
-              className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl p-6"
-              style={{ backgroundColor: BRAND_COLOR_LIGHT }}
-            >
+            <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl p-6 bg-gray-100">
               <div className="text-center sm:text-left">
                 <p className="text-xs text-gray-500">
                   후불제 상조기업 예담라이프(주)
                 </p>
               </div>
               <div className="flex items-center gap-4">
-                <span
-                  className="text-xs font-semibold"
-                  style={{ color: BRAND_COLOR }}
-                >
+                <span className="text-xs font-semibold text-gray-700">
                   전국 365일 24시간 긴급출동
                 </span>
                 <a
-                  href="tel:1660-0959"
-                  className="flex items-center gap-1.5 font-extrabold text-lg"
-                  style={{ color: BRAND_COLOR }}
+                  href={CONTACT_TEL_HREF}
+                  className="flex items-center gap-1.5 font-extrabold text-lg text-gray-900"
                 >
                   <Phone className="w-4 h-4" />
-                  1660-0959
+                  {CONTACT_PHONE}
                 </a>
               </div>
             </div>
@@ -756,7 +697,7 @@ function MembershipCorporatePageContent() {
         {/* PAGE 3: 개인정보 동의서                        */}
         {/* ════════════════════════════════════════════ */}
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-[#faf8f5]" />
+          <div className="absolute inset-0 bg-white" />
 
           <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
             <div className="text-center mb-10">
@@ -859,23 +800,6 @@ function MembershipCorporatePageContent() {
                 </div>
               </div>
             </div>
-
-            {/* 제출 버튼 */}
-            <div className="mt-10 text-center">
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="inline-flex items-center justify-center gap-2 px-12 py-4 rounded-2xl text-white font-bold text-lg shadow-lg transition-all hover:opacity-90 hover:shadow-xl hover:-translate-y-0.5 cursor-pointer disabled:opacity-50"
-                style={{ backgroundColor: BRAND_COLOR }}
-              >
-                <FileText className="w-5 h-5" />
-                {submitting ? '신청 중...' : '가입증서 신청'}
-              </button>
-              <p className="text-xs text-gray-400 mt-4">
-                신청 후 담당자가 확인하여 연락드립니다.
-              </p>
-            </div>
           </div>
         </section>
       </div>
@@ -902,6 +826,31 @@ function MembershipCorporatePageContent() {
           <div ref={postcodeRef} className="flex-1" />
         </div>
       </div>
+
+      {/* 하단 고정 전화 상담 / 가입 신청 버튼 */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 sm:pb-4 pointer-events-none safe-area-bottom">
+        <div className="mx-auto max-w-2xl sm:px-6 flex sm:rounded-xl overflow-hidden sm:shadow-xl">
+          <a
+            href={CONTACT_TEL_HREF}
+            className="pointer-events-auto flex-1 h-14 flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-800 font-bold text-base transition-colors"
+          >
+            <Phone className="w-5 h-5 shrink-0" />
+            <span className="leading-none">전화 상담</span>
+          </a>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="pointer-events-auto flex-1 h-14 flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-800 text-white font-bold text-base disabled:opacity-60 cursor-pointer transition-colors"
+          >
+            <FileText className="w-5 h-5 shrink-0" />
+            <span className="leading-none">
+              {submitting ? '신청 중...' : '가입 신청'}
+            </span>
+          </button>
+        </div>
+      </div>
+      <div className="h-16" />
     </>
   );
 }

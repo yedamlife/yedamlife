@@ -1,4 +1,5 @@
 'use client';
+import { CONTACT_PHONE, CONTACT_TEL_HREF } from '@/constants/contact';
 
 import { Suspense, useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -17,7 +18,6 @@ import {
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
-  BRAND_COLOR_PREMIUM,
 } from '@/components/template/YedamLife/constants';
 
 const SUPABASE_BASE =
@@ -92,14 +92,54 @@ function CertificateResultContent() {
     }).open();
   };
 
-  const handleCardSubmit = () => {
+  const [cardSubmitting, setCardSubmitting] = useState(false);
+  const handleCardSubmit = async () => {
     if (!cardForm.name || !cardForm.phone || !cardForm.address) return;
-    setCardSubmitted(true);
+    if (cardSubmitting) return;
+    setCardSubmitting(true);
+    try {
+      const res = await fetch('/api/v1/membership/card-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          member_no: memberNo,
+          name: cardForm.name,
+          phone: cardForm.phone,
+          zonecode: cardForm.zonecode,
+          address: cardForm.address,
+          detail_address: cardForm.detailAddress,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success)
+        throw new Error(json.message || '신청에 실패했습니다.');
+      setCardSubmitted(true);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '신청에 실패했습니다.');
+    } finally {
+      setCardSubmitting(false);
+    }
   };
 
-  const [memberNo] = useState(
-    () => `AA${String(Math.floor(Math.random() * 900 + 100)).padStart(5, '0')}`,
-  );
+  const [memberNo, setMemberNo] = useState<string>('');
+  const [lookupLoading, setLookupLoading] = useState(true);
+  const [lookupError, setLookupError] = useState(false);
+
+  useEffect(() => {
+    if (!name || !phone) return;
+    const params = new URLSearchParams({ name, phone });
+    fetch(`/api/v1/membership/lookup?${params.toString()}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data?.membership_no) {
+          setMemberNo(json.data.membership_no);
+        } else {
+          setLookupError(true);
+        }
+      })
+      .catch(() => setLookupError(true))
+      .finally(() => setLookupLoading(false));
+  }, [name, phone]);
   const today = new Date();
   const formattedDate = `${today.getFullYear()}년 ${String(today.getMonth() + 1).padStart(2, '0')}월 ${String(today.getDate()).padStart(2, '0')}일`;
   const formattedPhone = phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
@@ -140,11 +180,43 @@ function CertificateResultContent() {
     );
   }
 
+  if (lookupLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#faf8f5]">
+        <p className="text-gray-500 text-sm">
+          가입 정보를 확인하고 있습니다...
+        </p>
+      </div>
+    );
+  }
+
+  if (lookupError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#faf8f5]">
+        <div className="text-center space-y-4 px-4">
+          <p className="text-gray-700 font-semibold">
+            가입 내역을 찾을 수 없습니다.
+          </p>
+          <p className="text-gray-500 text-sm">
+            입력하신 이름과 연락처로 가입된 회원이 없습니다.
+          </p>
+          <a
+            href="/membership/certificate"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold transition-all hover:opacity-90"
+            style={{ backgroundColor: BRAND_COLOR }}
+          >
+            가입증서 조회로 이동
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <style>{`
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
-        html, body { scrollbar-width: none; -ms-overflow-style: none; overflow-x: hidden; }
+        html, body { scrollbar-width: none; -ms-overflow-style: none; overflow-x: clip; }
         html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
@@ -177,62 +249,29 @@ function CertificateResultContent() {
         style={{ fontFamily: 'Pretendard, sans-serif' }}
       >
         {/* ── 배경 ── */}
-        <div className="fixed inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#f9f6f1] via-[#f3ede4] to-[#faf8f5]" />
-          <div
-            className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full blur-[100px] opacity-[0.08]"
-            style={{ backgroundColor: BRAND_COLOR_PREMIUM }}
-          />
-          <div
-            className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] rounded-full blur-[100px] opacity-[0.06]"
-            style={{ backgroundColor: BRAND_COLOR }}
-          />
-        </div>
+        <div className="fixed inset-0 -z-10 bg-white" />
 
         <div className="relative max-w-lg mx-auto px-4 sm:px-6 py-8 sm:py-12">
           {/* ── 1. 회원증 (Certificate) ── */}
           <div className="animate-fade-in-up" ref={certificateRef}>
-            <div
-              className="relative rounded-3xl overflow-hidden shadow-xl"
-              style={{
-                background:
-                  'linear-gradient(170deg, #fffdf8 0%, #f8f3eb 40%, #f3ede3 100%)',
-                border: '1.5px solid #e0d5c3',
-              }}
-            >
-              {/* 금색 상단 장식 */}
-              <div
-                className="h-1.5"
-                style={{
-                  background:
-                    'linear-gradient(90deg, #c5a55a, #f0d98c, #c5a55a)',
-                }}
-              />
-
+            <div className="relative rounded-3xl overflow-hidden shadow-xl bg-white border border-gray-200">
               <div className="px-6 sm:px-10 pt-8 pb-10">
-                {/* 회원번호 & 로고 */}
+                {/* 회원번호 & 인증 */}
                 <div className="flex items-start justify-between mb-6">
                   <div>
                     <p className="text-[10px] text-gray-400 tracking-wider mb-0.5">
                       MEMBER NO.
                     </p>
                     <p
-                      className="text-sm font-bold tracking-widest"
-                      style={{ color: BRAND_COLOR_PREMIUM }}
+                      className="text-sm font-bold tracking-widest text-gray-900"
                       suppressHydrationWarning
                     >
                       {memberNo}
                     </p>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Shield
-                      className="w-3.5 h-3.5"
-                      style={{ color: BRAND_COLOR_PREMIUM }}
-                    />
-                    <span
-                      className="text-[10px] font-semibold tracking-wider"
-                      style={{ color: BRAND_COLOR_PREMIUM }}
-                    >
+                    <Shield className="w-3.5 h-3.5 text-gray-700" />
+                    <span className="text-[10px] font-semibold tracking-wider text-gray-700">
                       VERIFIED
                     </span>
                   </div>
@@ -241,75 +280,42 @@ function CertificateResultContent() {
                 {/* 타이틀 */}
                 <div className="text-center mb-8">
                   <div className="flex items-center justify-center gap-3 mb-3">
-                    <div
-                      className="h-px w-10"
-                      style={{
-                        background:
-                          'linear-gradient(90deg, transparent, #c5a55a)',
-                      }}
-                    />
-                    <Award className="w-5 h-5" style={{ color: '#c5a55a' }} />
-                    <div
-                      className="h-px w-10"
-                      style={{
-                        background:
-                          'linear-gradient(90deg, #c5a55a, transparent)',
-                      }}
-                    />
+                    <div className="h-px w-10 bg-gradient-to-r from-transparent to-gray-300" />
+                    <Award className="w-5 h-5 text-gray-700" />
+                    <div className="h-px w-10 bg-gradient-to-r from-gray-300 to-transparent" />
                   </div>
-                  <h1
-                    className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-1"
-                    style={{ color: '#3a3024' }}
-                  >
+                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-1 text-gray-900">
                     회원증
                   </h1>
-                  <p
-                    className="text-xs tracking-[0.2em]"
-                    style={{ color: BRAND_COLOR_PREMIUM }}
-                  >
+                  <p className="text-xs tracking-[0.2em] text-gray-500">
                     CERTIFICATE OF MEMBERSHIP
                   </p>
                 </div>
 
                 {/* 회원 정보 */}
-                <div
-                  className="rounded-2xl p-5 sm:p-6 mb-6"
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.6)',
-                    border: '1px solid #e8dfd0',
-                  }}
-                >
+                <div className="rounded-2xl p-5 sm:p-6 mb-6 bg-gray-50 border border-gray-100">
                   <div className="space-y-0">
-                    <div className="flex items-center py-3.5 border-b border-[#e8dfd0]/60">
-                      <span
-                        className="text-xs font-semibold w-20 shrink-0 tracking-wider"
-                        style={{ color: BRAND_COLOR_PREMIUM }}
-                      >
+                    <div className="flex items-center py-3.5 border-b border-gray-200">
+                      <span className="text-xs font-semibold w-20 shrink-0 tracking-wider text-gray-500">
                         회원성명
                       </span>
-                      <span className="text-sm font-bold text-[#3a3024]">
+                      <span className="text-sm font-bold text-gray-900">
                         {name}
                       </span>
                     </div>
-                    <div className="flex items-center py-3.5 border-b border-[#e8dfd0]/60">
-                      <span
-                        className="text-xs font-semibold w-20 shrink-0 tracking-wider"
-                        style={{ color: BRAND_COLOR_PREMIUM }}
-                      >
+                    <div className="flex items-center py-3.5 border-b border-gray-200">
+                      <span className="text-xs font-semibold w-20 shrink-0 tracking-wider text-gray-500">
                         연락처
                       </span>
-                      <span className="text-sm font-bold text-[#3a3024]">
+                      <span className="text-sm font-bold text-gray-900">
                         {formattedPhone}
                       </span>
                     </div>
                     <div className="flex items-center py-3.5">
-                      <span
-                        className="text-xs font-semibold w-20 shrink-0 tracking-wider"
-                        style={{ color: BRAND_COLOR_PREMIUM }}
-                      >
+                      <span className="text-xs font-semibold w-20 shrink-0 tracking-wider text-gray-500">
                         가입일
                       </span>
-                      <span className="text-sm font-bold text-[#3a3024]">
+                      <span className="text-sm font-bold text-gray-900">
                         {formattedDate}
                       </span>
                     </div>
@@ -317,20 +323,13 @@ function CertificateResultContent() {
                 </div>
 
                 {/* 증명 문구 */}
-                <p className="text-center text-sm text-[#5a503e] leading-relaxed mb-8">
+                <p className="text-center text-sm text-gray-600 leading-relaxed">
                   귀하는 후불제 상조기업{' '}
-                  <span className="font-bold">예담라이프</span>의<br />
+                  <span className="font-bold text-gray-900">예담라이프</span>의
+                  <br />
                   회원임을 증명합니다.
                 </p>
               </div>
-              {/* 금색 하단 장식 */}
-              <div
-                className="h-1"
-                style={{
-                  background:
-                    'linear-gradient(90deg, #c5a55a, #f0d98c, #c5a55a)',
-                }}
-              />
             </div>
           </div>
 
@@ -401,11 +400,7 @@ function CertificateResultContent() {
                 <div className="mt-5 flex justify-center">
                   <a
                     href={homeUrl}
-                    className="inline-flex items-center gap-1 text-sm font-semibold px-6 py-2.5 rounded-full transition-all hover:opacity-80"
-                    style={{
-                      backgroundColor: BRAND_COLOR_LIGHT,
-                      color: BRAND_COLOR,
-                    }}
+                    className="inline-flex items-center gap-1 text-sm font-semibold px-6 py-2.5 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
                   >
                     자세히보기
                     <ChevronRight className="w-4 h-4" />
@@ -441,68 +436,38 @@ function CertificateResultContent() {
             </div>
           </div>
 
-          {/* ── 4. 긴급 연락처 ── */}
-          <div className="mt-6 animate-fade-in-up animate-delay-3">
-            <div
-              className="rounded-2xl p-5 text-center"
-              style={{
-                background: `linear-gradient(135deg, ${BRAND_COLOR}12, ${BRAND_COLOR}08)`,
-                border: `1px solid ${BRAND_COLOR}20`,
-              }}
+          {/* 하단 고정 버튼 영역 확보용 여백 */}
+          <div className="h-20" />
+        </div>
+
+        {/* ── 5. 하단 고정 액션 버튼 ── */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 sm:pb-4 pointer-events-none safe-area-bottom">
+          <div className="mx-auto max-w-2xl sm:px-6 flex sm:rounded-xl overflow-hidden sm:shadow-xl">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="pointer-events-auto flex-1 h-14 flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-bold text-base cursor-pointer transition-colors"
             >
-              <p className="text-xs text-gray-500 mb-1">
-                전국 365일 24시간 긴급출동
-              </p>
-              <a
-                href="tel:1660-0959"
-                className="inline-flex items-center gap-2 text-xl font-extrabold"
-                style={{ color: BRAND_COLOR }}
-              >
-                <Phone className="w-5 h-5" />
-                1660-0959
-              </a>
-              <p className="text-[10px] text-gray-600 mt-1">예담라이프(주)</p>
-            </div>
+              <Share2 className="w-5 h-5 shrink-0" />
+              <span className="leading-none">공유하기</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCardForm((p) => ({
+                  ...p,
+                  name: name,
+                  phone: formattedPhone,
+                }));
+                setCardSubmitted(false);
+                setShowCardModal(true);
+              }}
+              className="pointer-events-auto flex-1 h-14 flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-800 text-white font-bold text-base cursor-pointer transition-colors"
+            >
+              <CreditCard className="w-5 h-5 shrink-0" />
+              <span className="leading-none">실물카드 수령</span>
+            </button>
           </div>
-
-          {/* ── 5. 하단 액션 버튼 ── */}
-          <div className="mt-8 animate-fade-in-up animate-delay-4">
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={handleShare}
-                className="flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm transition-all hover:opacity-90 cursor-pointer shadow-sm"
-                style={{
-                  backgroundColor: BRAND_COLOR,
-                  color: '#fff',
-                }}
-              >
-                <Share2 className="w-4 h-4" />
-                공유하기
-              </button>
-              <button
-                onClick={() => {
-                  setCardForm((p) => ({
-                    ...p,
-                    name: name,
-                    phone: formattedPhone,
-                  }));
-                  setCardSubmitted(false);
-                  setShowCardModal(true);
-                }}
-                className="flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm transition-all hover:opacity-90 cursor-pointer shadow-sm"
-                style={{
-                  backgroundColor: '#4a90c4',
-                  color: '#fff',
-                }}
-              >
-                <CreditCard className="w-4 h-4" />
-                실물카드수령
-              </button>
-            </div>
-          </div>
-
-          {/* 하단 여백 */}
-          <div className="h-8" />
         </div>
       </div>
 
@@ -627,12 +592,15 @@ function CertificateResultContent() {
                 <button
                   onClick={handleCardSubmit}
                   disabled={
-                    !cardForm.name || !cardForm.phone || !cardForm.address
+                    !cardForm.name ||
+                    !cardForm.phone ||
+                    !cardForm.address ||
+                    cardSubmitting
                   }
                   className="w-full py-3.5 rounded-xl text-white font-bold text-sm transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{ backgroundColor: BRAND_COLOR }}
                 >
-                  실물카드수령 신청
+                  {cardSubmitting ? '신청 중...' : '실물카드수령 신청'}
                 </button>
               </div>
             )}

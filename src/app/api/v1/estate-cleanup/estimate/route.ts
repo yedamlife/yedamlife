@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { sendAlimtalk } from '@/lib/alimtalk';
 
 export async function POST(request: Request) {
   try {
@@ -47,6 +48,24 @@ export async function POST(request: Request) {
         { status: 500 },
       );
     }
+
+    sendAlimtalk(
+      'EC_ESTIMATE',
+      {
+        고객명: body.name,
+        연락처: body.phone,
+        주소: body.address,
+        상세주소: body.address_detail,
+        서비스종류: Array.isArray(body.service_types)
+          ? body.service_types.join(', ')
+          : body.service_types,
+        평수: body.area,
+        층: body.floor,
+        주거형태: body.housing_type,
+        방문희망일: body.visit_date,
+      },
+      { customerPhone: body.phone, host: request.headers.get('host') },
+    ).catch(() => {});
 
     return NextResponse.json({ success: true, data: { id: data.id } }, { status: 201 });
   } catch {

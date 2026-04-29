@@ -1,4 +1,5 @@
 'use client';
+import { CONTACT_TEL_HREF } from '@/constants/contact';
 
 import { useState, useEffect, useRef } from 'react';
 import {
@@ -240,6 +241,22 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
 
   const [activeTip, setActiveTip] = useState(0);
   const [showReservation, setShowReservation] = useState(false);
+  const [reservationDefaults, setReservationDefaults] = useState<{
+    funeralMethod?: 'cremation' | 'burial';
+    people?: '2' | '4' | '6' | '8';
+    region?: '수도권' | '비수도권';
+  }>({});
+
+  const openReservation = (
+    defaults: {
+      funeralMethod?: 'cremation' | 'burial';
+      people?: '2' | '4' | '6' | '8';
+      region?: '수도권' | '비수도권';
+    } = {},
+  ) => {
+    setReservationDefaults(defaults);
+    setShowReservation(true);
+  };
   const [tipDirection, setTipDirection] = useState<'left' | 'right'>('right');
   const tipTouchRef = useRef<number>(0);
 
@@ -319,7 +336,7 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
                   간편 예약하기
                 </button>
                 <a
-                  href="tel:1660-0000"
+                  href={CONTACT_TEL_HREF}
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white/15 text-white text-base font-bold rounded-xl border border-white/30 hover:bg-white/25 transition-colors backdrop-blur-sm cursor-pointer"
                 >
                   <Phone className="w-5 h-5" />
@@ -488,7 +505,12 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {[products.metro, products.nonMetro].map((region) => (
+            {(
+              [
+                { ...products.metro, regionKey: '수도권' as const },
+                { ...products.nonMetro, regionKey: '비수도권' as const },
+              ]
+            ).map((region) => (
               <div
                 key={region.title}
                 className="bg-white rounded-2xl overflow-hidden"
@@ -524,12 +546,35 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
                       >
                         {item.originalPrice}
                       </p>
-                      <p className="text-base sm:text-lg font-extrabold text-gray-900">
+                      <p className="text-base sm:text-lg font-extrabold text-gray-900 mb-4">
                         {item.price}
                         <span className="text-xs font-normal text-gray-500">
                           원
                         </span>
                       </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const peopleMatch = item.people.match(/(\d+)/);
+                          const peopleStr = peopleMatch?.[1];
+                          const peopleVal =
+                            peopleStr === '2' ||
+                            peopleStr === '4' ||
+                            peopleStr === '6' ||
+                            peopleStr === '8'
+                              ? peopleStr
+                              : undefined;
+                          openReservation({
+                            funeralMethod:
+                              item.type === '화장' ? 'cremation' : 'burial',
+                            people: peopleVal,
+                            region: region.regionKey,
+                          });
+                        }}
+                        className="w-full py-2 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors cursor-pointer"
+                      >
+                        {item.type} 간편 예약
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -836,7 +881,7 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
               <span className="relative">간편 예약하기</span>
             </button>
             <a
-              href="tel:1660-0959"
+              href={CONTACT_TEL_HREF}
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-colors cursor-pointer"
             >
               <Phone className="w-5 h-5" />
@@ -849,12 +894,13 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
       <ReservationModal
         open={showReservation}
         onClose={() => setShowReservation(false)}
+        defaults={reservationDefaults}
       />
 
       {/* ── PC 우측 플로팅 사이드바 (sm 이상) ── */}
       <div className="hidden sm:flex fixed right-4 top-1/2 -translate-y-1/2 z-50 flex-col bg-white rounded-[32px] shadow-xl border border-gray-200 overflow-hidden divide-y divide-gray-200">
         <a
-          href="tel:1660-0959"
+          href={CONTACT_TEL_HREF}
           className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
         >
           <Phone className="w-5 h-5 text-gray-700" />
@@ -890,7 +936,7 @@ export function CeremonyService({}: { googleFormUrl?: string }) {
       <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#222] safe-area-bottom">
         <div className="flex items-center divide-x divide-white/20">
           <a
-            href="tel:1660-0959"
+            href={CONTACT_TEL_HREF}
             className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
             <Phone className="w-5 h-5" />

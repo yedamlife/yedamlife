@@ -1,4 +1,5 @@
 'use client';
+import { CONTACT_PHONE, CONTACT_TEL_HREF } from '@/constants/contact';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Menu, X, Phone, ChevronDown, Plus, Bell } from 'lucide-react';
@@ -248,7 +249,7 @@ export function YedamHeader({
             </div>
             <div className="hidden md:flex items-center gap-3">
               <a
-                href="tel:1660-0959"
+                href={CONTACT_TEL_HREF}
                 className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer whitespace-nowrap"
               >
                 <Phone className="w-4 h-4 text-gray-500" />
@@ -257,21 +258,21 @@ export function YedamHeader({
                     빠른상담 신청
                   </span>
                   <span className="text-[13px] font-extrabold text-gray-900">
-                    1660-0959
+                    {CONTACT_PHONE}
                   </span>
                 </div>
               </a>
             </div>
             <div className="flex md:hidden items-center gap-1.5 shrink-0">
               <a
-                href="tel:1660-0959"
+                href={CONTACT_TEL_HREF}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 whitespace-nowrap"
               >
                 <Phone className="w-3 h-3 text-gray-500 shrink-0" />
                 <div className="flex flex-col leading-tight">
                   <span className="text-[9px] text-gray-400">빠른상담</span>
                   <span className="text-[11px] font-bold text-gray-900">
-                    1660-0959
+                    {CONTACT_PHONE}
                   </span>
                 </div>
               </a>

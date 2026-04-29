@@ -1,4 +1,5 @@
 'use client';
+import { CONTACT_PHONE, CONTACT_TEL_HREF } from '@/constants/contact';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -368,7 +369,7 @@ export function YedamLife({
                 </div>
                 <div className="hidden md:flex items-center gap-3">
                   <a
-                    href="tel:1660-0959"
+                    href={CONTACT_TEL_HREF}
                     className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer whitespace-nowrap"
                   >
                     <Phone className="w-4 h-4 text-gray-500" />
@@ -377,7 +378,7 @@ export function YedamLife({
                         빠른상담 신청
                       </span>
                       <span className="text-[13px] font-extrabold text-gray-900">
-                        1660-0959
+                        {CONTACT_PHONE}
                       </span>
                     </div>
                   </a>
@@ -657,7 +658,7 @@ export function YedamLife({
               </a>
             )}
             <a
-              href="tel:1660-0959"
+              href={CONTACT_TEL_HREF}
               className="flex flex-col items-center justify-center w-[60px] py-3 hover:bg-gray-50 transition-colors cursor-pointer"
             >
               <Phone className="w-5 h-5 text-gray-700" />
@@ -734,7 +735,7 @@ export function YedamLife({
           <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#222] safe-area-bottom">
             <div className="flex items-center divide-x divide-white/20">
               <a
-                href="tel:1660-0959"
+                href={CONTACT_TEL_HREF}
                 className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
               >
                 <Phone className="w-5 h-5" />

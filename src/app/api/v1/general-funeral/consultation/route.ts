@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { sendAlimtalk, productLabel } from '@/lib/alimtalk';
 
 export async function POST(request: Request) {
   try {
@@ -52,6 +53,26 @@ export async function POST(request: Request) {
         { success: false, error: 'internal_error', message: '서버 오류가 발생했습니다.' },
         { status: 500 },
       );
+    }
+
+    try {
+      await sendAlimtalk(
+        'GF_CONSULT',
+        {
+          상품: productLabel(body.product || body.funeral_scale),
+          고객명: body.name,
+          연락처: body.phone || body.contact_number,
+          지역: body.region || body.funeral_location,
+          상담시간: body.preferred_time,
+        },
+        {
+          customerPhone: body.phone || body.contact_number,
+          host: request.headers.get('host'),
+          source: { table: 'gf_consultation_requests', id: data.id },
+        },
+      );
+    } catch (e) {
+      console.error('[GF_CONSULT] sendAlimtalk threw', e);
     }
 
     return NextResponse.json({ success: true, data: { id: data.id } }, { status: 201 });

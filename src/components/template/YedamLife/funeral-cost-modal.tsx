@@ -40,6 +40,7 @@ interface FuneralHall {
   parking_count: number;
   full_address: string;
   facility_fees: FacilityFee[];
+  service_items?: FacilityFee[];
   sido_cd: string;
 }
 
@@ -58,6 +59,27 @@ interface FacilityFee {
 function getAreaSqm(fee: FacilityFee): number | null {
   const v = fee['평수_㎡'];
   return typeof v === 'number' && v > 0 ? v : null;
+}
+
+// 사용료 단위 판별
+//  - 시간당 (예: '시간당', '1시간') → 24시간 x 2일 = 48 적용
+//  - 일/24시간 단위 (예: '1일', '24시간 기준', '1실/24시간 기준') → 2일 적용
+//  - 그 외 → 데이터 그대로 사용
+function getFeeMultiplier(fee: FacilityFee): {
+  multiplier: number;
+  unitLabel: string;
+} {
+  const raw = `${fee.임대내용 ?? ''} ${fee.품명 ?? ''} ${
+    typeof fee['서비스내용'] === 'string' ? (fee['서비스내용'] as string) : ''
+  }`;
+  const desc = raw.replace(/\s/g, '');
+  if (/시간당|1시간|시간\/회/.test(desc)) {
+    return { multiplier: 48, unitLabel: '24시간 x 2일' };
+  }
+  if (/24시간|일/.test(desc)) {
+    return { multiplier: 2, unitLabel: '2일' };
+  }
+  return { multiplier: 1, unitLabel: '' };
 }
 
 type FuneralType = '3day' | 'nobinso';
@@ -154,21 +176,148 @@ const SIZE_CATEGORIES: {
 ];
 
 /* ─── 평균 상조비용 상수 ─── */
-const SANGJO_ITEMS_NOBINSO = [
-  { label: '인력지원 (장례지도사, 입관지도사)', price: 500000 },
-  { label: '장의차량 (장의버스, 리무진)', price: 350000 },
-  { label: '고인용품 (수의, 관, 유골함, 횡대, 입관용품)', price: 600000 },
+type SangjoItem = {
+  label: string;
+  price: number;
+  items?: { label: string; price?: number; note?: string }[];
+};
+
+const SANGJO_ITEMS_NOBINSO: SangjoItem[] = [
+  {
+    label: '인력지원 (2명 * 2일)',
+    price: 480000,
+    items: [
+      { label: '장례지도사', price: 240000 },
+      { label: '입관지도사', price: 240000 },
+    ],
+  },
+  {
+    label: '장의차량',
+    price: 900000,
+    items: [
+      { label: '장의버스 1대', price: 450000 },
+      { label: '리무진 1대', price: 450000 },
+    ],
+  },
+  {
+    label: '고인용품',
+    price: 850000,
+    items: [
+      { label: '기본수의 평균', price: 250000 },
+      { label: '관(오동나무 기본) 평균', price: 290000 },
+      { label: '입관 꽃장식 평균', price: 150000 },
+      {
+        label: '고인메이크업 평균',
+        price: 10000,
+      },
+      { label: '영정사진 평균', price: 150000 },
+    ],
+  },
+  {
+    label: '유골함',
+    price: 250000,
+    items: [
+      { label: '도자기 유골함 평균', price: 230000 },
+      { label: '나무 유골함 평균', price: 20000 },
+    ],
+  },
 ];
 
-const SANGJO_ITEMS_3DAY = [
-  { label: '인력지원 (장례지도사, 입관지도사)', price: 500000 },
-  { label: '장의차량 (장의버스, 리무진)', price: 350000 },
-  { label: '고인용품 (수의, 관, 유골함, 횡대, 입관용품, 빈소용품, 헌화)', price: 900000 },
-  { label: '상복 (남자 상복, 여자 상복)', price: 200000 },
+const SANGJO_ITEMS_3DAY: SangjoItem[] = [
+  {
+    label: '인력지원 (2명 * 2일)',
+    price: 480000,
+    items: [
+      { label: '장례지도사', price: 240000 },
+      { label: '입관지도사', price: 240000 },
+    ],
+  },
+  {
+    label: '장의차량',
+    price: 900000,
+    items: [
+      { label: '장의버스 1대', price: 450000 },
+      { label: '리무진 1대', price: 450000 },
+    ],
+  },
+  {
+    label: '고인용품',
+    price: 940000,
+    items: [
+      { label: '기본수의 평균', price: 250000 },
+      { label: '관(오동나무 기본) 평균', price: 290000 },
+      { label: '입관 꽃장식 평균', price: 150000 },
+      {
+        label: '고인메이크업 평균',
+        price: 100000,
+      },
+      { label: '영정사진 평균', price: 150000 },
+    ],
+  },
+  {
+    label: '유골함',
+    price: 250000,
+    items: [
+      { label: '도자기 유골함 평균', price: 230000 },
+      { label: '나무 유골함 평균', price: 20000 },
+    ],
+  },
+  {
+    label: '상복',
+    price: 52000,
+    items: [
+      { label: '남자상복 1벌', price: 30000 },
+      { label: '여자상복 1벌', price: 22000 },
+    ],
+  },
 ];
 
-const SANGJO_TOTAL_NOBINSO = SANGJO_ITEMS_NOBINSO.reduce((s, i) => s + i.price, 0);
+const SANGJO_TOTAL_NOBINSO = SANGJO_ITEMS_NOBINSO.reduce(
+  (s, i) => s + i.price,
+  0,
+);
 const SANGJO_TOTAL_3DAY = SANGJO_ITEMS_3DAY.reduce((s, i) => s + i.price, 0);
+
+// 라이브 통계가 적용되는 sub 라벨 키워드 목록.
+// sub.label에 아래 키워드가 포함되면 stats 로딩 동안 스켈레톤 표시 / 응답 후 ㄴ 라벨 표시.
+const LIVE_STATS_KEYWORDS = [
+  '메이크업',
+  '수의',
+  '남자상복',
+  '여자상복',
+  '장의버스',
+  '리무진',
+  '장례지도사',
+  '입관지도사',
+  '오동나무',
+  '나무 유골함',
+  '도자기 유골함',
+  '영정사진',
+] as const;
+
+const hasLiveStatsLabel = (label: string): boolean =>
+  LIVE_STATS_KEYWORDS.some((k) => label.includes(k));
+
+// 라이브 라벨 안에서 강조할 숫자 색상 (파란색 계열).
+const LIVE_LABEL_HIGHLIGHT = '#2563eb';
+
+// 기본 선택 해제 키: '나무 유골함'은 기본 비선택, '도자기 유골함'이 기본 선택.
+// 두 데이터 구조 모두에서 동일 인덱스를 보장하기 위해 양쪽을 스캔해 합집합으로 처리.
+const createInitialUnselectedSangjoKeys = (): Set<string> => {
+  const set = new Set<string>();
+  const collect = (items: SangjoItem[]) => {
+    items.forEach((item, i) => {
+      item.items?.forEach((sub, j) => {
+        if (sub.label.includes('나무 유골함')) {
+          set.add(`${i}:${j}`);
+        }
+      });
+    });
+  };
+  collect(SANGJO_ITEMS_3DAY);
+  collect(SANGJO_ITEMS_NOBINSO);
+  return set;
+};
 
 const YEDAM_PRODUCTS = [
   {
@@ -283,9 +432,242 @@ export function FuneralCostModal({
   const [selectedFeeIndexes, setSelectedFeeIndexes] = useState<number[]>([]);
   // 결과 화면에서 체크한 시설 사용료 인덱스 (facility_fees 기준)
   const [checkedFeeIndexes, setCheckedFeeIndexes] = useState<number[]>([]);
+  const [checkedEncoffinIndexes, setCheckedEncoffinIndexes] = useState<
+    number[]
+  >([]);
+  const [checkedMortuaryIndexes, setCheckedMortuaryIndexes] = useState<
+    number[]
+  >([]);
   const [showFeeTooltip, setShowFeeTooltip] = useState(true);
   const [feeListOpen, setFeeListOpen] = useState(true);
+  const [encoffinListOpen, setEncoffinListOpen] = useState(true);
+  const [mortuaryListOpen, setMortuaryListOpen] = useState(true);
+  // 상조비용 항목별 선택 해제 키 (예: "0:1" = 인력지원의 입관지도사). 비어있으면 전체 선택.
+  // 단, '나무 유골함'은 기본 비선택 (도자기 유골함이 기본).
+  const [unselectedSangjoKeys, setUnselectedSangjoKeys] = useState<Set<string>>(
+    () => createInitialUnselectedSangjoKeys(),
+  );
+
+  // 메이크업 통계 (실시간 쿼리)
+  const [makeupStats, setMakeupStats] = useState<{
+    hall_count: number;
+    avg_amount: number;
+    median_amount: number;
+  } | null>(null);
+
+  // 수의 통계 (실시간 쿼리)
+  const [shroudStats, setShroudStats] = useState<{
+    hall_count: number;
+    avg_amount: number;
+    median_amount: number;
+  } | null>(null);
+
+  // 상복 통계 (성별 분리)
+  const [mourningStats, setMourningStats] = useState<{
+    male: { hall_count: number; avg_amount: number; median_amount: number };
+    female: { hall_count: number; avg_amount: number; median_amount: number };
+  } | null>(null);
+
+  // 장의버스/리무진 통계
+  const [vehicleStats, setVehicleStats] = useState<{
+    hall_count: number;
+    bus: { avg_amount: number; median_amount: number; sample_count: number };
+    limo: { avg_amount: number; median_amount: number; sample_count: number };
+  } | null>(null);
+
+  // 장례지도사/입관지도사 통계
+  const [directorStats, setDirectorStats] = useState<{
+    hall_count: number;
+    hall_count_exact: number;
+    avg_amount: number;
+    median_amount: number;
+  } | null>(null);
+
+  // 오동나무 관 통계
+  const [coffinStats, setCoffinStats] = useState<{
+    hall_count: number;
+    avg_amount: number;
+    median_amount: number;
+  } | null>(null);
+
+  // 유골함 통계 (재질별: 나무 / 도자기)
+  const [urnStats, setUrnStats] = useState<{
+    hall_count: number;
+    wood: { hall_count: number; avg_amount: number; median_amount: number };
+    ceramic: { hall_count: number; avg_amount: number; median_amount: number };
+  } | null>(null);
+
+  // 영정사진 통계
+  const [portraitStats, setPortraitStats] = useState<{
+    hall_count: number;
+    avg_amount: number;
+    median_amount: number;
+  } | null>(null);
+
+  // 상복 수량 (key: "i:j" → 수량, 기본 1)
+  const [sangjoQuantities, setSangjoQuantities] = useState<
+    Record<string, number>
+  >({});
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (
+      makeupStats &&
+      shroudStats &&
+      mourningStats &&
+      vehicleStats &&
+      directorStats &&
+      coffinStats &&
+      urnStats &&
+      portraitStats
+    )
+      return;
+    fetch('/api/v1/funeral-cost/sangjo-stats')
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j.success || !j.data) return;
+        if (j.data.makeup) setMakeupStats(j.data.makeup);
+        if (j.data.shroud) setShroudStats(j.data.shroud);
+        if (j.data.mourning) setMourningStats(j.data.mourning);
+        if (j.data.vehicle) setVehicleStats(j.data.vehicle);
+        if (j.data.director) setDirectorStats(j.data.director);
+        if (j.data.coffin) setCoffinStats(j.data.coffin);
+        if (j.data.urn) setUrnStats(j.data.urn);
+        if (j.data.portrait) setPortraitStats(j.data.portrait);
+      })
+      .catch(() => {});
+  }, [
+    isOpen,
+    makeupStats,
+    shroudStats,
+    mourningStats,
+    vehicleStats,
+    directorStats,
+    coffinStats,
+    urnStats,
+    portraitStats,
+  ]);
+
+  // 실시간 통계를 적용한 동적 상조 항목 (메이크업, 수의)
+  const applyMakeupStats = useCallback(
+    (items: SangjoItem[]): SangjoItem[] =>
+      items.map((item) => {
+        if (!item.items) return item;
+        const newSubs = item.items.map((sub) => {
+          if (sub.label.includes('메이크업') && makeupStats) {
+            return {
+              ...sub,
+              price: makeupStats.avg_amount,
+              note: `'메이크업 비용' 제공하는 ${makeupStats.hall_count}개 장례식장 실시간 평균 비용`,
+            };
+          }
+          if (sub.label.includes('수의') && shroudStats) {
+            return {
+              ...sub,
+              price: shroudStats.avg_amount,
+              note: `'수의 비용' 제공하는 ${shroudStats.hall_count}개 장례식장 실시간 평균 비용`,
+            };
+          }
+          if (sub.label.includes('남자상복') && mourningStats?.male) {
+            return {
+              ...sub,
+              price: mourningStats.male.median_amount,
+              note: `'남자상복 비용' 제공하는 ${mourningStats.male.hall_count}개 장례식장 실시간 평균 비용`,
+            };
+          }
+          if (sub.label.includes('여자상복') && mourningStats?.female) {
+            return {
+              ...sub,
+              price: mourningStats.female.median_amount,
+              note: `'여자상복 비용' 제공하는 ${mourningStats.female.hall_count}개 장례식장 실시간 평균 비용`,
+            };
+          }
+          if (sub.label.includes('장의버스') && vehicleStats) {
+            return {
+              ...sub,
+              price: vehicleStats.bus.median_amount,
+              note: `'장의버스 비용' 제공하는 ${vehicleStats.hall_count}개 장례식장 실시간 평균 비용`,
+            };
+          }
+          if (sub.label.includes('리무진') && vehicleStats) {
+            return {
+              ...sub,
+              price: vehicleStats.limo.median_amount,
+              note: `'리무진 비용' 제공하는 ${vehicleStats.hall_count}개 장례식장 실시간 평균 비용`,
+            };
+          }
+          if (sub.label.includes('장례지도사') && directorStats) {
+            return {
+              ...sub,
+              price: directorStats.median_amount,
+              note: `'장례지도사 비용' 제공하는 ${directorStats.hall_count}개 장례식장 실시간 평균 비용`,
+            };
+          }
+          if (sub.label.includes('입관지도사') && directorStats) {
+            return {
+              ...sub,
+              price: directorStats.median_amount,
+              note: `'입관지도사 비용' 제공하는 ${directorStats.hall_count}개 장례식장 실시간 평균 비용`,
+            };
+          }
+          if (sub.label.includes('오동나무') && coffinStats) {
+            return {
+              ...sub,
+              price: coffinStats.median_amount,
+              note: `'오동나무 관 비용' 제공하는 ${coffinStats.hall_count}개 장례식장 실시간 평균 비용`,
+            };
+          }
+          if (sub.label.includes('나무 유골함') && urnStats?.wood) {
+            return {
+              ...sub,
+              price: urnStats.wood.median_amount,
+              note: `'나무 유골함 비용' 제공하는 ${urnStats.wood.hall_count}개 장례식장 실시간 평균 비용`,
+            };
+          }
+          if (sub.label.includes('도자기 유골함') && urnStats?.ceramic) {
+            return {
+              ...sub,
+              price: urnStats.ceramic.median_amount,
+              note: `'도자기 유골함 비용' 제공하는 ${urnStats.ceramic.hall_count}개 장례식장 실시간 평균 비용`,
+            };
+          }
+          if (sub.label.includes('영정사진') && portraitStats) {
+            return {
+              ...sub,
+              price: portraitStats.median_amount,
+              note: `'영정사진 비용' 제공하는 ${portraitStats.hall_count}개 장례식장 실시간 평균 비용`,
+            };
+          }
+          return sub;
+        });
+        const newPrice = newSubs.reduce((s, sub) => s + (sub.price ?? 0), 0);
+        return { ...item, items: newSubs, price: newPrice };
+      }),
+    [
+      makeupStats,
+      shroudStats,
+      mourningStats,
+      vehicleStats,
+      directorStats,
+      coffinStats,
+      urnStats,
+      portraitStats,
+    ],
+  );
+
+  const toggleSangjoKey = (key: string) => {
+    setUnselectedSangjoKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
   const [guestCount, setGuestCount] = useState(120);
+
+  // Contact step
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
 
   // ── URL 쿼리 파라미터에서 상태 복원 ──
   useEffect(() => {
@@ -322,7 +704,7 @@ export function FuneralCostModal({
             );
             if (hall) {
               setSelectedHall(hall);
-              const resultStep = fc === '3day' ? 5 : 4;
+              const resultStep = fc === '3day' ? 6 : 5;
               setStep(resultStep);
             }
           }
@@ -333,7 +715,7 @@ export function FuneralCostModal({
   // ── 결과 화면에서 URL 쿼리 파라미터 업데이트 ──
   const syncQueryParams = useCallback(() => {
     if (!selectedHall || !funeralType) return;
-    const resultStep = funeralType === '3day' ? 5 : 4;
+    const resultStep = funeralType === '3day' ? 6 : 5;
     if (step !== resultStep) return;
 
     const params = new URLSearchParams(window.location.search);
@@ -415,8 +797,9 @@ export function FuneralCostModal({
   }, [gungu]);
 
   // 총 스텝 수
-  const totalSteps = funeralType === '3day' ? 5 : 4;
-  const resultStep = funeralType === '3day' ? 5 : 4;
+  const totalSteps = funeralType === '3day' ? 6 : 5;
+  const resultStep = funeralType === '3day' ? 6 : 5;
+  const contactStep = funeralType === '3day' ? 5 : 4;
 
   // 뒤로가기
   const goBack = useCallback(() => {
@@ -424,13 +807,13 @@ export function FuneralCostModal({
       onClose();
       return;
     }
-    // 무빈소: step 4(결과)에서 뒤로가면 step 3
-    if (funeralType === 'nobinso' && step === resultStep) {
+    // 무빈소: contact step(4)에서 뒤로가면 step 3
+    if (funeralType === 'nobinso' && step === contactStep) {
       setStep(3);
     } else {
       setStep(step - 1);
     }
-  }, [step, funeralType, resultStep, onClose]);
+  }, [step, funeralType, contactStep, onClose]);
 
   // 리셋
   const handleClose = () => {
@@ -444,7 +827,13 @@ export function FuneralCostModal({
     setSelectedSize(null);
     setSelectedFeeIndexes([]);
     setCheckedFeeIndexes([]);
+    setCheckedEncoffinIndexes([]);
+    setCheckedMortuaryIndexes([]);
+    setUnselectedSangjoKeys(createInitialUnselectedSangjoKeys());
+    setSangjoQuantities({});
     setGuestCount(120);
+    setName('');
+    setPhone('');
     setShowFeeTooltip(true);
     // URL 파라미터 정리
     const params = new URLSearchParams(window.location.search);
@@ -527,25 +916,151 @@ export function FuneralCostModal({
     [getBinsoFees],
   );
 
+  // 염습/입관 — service_items에서 조회
+  const encoffinCategoryItems = selectedHall?.service_items
+    ? selectedHall.service_items.filter(
+        (f) => f.판매여부 === 'Y' && f.품종 === '염습/입관',
+      )
+    : [];
+
+  // 안치실이용료 — facility_fees에서 조회
+  const mortuaryCategoryItems = selectedHall
+    ? selectedHall.facility_fees.filter(
+        (f) => f.판매여부 === 'Y' && f.품종 === '안치실이용료',
+      )
+    : [];
+
+  // 결과 화면 진입 시 염습/입관 '일반' 항목 자동 체크
+  const encoffinAutoCheckedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selectedHall) return;
+    if (step !== resultStep) return;
+    const key = selectedHall.facility_cd;
+    if (encoffinAutoCheckedRef.current === key) return;
+    if (encoffinCategoryItems.length === 0) return;
+    const idx = encoffinCategoryItems.findIndex((f) => f.품종상세 === '일반');
+    if (idx >= 0 && checkedEncoffinIndexes.length === 0) {
+      setCheckedEncoffinIndexes([idx]);
+    }
+    encoffinAutoCheckedRef.current = key;
+  }, [
+    selectedHall,
+    step,
+    resultStep,
+    encoffinCategoryItems,
+    checkedEncoffinIndexes.length,
+  ]);
+
+  // 결과 화면 진입 시 안치실 최저가 항목 자동 체크
+  const mortuaryAutoCheckedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selectedHall) return;
+    if (step !== resultStep) return;
+    const key = selectedHall.facility_cd;
+    if (mortuaryAutoCheckedRef.current === key) return;
+    if (mortuaryCategoryItems.length === 0) return;
+    let minIdx = 0;
+    for (let i = 1; i < mortuaryCategoryItems.length; i++) {
+      if (mortuaryCategoryItems[i].요금 < mortuaryCategoryItems[minIdx].요금) {
+        minIdx = i;
+      }
+    }
+    if (checkedMortuaryIndexes.length === 0) {
+      setCheckedMortuaryIndexes([minIdx]);
+    }
+    mortuaryAutoCheckedRef.current = key;
+  }, [
+    selectedHall,
+    step,
+    resultStep,
+    mortuaryCategoryItems,
+    checkedMortuaryIndexes.length,
+  ]);
+
   // 비용 계산
   const calcResult = useCallback(() => {
     if (!selectedHall) return null;
     const isMetro = METRO_SIDO.includes(selectedHall.sido_cd);
     const costs = isMetro ? METRO_COSTS : NON_METRO_COSTS;
 
+    // 입관실 사용료 lookup: 1) 염습/입관 '일반' 카테고리, 2) 시설임대료 입관, 3) 평균
+    const defaultEncoffinIdx = encoffinCategoryItems.findIndex(
+      (f) => f.품종상세 === '일반',
+    );
+    const encoffinFromCategory =
+      defaultEncoffinIdx >= 0
+        ? encoffinCategoryItems[defaultEncoffinIdx]
+        : undefined;
+    const encoffinFromFacility = selectedHall.facility_fees.find(
+      (f) =>
+        f.판매여부 === 'Y' &&
+        f.품종 === '시설임대료' &&
+        f.품명.includes('입관'),
+    );
+    let encoffin: number;
+    let encoffinIsAvg: boolean;
+    if (encoffinFromCategory) {
+      encoffin = encoffinFromCategory.요금;
+      encoffinIsAvg = false;
+    } else if (encoffinFromFacility) {
+      encoffin = encoffinFromFacility.요금;
+      encoffinIsAvg = false;
+    } else {
+      encoffin = costs.encoffin;
+      encoffinIsAvg = true;
+    }
+
+    // 염습/입관 추가 선택 (기본 입관실 외 체크한 항목)
+    const extraEncoffinItems = checkedEncoffinIndexes
+      .filter((i) => i !== defaultEncoffinIdx)
+      .map((i) => encoffinCategoryItems[i])
+      .filter((f): f is FacilityFee => Boolean(f));
+    const extraEncoffinTotal = extraEncoffinItems.reduce(
+      (s, f) => s + f.요금,
+      0,
+    );
+
+    const computeSangjoTotal = (items: SangjoItem[]) =>
+      items.reduce((sum, item, i) => {
+        if (item.items && item.items.length > 0) {
+          return (
+            sum +
+            item.items.reduce((s, sub, j) => {
+              const key = `${i}:${j}`;
+              if (unselectedSangjoKeys.has(key)) return s;
+              const qty = sangjoQuantities[key] ?? 1;
+              return s + (sub.price ?? 0) * qty;
+            }, 0)
+          );
+        }
+        if (unselectedSangjoKeys.has(String(i))) return sum;
+        return sum + item.price;
+      }, 0);
+
     if (funeralType === 'nobinso') {
       const transfer = costs.transfer;
       const mortuary = costs.mortuary;
-      const encoffin = costs.encoffin;
-      const basicTotal = transfer + mortuary + encoffin;
-      const sangjoTotal = SANGJO_TOTAL_NOBINSO;
+      const basicTotal = transfer + mortuary + encoffin + extraEncoffinTotal;
+      const sangjoTotal = computeSangjoTotal(
+        applyMakeupStats(SANGJO_ITEMS_NOBINSO),
+      );
       const total = basicTotal + sangjoTotal;
       return {
         funeralType: 'nobinso' as const,
         isMetro,
         transfer,
         mortuary,
+        mortuaryUnit: '',
+        mortuaryIsAvg: true,
+        mortuarySource: undefined as FacilityFee | undefined,
         encoffin,
+        encoffinIsAvg,
+        extraEncoffinItems,
+        extraMortuaryItems: [] as FacilityFee[],
+        selectedFacilityItems: [] as FacilityFee[],
+        selectedEncoffinItems: encoffinFromCategory
+          ? [encoffinFromCategory, ...extraEncoffinItems]
+          : extraEncoffinItems,
         facilityFee: 0,
         food: 0,
         basicTotal,
@@ -559,31 +1074,77 @@ export function FuneralCostModal({
     const facilityFeeItems = selectedHall.facility_fees.filter(
       (f) => f.판매여부 === 'Y' && f.품종 === '시설임대료',
     );
-    const facilityFee =
-      checkedFeeIndexes.reduce(
-        (sum, idx) => sum + (facilityFeeItems[idx]?.요금 ?? 0),
-        0,
-      ) * 3;
+    const facilityFee = checkedFeeIndexes.reduce((sum, idx) => {
+      const fee = facilityFeeItems[idx];
+      if (!fee) return sum;
+      return sum + fee.요금 * getFeeMultiplier(fee).multiplier;
+    }, 0);
 
-    // 입관실 사용료 (장례식장 데이터에서)
-    const encoffinFee = selectedHall.facility_fees.find(
-      (f) => f.판매여부 === 'Y' && f.품명.includes('입관'),
-    );
-    const encoffin = encoffinFee?.요금 ?? costs.encoffin;
+    // 안치실 사용료 lookup: 1) 체크된 항목, 2) 안치실이용료 카테고리 최저가, 3) facility_fees 안치, 4) 평균
+    const checkedMortuaryItem =
+      checkedMortuaryIndexes.length > 0
+        ? mortuaryCategoryItems[checkedMortuaryIndexes[0]]
+        : undefined;
+    const cheapestMortuaryItem =
+      mortuaryCategoryItems.length > 0
+        ? mortuaryCategoryItems.reduce((min, f) =>
+            f.요금 < min.요금 ? f : min,
+          )
+        : undefined;
+    const mortuaryFromFacility = !cheapestMortuaryItem
+      ? selectedHall.facility_fees.find(
+          (f) =>
+            f.판매여부 === 'Y' &&
+            f.품종 !== '안치실이용료' &&
+            f.품명.includes('안치'),
+        )
+      : undefined;
+    const mortuarySource =
+      checkedMortuaryItem ?? cheapestMortuaryItem ?? mortuaryFromFacility;
+    const mortuaryUnit = mortuarySource
+      ? getFeeMultiplier(mortuarySource).unitLabel
+      : '';
+    const mortuary = mortuarySource
+      ? mortuarySource.요금 * getFeeMultiplier(mortuarySource).multiplier
+      : costs.mortuary;
+    const extraMortuaryItems: FacilityFee[] = [];
+    const extraMortuaryTotal = 0;
 
     const transfer = costs.transfer;
-    const mortuary = costs.mortuary * 3;
     const food = costs.food * guestCount;
-    const basicTotal = facilityFee + encoffin + transfer + mortuary + food;
-    const sangjoTotal = SANGJO_TOTAL_3DAY;
+    const basicTotal =
+      facilityFee +
+      encoffin +
+      transfer +
+      mortuary +
+      food +
+      extraEncoffinTotal +
+      extraMortuaryTotal;
+    const sangjoTotal = computeSangjoTotal(applyMakeupStats(SANGJO_ITEMS_3DAY));
     const total = basicTotal + sangjoTotal;
+
+    const selectedFacilityItems = checkedFeeIndexes
+      .map((i) => facilityFeeItems[i])
+      .filter((f): f is FacilityFee => Boolean(f));
+    const selectedEncoffinItems = [
+      ...(encoffinFromCategory ? [encoffinFromCategory] : []),
+      ...extraEncoffinItems,
+    ];
 
     return {
       funeralType: '3day' as const,
       isMetro,
       transfer,
       mortuary,
+      mortuaryUnit,
+      mortuaryIsAvg: !mortuarySource,
+      mortuarySource,
       encoffin,
+      encoffinIsAvg,
+      extraEncoffinItems,
+      extraMortuaryItems,
+      selectedFacilityItems,
+      selectedEncoffinItems,
       facilityFee,
       food,
       basicTotal,
@@ -597,7 +1158,14 @@ export function FuneralCostModal({
     selectedSize,
     selectedFeeIndexes,
     checkedFeeIndexes,
+    checkedEncoffinIndexes,
+    checkedMortuaryIndexes,
+    encoffinCategoryItems,
+    mortuaryCategoryItems,
     guestCount,
+    unselectedSangjoKeys,
+    sangjoQuantities,
+    applyMakeupStats,
     hasAreaData,
     getFeesForSize,
     getBinsoFees,
@@ -721,7 +1289,11 @@ export function FuneralCostModal({
                 </h3>
                 {(sido || gungu) && (
                   <button
-                    onClick={() => { setSido(''); setGungu(''); setSelectedHall(null); }}
+                    onClick={() => {
+                      setSido('');
+                      setGungu('');
+                      setSelectedHall(null);
+                    }}
                     className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 cursor-pointer"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
@@ -836,7 +1408,7 @@ export function FuneralCostModal({
                         setSelectedSize('small');
                         setGuestCount(SIZE_CATEGORIES[0].defaultGuests);
                       } else {
-                        setStep(resultStep);
+                        setStep(contactStep);
                       }
                     }}
                     className="w-full p-4 rounded-xl border border-gray-200 text-left cursor-pointer hover:border-gray-400 transition-colors"
@@ -956,20 +1528,54 @@ export function FuneralCostModal({
                   명이 일반적입니다.
                 </p>
               )}
-
-              {/* 다음 버튼 */}
-              <button
-                onClick={() => setStep(5)}
-                disabled={!selectedSize}
-                className="w-full py-3 rounded-xl text-white font-bold text-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ backgroundColor: BRAND_COLOR }}
-              >
-                예상 비용 확인하기
-              </button>
             </div>
           )}
 
-          {/* ── Step 5 (or 4 for 무빈소): 결과 ── */}
+          {/* ── Contact step: 이름 + 전화번호 ── */}
+          {step === contactStep && selectedHall && (
+            <div>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
+                선택하신 장례식장 정보와
+                <br />
+                주변 장지까지 함께 보내드려요.
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                {selectedHall.company_name}
+              </p>
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    이름
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="이름을 입력해주세요"
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    전화번호
+                  </label>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    value={phone}
+                    onChange={(e) =>
+                      setPhone(e.target.value.replace(/\D/g, ''))
+                    }
+                    placeholder="숫자만 입력해주세요 (예: 01012345678)"
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── 결과 ── */}
           {step === resultStep &&
             selectedHall &&
             (() => {
@@ -981,7 +1587,7 @@ export function FuneralCostModal({
               return (
                 <div>
                   {/* 총 예상비용 */}
-                  <div className="text-center mb-4">
+                  <div className="text-center mb-4 mt-4">
                     <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
                       총 장례 예상비용
                     </h3>
@@ -993,116 +1599,8 @@ export function FuneralCostModal({
                     </p>
                   </div>
 
-                  {/* ── 장례식장 기본 비용 ── */}
-                  {(() => {
-                    const facilityFeeItems = selectedHall.facility_fees.filter(
-                      (f) => f.판매여부 === 'Y' && f.품종 === '시설임대료',
-                    );
-                    const checkedTotal = checkedFeeIndexes.reduce(
-                      (sum, i) => sum + (facilityFeeItems[i]?.요금 ?? 0),
-                      0,
-                    );
-                    const hasBinsoSelected =
-                      funeralType === '3day' && checkedFeeIndexes.length > 0;
-
-                    return (
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-bold text-gray-700">장례식장 기본 비용</p>
-                          <p className="text-sm font-bold" style={{ color: BRAND_COLOR }}>
-                            {result.basicTotal.toLocaleString()}원
-                          </p>
-                        </div>
-                        <div className="border border-gray-200 rounded-xl overflow-hidden text-sm">
-                          {funeralType === '3day' && (
-                            <div className="px-4 py-2.5 flex justify-between items-center border-b border-gray-100">
-                              <span className="text-gray-600">
-                                빈소 사용료 (3일)
-                              </span>
-                              {hasBinsoSelected ? (
-                                <span className="font-semibold text-gray-900 text-right">
-                                  <span className="text-xs text-gray-400">
-                                    {checkedTotal.toLocaleString()} x 3일 ={' '}
-                                  </span>
-                                  {(checkedTotal * 3).toLocaleString()}원
-                                </span>
-                              ) : (
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
-                                  선택 필요
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          <div className="px-4 py-2.5 flex justify-between border-b border-gray-100">
-                            <span className="text-gray-600">입관실 사용료</span>
-                            <span className="font-semibold text-gray-900">
-                              <span className="text-xs text-gray-400 mr-1">평균</span>
-                              {result.encoffin.toLocaleString()}원
-                            </span>
-                          </div>
-                          <div className="px-4 py-2.5 flex justify-between border-b border-gray-100">
-                            <span className="text-gray-600">고인 이송비</span>
-                            <span className="font-semibold text-gray-900">
-                              <span className="text-xs text-gray-400 mr-1">평균</span>
-                              {result.transfer.toLocaleString()}원
-                            </span>
-                          </div>
-                          <div className="px-4 py-2.5 flex justify-between border-b border-gray-100">
-                            <span className="text-gray-600">
-                              안치실 안치료{funeralType === '3day' ? ' (3일)' : ''}
-                            </span>
-                            <span className="font-semibold text-gray-900">
-                              <span className="text-xs text-gray-400 mr-1">평균</span>
-                              {result.mortuary.toLocaleString()}원
-                            </span>
-                          </div>
-                          {funeralType === '3day' && (
-                            <div className="px-4 py-2.5 flex justify-between">
-                              <span className="text-gray-600">
-                                음식비 ({guestCount}명 x{' '}
-                                {(result.isMetro ? METRO_COSTS : NON_METRO_COSTS).food.toLocaleString()}원)
-                              </span>
-                              <span className="font-semibold text-gray-900">
-                                <span className="text-xs text-gray-400 mr-1">평균</span>
-                                {result.food.toLocaleString()}원
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* ── 장례식장 평균 상조비용 ── */}
-                  {(() => {
-                    const isNobinso = funeralType === 'nobinso';
-                    const sangjoItems = isNobinso ? SANGJO_ITEMS_NOBINSO : SANGJO_ITEMS_3DAY;
-
-                    return (
-                      <div className="mb-5">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-bold text-gray-700">장례식장 평균 상조비용</p>
-                          <p className="text-sm font-bold" style={{ color: BRAND_COLOR }}>
-                            <span className="text-xs text-gray-400 mr-1">평균</span>
-                            {result.sangjoTotal.toLocaleString()}원
-                          </p>
-                        </div>
-                        <div className="border border-gray-200 rounded-xl overflow-hidden text-sm">
-                          {sangjoItems.map((item, i) => (
-                            <div
-                              key={i}
-                              className={`px-4 py-2.5 text-gray-600 ${i < sangjoItems.length - 1 ? 'border-b border-gray-100' : ''}`}
-                            >
-                              {item.label}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
-
                   {/* 선택 정보 */}
-                  <div className="bg-gray-50 rounded-xl p-4 mb-5 text-sm text-gray-600">
+                  <div className="bg-gray-50 rounded-xl p-4 mb-4 text-sm text-gray-600">
                     <div className="flex justify-between mb-1">
                       <span className="text-gray-400">장례식장</span>
                       <span className="font-semibold text-gray-900">
@@ -1127,6 +1625,516 @@ export function FuneralCostModal({
                     )}
                   </div>
 
+                  {/* ── 장례식장 기본 비용 ── */}
+                  {(() => {
+                    const facilityFeeItems = selectedHall.facility_fees.filter(
+                      (f) => f.판매여부 === 'Y' && f.품종 === '시설임대료',
+                    );
+                    const checkedDetails = checkedFeeIndexes
+                      .map((i) => facilityFeeItems[i])
+                      .filter((f): f is FacilityFee => Boolean(f))
+                      .map((f) => ({ fee: f, ...getFeeMultiplier(f) }));
+                    const checkedTotal = checkedDetails.reduce(
+                      (sum, d) => sum + d.fee.요금 * d.multiplier,
+                      0,
+                    );
+                    const allHourly =
+                      checkedDetails.length > 0 &&
+                      checkedDetails.every((d) => d.multiplier === 48);
+                    const allDaily =
+                      checkedDetails.length > 0 &&
+                      checkedDetails.every((d) => d.multiplier === 3);
+                    const unitLabel = allHourly
+                      ? '24시간 x 2일'
+                      : allDaily
+                        ? '3일'
+                        : '';
+                    const hasBinsoSelected =
+                      funeralType === '3day' && checkedFeeIndexes.length > 0;
+
+                    return (
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-base font-bold text-gray-700">
+                            장례식장 이용료
+                          </p>
+                          <p
+                            className="text-base font-bold"
+                            style={{ color: BRAND_COLOR }}
+                          >
+                            {result.basicTotal.toLocaleString()}원
+                          </p>
+                        </div>
+                        <p className="text-xs text-gray-500 -mt-2 mb-4 mt-2 pl-1">
+                          * <span className="font-semibold">실제비용</span>은
+                          아래{' '}
+                          <span className="font-semibold">‘전부 확인하기’</span>{' '}
+                          버튼을 눌러 세부 항목과 금액을 한 번 더 확인해 주세요.
+                        </p>
+                        <div className="border border-gray-200 rounded-xl overflow-hidden text-sm">
+                          {funeralType === '3day' && (
+                            <div className="px-4 py-2.5 border-b border-gray-100">
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-600 flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
+                                    필수
+                                  </span>
+                                  빈소 사용료{' '}
+                                  <span className="text-xs text-gray-500">
+                                    (2일)
+                                  </span>
+                                </span>
+                                {hasBinsoSelected ? (
+                                  <span className="font-semibold text-gray-900 flex items-center gap-1.5">
+                                    <span
+                                      className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold text-white"
+                                      style={{ backgroundColor: BRAND_COLOR }}
+                                    >
+                                      실제비용
+                                    </span>
+                                    {checkedTotal.toLocaleString()}원
+                                  </span>
+                                ) : (
+                                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
+                                    선택 필요
+                                  </span>
+                                )}
+                              </div>
+                              {result.selectedFacilityItems?.map((f, i) => (
+                                <p
+                                  key={`bs-${i}`}
+                                  className="text-xs text-gray-400 mt-1 pl-6"
+                                >
+                                  ㄴ {f.품명}
+                                </p>
+                              ))}
+                              <button
+                                onClick={() => {
+                                  setFeeListOpen(true);
+                                  setTimeout(() => {
+                                    document
+                                      .getElementById('fc-table-binso')
+                                      ?.scrollIntoView({
+                                        behavior: 'smooth',
+                                        block: 'start',
+                                      });
+                                  }, 0);
+                                }}
+                                className="mt-2 ml-6 text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer transition-colors"
+                              >
+                                빈소 전부 확인하기
+                              </button>
+                            </div>
+                          )}
+                          <div className="px-4 py-2.5 border-b border-gray-100">
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600 flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
+                                  필수
+                                </span>
+                                안치실 이용료{' '}
+                                <span className="text-xs text-gray-500">
+                                  (2일)
+                                </span>
+                              </span>
+                              <span className="font-semibold text-gray-900 flex items-center gap-1.5">
+                                {result.mortuaryIsAvg ? (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
+                                    평균비용
+                                  </span>
+                                ) : (
+                                  <span
+                                    className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold text-white"
+                                    style={{ backgroundColor: BRAND_COLOR }}
+                                  >
+                                    실제비용
+                                  </span>
+                                )}
+                                {result.mortuary.toLocaleString()}원
+                              </span>
+                            </div>
+                            {result.mortuarySource && (
+                              <p className="text-xs text-gray-400 mt-1 pl-6">
+                                ㄴ {result.mortuarySource.품명}
+                              </p>
+                            )}
+                            {!result.mortuaryIsAvg &&
+                              mortuaryCategoryItems.length > 0 && (
+                                <button
+                                  onClick={() => {
+                                    setMortuaryListOpen(true);
+                                    setTimeout(() => {
+                                      document
+                                        .getElementById('fc-table-mortuary')
+                                        ?.scrollIntoView({
+                                          behavior: 'smooth',
+                                          block: 'start',
+                                        });
+                                    }, 0);
+                                  }}
+                                  className="mt-2 ml-6 text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer transition-colors"
+                                >
+                                  안치실 전부 확인하기
+                                </button>
+                              )}
+                          </div>
+                          <div className="px-4 py-2.5 border-b border-gray-100">
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600 flex items-center gap-1.5">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
+                                  필수
+                                </span>
+                                염습/입관
+                              </span>
+                              <span className="font-semibold text-gray-900 flex items-center gap-1.5">
+                                {result.encoffinIsAvg ? (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
+                                    평균비용
+                                  </span>
+                                ) : (
+                                  <span
+                                    className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold text-white"
+                                    style={{ backgroundColor: BRAND_COLOR }}
+                                  >
+                                    실제비용
+                                  </span>
+                                )}
+                                {(
+                                  result.encoffin +
+                                  (result.extraEncoffinItems?.reduce(
+                                    (s, f) => s + f.요금,
+                                    0,
+                                  ) ?? 0)
+                                ).toLocaleString()}
+                                원
+                              </span>
+                            </div>
+                            {result.selectedEncoffinItems?.map((f, i) => (
+                              <p
+                                key={`en-${i}`}
+                                className="text-xs text-gray-400 mt-1 pl-6"
+                              >
+                                ㄴ {f.품명}
+                              </p>
+                            ))}
+                            {!result.encoffinIsAvg &&
+                              encoffinCategoryItems.length > 0 && (
+                                <button
+                                  onClick={() => {
+                                    setEncoffinListOpen(true);
+                                    setTimeout(() => {
+                                      document
+                                        .getElementById('fc-table-encoffin')
+                                        ?.scrollIntoView({
+                                          behavior: 'smooth',
+                                          block: 'start',
+                                        });
+                                    }, 0);
+                                  }}
+                                  className="mt-2 ml-6 text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer transition-colors"
+                                >
+                                  염습/입관 전부 확인하기
+                                </button>
+                              )}
+                          </div>
+                          <div className="px-4 py-2.5 flex justify-between items-center border-b border-gray-100">
+                            <span className="text-gray-600 flex items-center gap-1.5">
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
+                                필수
+                              </span>
+                              고인 이송비
+                            </span>
+                            <span className="font-semibold text-gray-900 flex items-center gap-1.5">
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
+                                평균비용
+                              </span>
+                              {result.transfer.toLocaleString()}원
+                            </span>
+                          </div>
+                          {funeralType === '3day' && (
+                            <div className="px-4 py-2.5 flex justify-between items-center">
+                              <span className="text-gray-600 flex items-center gap-1.5">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
+                                  필수
+                                </span>
+                                음식비 ({guestCount}명 x{' '}
+                                {(result.isMetro
+                                  ? METRO_COSTS
+                                  : NON_METRO_COSTS
+                                ).food.toLocaleString()}
+                                원)
+                              </span>
+                              <span className="font-semibold text-gray-900 flex items-center gap-1.5">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
+                                  평균비용
+                                </span>
+                                {result.food.toLocaleString()}원
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── 장례식장 평균 상조비용 ── */}
+                  {(() => {
+                    const isNobinso = funeralType === 'nobinso';
+                    const sangjoItems = applyMakeupStats(
+                      isNobinso ? SANGJO_ITEMS_NOBINSO : SANGJO_ITEMS_3DAY,
+                    );
+
+                    return (
+                      <div className="mt-6 mb-5">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-base font-bold text-gray-700">
+                            장례식장 상조비용
+                          </p>
+                          <p
+                            className="text-base font-bold flex items-center gap-1.5"
+                            style={{ color: BRAND_COLOR }}
+                          >
+                            {result.sangjoTotal.toLocaleString()}원
+                          </p>
+                        </div>
+                        <div className="border border-gray-200 rounded-xl overflow-hidden text-sm">
+                          {sangjoItems.map((item, i) => {
+                            const hasSubs = !!item.items?.length;
+                            const parentKey = String(i);
+                            const parentSelected = hasSubs
+                              ? item.items!.some(
+                                  (_, j) =>
+                                    !unselectedSangjoKeys.has(`${i}:${j}`),
+                                )
+                              : !unselectedSangjoKeys.has(parentKey);
+                            const parentTotal = hasSubs
+                              ? item.items!.reduce((s, sub, j) => {
+                                  const key = `${i}:${j}`;
+                                  if (unselectedSangjoKeys.has(key)) return s;
+                                  const qty = sangjoQuantities[key] ?? 1;
+                                  return s + (sub.price ?? 0) * qty;
+                                }, 0)
+                              : parentSelected
+                                ? item.price
+                                : 0;
+                            return (
+                              <div
+                                key={i}
+                                className={`px-4 py-4 text-gray-600 ${i < sangjoItems.length - 1 ? 'border-b border-gray-100' : ''}`}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (hasSubs) {
+                                      setUnselectedSangjoKeys((prev) => {
+                                        const next = new Set(prev);
+                                        if (parentSelected) {
+                                          item.items!.forEach((_, j) =>
+                                            next.add(`${i}:${j}`),
+                                          );
+                                        } else {
+                                          item.items!.forEach((_, j) =>
+                                            next.delete(`${i}:${j}`),
+                                          );
+                                        }
+                                        return next;
+                                      });
+                                    } else {
+                                      toggleSangjoKey(parentKey);
+                                    }
+                                  }}
+                                  className="w-full flex justify-between items-center cursor-pointer text-left"
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <span
+                                      className="w-4 h-4 rounded-sm border-2 flex items-center justify-center shrink-0"
+                                      style={{
+                                        borderColor: parentSelected
+                                          ? BRAND_COLOR
+                                          : '#d1d5db',
+                                        backgroundColor: parentSelected
+                                          ? BRAND_COLOR
+                                          : 'transparent',
+                                      }}
+                                    >
+                                      {parentSelected && (
+                                        <Check className="w-3 h-3 text-white" />
+                                      )}
+                                    </span>
+                                    {item.label}
+                                  </span>
+                                  <span className="font-semibold text-gray-900">
+                                    {parentTotal.toLocaleString()}원
+                                  </span>
+                                </button>
+                                {item.items?.map((sub, j) => {
+                                  const subKey = `${i}:${j}`;
+                                  const subSelected =
+                                    !unselectedSangjoKeys.has(subKey);
+                                  const supportsQty = /1벌|1대/.test(sub.label);
+                                  const qty = sangjoQuantities[subKey] ?? 1;
+                                  return (
+                                    <div key={j}>
+                                      <div className="w-full mt-3 pl-4 flex items-center gap-2 text-[13px]">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            toggleSangjoKey(subKey)
+                                          }
+                                          className="flex items-center gap-2 cursor-pointer text-left flex-1 min-w-0"
+                                        >
+                                          <span
+                                            className="w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center shrink-0"
+                                            style={{
+                                              borderColor: subSelected
+                                                ? BRAND_COLOR
+                                                : '#d1d5db',
+                                              backgroundColor: subSelected
+                                                ? BRAND_COLOR
+                                                : 'transparent',
+                                            }}
+                                          >
+                                            {subSelected && (
+                                              <Check className="w-2.5 h-2.5 text-white" />
+                                            )}
+                                          </span>
+                                          <span
+                                            className={
+                                              subSelected
+                                                ? 'text-gray-600'
+                                                : 'text-gray-400 line-through'
+                                            }
+                                          >
+                                            {sub.label}
+                                            {typeof sub.price === 'number' && (
+                                              <span
+                                                className={`ml-1 font-bold ${subSelected ? 'text-gray-900' : 'text-gray-400'}`}
+                                              >
+                                                {sub.price.toLocaleString()}원
+                                                {supportsQty && qty > 1 && (
+                                                  <span className="ml-1 text-gray-500 font-normal">
+                                                    × {qty} ={' '}
+                                                    {(
+                                                      sub.price * qty
+                                                    ).toLocaleString()}
+                                                    원
+                                                  </span>
+                                                )}
+                                              </span>
+                                            )}
+                                          </span>
+                                        </button>
+                                        {supportsQty && subSelected && (
+                                          <div className="shrink-0 flex items-center gap-1.5 border border-gray-200 rounded-full px-1 py-0.5">
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                setSangjoQuantities((prev) => ({
+                                                  ...prev,
+                                                  [subKey]: Math.max(
+                                                    1,
+                                                    (prev[subKey] ?? 1) - 1,
+                                                  ),
+                                                }))
+                                              }
+                                              disabled={qty <= 1}
+                                              className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed text-sm leading-none"
+                                            >
+                                              −
+                                            </button>
+                                            <span className="text-xs font-semibold text-gray-900 min-w-[1ch] text-center">
+                                              {qty}
+                                            </span>
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                setSangjoQuantities((prev) => ({
+                                                  ...prev,
+                                                  [subKey]:
+                                                    (prev[subKey] ?? 1) + 1,
+                                                }))
+                                              }
+                                              className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-900 cursor-pointer text-sm leading-none"
+                                            >
+                                              +
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                      {sub.note ? (
+                                        <div className="mt-2 ml-[1.4rem]">
+                                          <div className="flex items-start gap-1.5">
+                                            <span className="text-[11px] text-gray-400 leading-relaxed">
+                                              ㄴ
+                                            </span>
+                                            <span className="inline-flex items-center text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                              {sub.note
+                                                .split('\n')[0]
+                                                .split(
+                                                  /(\d{1,3}(?:,\d{3})*(?:건|개|원))/,
+                                                )
+                                                .map((part, k) =>
+                                                  /^\d{1,3}(?:,\d{3})*(?:건|개|원)$/.test(
+                                                    part,
+                                                  ) ? (
+                                                    <span
+                                                      key={k}
+                                                      className="font-extrabold mx-0.5"
+                                                      style={{
+                                                        color:
+                                                          LIVE_LABEL_HIGHLIGHT,
+                                                      }}
+                                                    >
+                                                      {part}
+                                                    </span>
+                                                  ) : (
+                                                    <React.Fragment key={k}>
+                                                      {part}
+                                                    </React.Fragment>
+                                                  ),
+                                                )}
+                                            </span>
+                                          </div>
+                                          {sub.note
+                                            .split('\n')
+                                            .slice(1)
+                                            .map((line, k) => (
+                                              <p
+                                                key={k}
+                                                className="mt-1 ml-3 text-[11px] text-gray-400 leading-relaxed"
+                                              >
+                                                {line}
+                                              </p>
+                                            ))}
+                                        </div>
+                                      ) : hasLiveStatsLabel(sub.label) ? (
+                                        <div
+                                          className="mt-2 ml-[1.4rem]"
+                                          aria-busy="true"
+                                          aria-label="실시간 평균 비용 불러오는 중"
+                                        >
+                                          <div className="flex items-start gap-1.5">
+                                            <span className="text-[11px] text-gray-400 leading-relaxed">
+                                              ㄴ
+                                            </span>
+                                            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-full bg-gray-100">
+                                              <span className="inline-block h-2.5 w-24 rounded-full bg-gray-200 animate-pulse" />
+                                              <span className="inline-block h-2.5 w-10 rounded-full bg-gray-200 animate-pulse" />
+                                            </span>
+                                          </div>
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* 시설 사용료 전체 리스트 — 체크박스로 선택 (3일장만) */}
                   {funeralType === '3day' &&
                     (() => {
@@ -1135,41 +2143,38 @@ export function FuneralCostModal({
                           (f) => f.판매여부 === 'Y' && f.품종 === '시설임대료',
                         );
                       const checkedTotal = checkedFeeIndexes.reduce(
-                        (sum, idx) => sum + (facilityFeeItems[idx]?.요금 ?? 0),
+                        (sum, idx) => {
+                          const f = facilityFeeItems[idx];
+                          if (!f) return sum;
+                          return sum + f.요금 * getFeeMultiplier(f).multiplier;
+                        },
                         0,
                       );
 
                       return (
-                        <div className="relative border border-gray-200 rounded-xl overflow-hidden mb-4">
+                        <div
+                          id="fc-table-binso"
+                          className="relative border border-gray-200 rounded-xl overflow-hidden mb-4 scroll-mt-4"
+                        >
                           {/* 아코디언 헤더 */}
                           <button
                             onClick={() => setFeeListOpen(!feeListOpen)}
                             className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
                           >
                             <div className="flex flex-col items-start gap-0.5">
-                              <span className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
+                              <span className="text-sm font-bold text-gray-700">
                                 시설 사용료
-                                {selectedSize && (
-                                  <span
-                                    className="text-xs font-bold"
-                                    style={{ color: BRAND_COLOR }}
-                                  >
-                                    {
-                                      SIZE_CATEGORIES.find(
-                                        (c) => c.key === selectedSize,
-                                      )?.label
-                                    }{' '}
-                                    추천
-                                  </span>
-                                )}
+                              </span>
+                              <span className="text-xs">
+                                (빈소와 접객실이 분리되어 있는 경우에는 2개를
+                                선택해주세요)
                               </span>
                               {checkedFeeIndexes.length > 0 && (
                                 <span
                                   className="text-xs font-semibold"
                                   style={{ color: BRAND_COLOR }}
                                 >
-                                  선택 합계:{' '}
-                                  {(checkedTotal * 3).toLocaleString()}원 (3일)
+                                  선택 합계: {checkedTotal.toLocaleString()}원
                                 </span>
                               )}
                               {checkedFeeIndexes.length === 0 && (
@@ -1351,6 +2356,256 @@ export function FuneralCostModal({
                       );
                     })()}
 
+                  {/* 안치실이용료 항목 — 데이터 있을 때만 노출 */}
+                  {mortuaryCategoryItems.length > 0 && (
+                    <div
+                      id="fc-table-mortuary"
+                      className="border border-gray-200 rounded-xl overflow-hidden mb-4 scroll-mt-4"
+                    >
+                      <button
+                        onClick={() => setMortuaryListOpen(!mortuaryListOpen)}
+                        className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex flex-col items-start gap-0.5">
+                          <span className="text-sm font-bold text-gray-700">
+                            안치실 이용료
+                          </span>
+                          {checkedMortuaryIndexes.length > 0 && (
+                            <span
+                              className="text-xs font-semibold"
+                              style={{ color: BRAND_COLOR }}
+                            >
+                              선택 합계:{' '}
+                              {checkedMortuaryIndexes
+                                .reduce(
+                                  (s, i) =>
+                                    s + (mortuaryCategoryItems[i]?.요금 ?? 0),
+                                  0,
+                                )
+                                .toLocaleString()}
+                              원
+                            </span>
+                          )}
+                        </div>
+                        <ChevronDown
+                          className="w-5 h-5 text-gray-400 shrink-0 transition-transform"
+                          style={{
+                            transform: mortuaryListOpen
+                              ? 'rotate(180deg)'
+                              : 'rotate(0)',
+                          }}
+                        />
+                      </button>
+                      {mortuaryListOpen &&
+                        (() => {
+                          let cheapestIdx = 0;
+                          for (
+                            let i = 1;
+                            i < mortuaryCategoryItems.length;
+                            i++
+                          ) {
+                            if (
+                              mortuaryCategoryItems[i].요금 <
+                              mortuaryCategoryItems[cheapestIdx].요금
+                            ) {
+                              cheapestIdx = i;
+                            }
+                          }
+                          const effectiveIdx =
+                            checkedMortuaryIndexes.length > 0
+                              ? checkedMortuaryIndexes[0]
+                              : cheapestIdx;
+                          return mortuaryCategoryItems.map((fee, idx) => {
+                            const isChecked = effectiveIdx === idx;
+                            const desc =
+                              fee.임대내용 ||
+                              (typeof fee['서비스내용'] === 'string'
+                                ? (fee['서비스내용'] as string)
+                                : '');
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => setCheckedMortuaryIndexes([idx])}
+                                className="w-full px-4 py-2.5 flex items-center gap-3 text-sm border-t border-gray-100 text-left cursor-pointer transition-colors"
+                                style={
+                                  isChecked
+                                    ? { backgroundColor: '#e8eddf' }
+                                    : undefined
+                                }
+                              >
+                                <div
+                                  className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0"
+                                  style={{
+                                    borderColor: isChecked
+                                      ? BRAND_COLOR
+                                      : '#d1d5db',
+                                    backgroundColor: isChecked
+                                      ? BRAND_COLOR
+                                      : 'transparent',
+                                  }}
+                                >
+                                  {isChecked && (
+                                    <Check className="w-3 h-3 text-white" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <span
+                                    className={
+                                      isChecked
+                                        ? 'font-bold text-gray-900'
+                                        : 'text-gray-600'
+                                    }
+                                  >
+                                    {fee.품명}
+                                  </span>
+                                  {desc && (
+                                    <p className="text-xs text-gray-400 mt-0.5">
+                                      {desc}
+                                    </p>
+                                  )}
+                                </div>
+                                <span
+                                  className={`shrink-0 ml-3 ${isChecked ? 'font-bold text-gray-900' : 'text-gray-500'}`}
+                                >
+                                  {fee.요금_표시}원
+                                </span>
+                              </button>
+                            );
+                          });
+                        })()}
+                    </div>
+                  )}
+
+                  {/* 염습/입관 항목 — 데이터 있을 때만 노출 */}
+                  {encoffinCategoryItems.length > 0 && (
+                    <div
+                      id="fc-table-encoffin"
+                      className="border border-gray-200 rounded-xl overflow-hidden mb-4 scroll-mt-4"
+                    >
+                      <button
+                        onClick={() => setEncoffinListOpen(!encoffinListOpen)}
+                        className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex flex-col items-start gap-0.5">
+                          <span className="text-sm font-bold text-gray-700">
+                            염습/입관
+                          </span>
+                          {(() => {
+                            const defaultIdx = encoffinCategoryItems.findIndex(
+                              (f) => f.품종상세 === '일반',
+                            );
+                            const effectiveIdxs =
+                              checkedEncoffinIndexes.length > 0
+                                ? checkedEncoffinIndexes
+                                : defaultIdx >= 0
+                                  ? [defaultIdx]
+                                  : [];
+                            if (effectiveIdxs.length === 0) return null;
+                            const sum = effectiveIdxs.reduce(
+                              (s, i) =>
+                                s + (encoffinCategoryItems[i]?.요금 ?? 0),
+                              0,
+                            );
+                            return (
+                              <span
+                                className="text-xs font-semibold"
+                                style={{ color: BRAND_COLOR }}
+                              >
+                                선택 합계: {sum.toLocaleString()}원
+                              </span>
+                            );
+                          })()}
+                        </div>
+                        <ChevronDown
+                          className="w-5 h-5 text-gray-400 shrink-0 transition-transform"
+                          style={{
+                            transform: encoffinListOpen
+                              ? 'rotate(180deg)'
+                              : 'rotate(0)',
+                          }}
+                        />
+                      </button>
+                      {encoffinListOpen &&
+                        (() => {
+                          const defaultIdx = encoffinCategoryItems.findIndex(
+                            (f) => f.품종상세 === '일반',
+                          );
+                          return encoffinCategoryItems.map((fee, idx) => {
+                            const isManuallyChecked =
+                              checkedEncoffinIndexes.includes(idx);
+                            const isDefault = idx === defaultIdx;
+                            // 수동 체크가 하나도 없으면 default 항목을 시각적으로 체크 처리
+                            const isChecked =
+                              isManuallyChecked ||
+                              (checkedEncoffinIndexes.length === 0 &&
+                                isDefault);
+                            const desc =
+                              fee.임대내용 ||
+                              (typeof fee['서비스내용'] === 'string'
+                                ? (fee['서비스내용'] as string)
+                                : '');
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() =>
+                                  setCheckedEncoffinIndexes(
+                                    isManuallyChecked
+                                      ? checkedEncoffinIndexes.filter(
+                                          (i) => i !== idx,
+                                        )
+                                      : [...checkedEncoffinIndexes, idx],
+                                  )
+                                }
+                                className="w-full px-4 py-2.5 flex items-center gap-3 text-sm border-t border-gray-100 text-left cursor-pointer transition-colors"
+                                style={
+                                  isChecked
+                                    ? { backgroundColor: '#e8eddf' }
+                                    : undefined
+                                }
+                              >
+                                <div
+                                  className="w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0"
+                                  style={{
+                                    borderColor: isChecked
+                                      ? BRAND_COLOR
+                                      : '#d1d5db',
+                                    backgroundColor: isChecked
+                                      ? BRAND_COLOR
+                                      : 'transparent',
+                                  }}
+                                >
+                                  {isChecked && (
+                                    <Check className="w-3 h-3 text-white" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <span
+                                    className={
+                                      isChecked
+                                        ? 'font-bold text-gray-900'
+                                        : 'text-gray-600'
+                                    }
+                                  >
+                                    {fee.품명}
+                                  </span>
+                                  {desc && (
+                                    <p className="text-xs text-gray-400 mt-0.5">
+                                      {desc}
+                                    </p>
+                                  )}
+                                </div>
+                                <span
+                                  className={`shrink-0 ml-3 ${isChecked ? 'font-bold text-gray-900' : 'text-gray-500'}`}
+                                >
+                                  {fee.요금_표시}원
+                                </span>
+                              </button>
+                            );
+                          });
+                        })()}
+                    </div>
+                  )}
+
                   <p className="text-xs text-gray-400 text-center">
                     ※ 본 금액은 평균 데이터 기반 추정치이며, 실제 비용과 차이가
                     있을 수 있습니다.
@@ -1360,15 +2615,43 @@ export function FuneralCostModal({
             })()}
         </div>
 
+        {/* 하단 고정 버튼 — Step 4 (빈소 규모) */}
+        {step === 4 && funeralType === '3day' && (
+          <button
+            onClick={() => setStep(contactStep)}
+            disabled={!selectedSize}
+            className="shrink-0 w-full py-4 rounded-t-none sm:rounded-b-2xl text-white font-bold text-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ backgroundColor: BRAND_COLOR }}
+          >
+            다음
+          </button>
+        )}
+
+        {/* 하단 고정 버튼 — Contact step */}
+        {step === contactStep && selectedHall && (
+          <button
+            onClick={() => setStep(resultStep)}
+            disabled={!name.trim() || phone.replace(/\D/g, '').length < 9}
+            className="shrink-0 w-full py-4 rounded-t-none sm:rounded-b-2xl text-white font-bold text-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ backgroundColor: BRAND_COLOR }}
+          >
+            예상 비용 확인하기
+          </button>
+        )}
+
         {/* 하단 고정 버튼 (결과 화면에서만) */}
         {step === resultStep &&
           selectedHall &&
           (() => {
             const res = calcResult();
             const recommended = getRecommendedProduct(res?.total ?? 0);
-            const discountPct = res && res.sangjoTotal > 0
-              ? Math.round(((res.sangjoTotal - recommended.price) / res.sangjoTotal) * 100)
-              : 0;
+            const discountPct =
+              res && res.sangjoTotal > 0
+                ? Math.round(
+                    ((res.sangjoTotal - recommended.price) / res.sangjoTotal) *
+                      100,
+                  )
+                : 0;
             return (
               <div
                 className="shrink-0 border-t border-gray-100 bg-white px-4 sm:px-6 pt-3 pb-4 sm:pb-4"
@@ -1377,15 +2660,6 @@ export function FuneralCostModal({
                 }}
               >
                 <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(window.location.href);
-                      toast.success('링크가 복사되었습니다.');
-                    }}
-                    className="w-[100px] shrink-0 py-3.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors"
-                  >
-                    결과 링크 복사
-                  </button>
                   <a
                     href="#inquiry"
                     onClick={(e) => {

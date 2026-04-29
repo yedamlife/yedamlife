@@ -1,14 +1,11 @@
 'use client';
+import { CONTACT_PHONE, CONTACT_TEL_HREF } from '@/constants/contact';
 
 import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Phone, FileText } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  BRAND_COLOR,
-  BRAND_COLOR_LIGHT,
-  BRAND_COLOR_PREMIUM,
-} from '@/components/template/YedamLife/constants';
+import { BRAND_COLOR } from '@/components/template/YedamLife/constants';
 
 export default function MembershipCertificatePage() {
   return (
@@ -56,49 +53,8 @@ function MembershipCertificateContent() {
         className="min-h-screen"
         style={{ fontFamily: 'Pretendard, sans-serif' }}
       >
-        <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#faf8f5] via-[#f5f0ea] to-white" />
-          <div
-            className="absolute top-0 right-0 w-[400px] h-[400px] opacity-[0.07] rounded-full blur-3xl"
-            style={{ backgroundColor: BRAND_COLOR }}
-          />
-          <div
-            className="absolute bottom-0 left-0 w-[300px] h-[300px] opacity-[0.05] rounded-full blur-3xl"
-            style={{ backgroundColor: BRAND_COLOR_PREMIUM }}
-          />
-
+        <section className="relative overflow-hidden bg-white">
           <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-            {/* 헤더 로고 */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center">
-                <img
-                  src="https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/main_logo.png"
-                  alt="예담라이프"
-                  className="h-[100px] sm:h-[120px] w-auto object-contain"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <span
-                  className="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium"
-                  style={{
-                    backgroundColor: BRAND_COLOR_LIGHT,
-                    color: BRAND_COLOR,
-                  }}
-                >
-                  ISO 9001
-                </span>
-                <span
-                  className="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium"
-                  style={{
-                    backgroundColor: BRAND_COLOR_LIGHT,
-                    color: BRAND_COLOR,
-                  }}
-                >
-                  예비사회적기업
-                </span>
-              </div>
-            </div>
-
             {/* 타이틀 */}
             <div className="text-center mb-6">
               <p
@@ -128,18 +84,9 @@ function MembershipCertificateContent() {
             {/* 입력 폼 카드 */}
             <form onSubmit={handleSubmit}>
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div
-                  className="px-5 sm:px-6 py-3 sm:py-4 flex items-center gap-2 rounded-t-2xl"
-                  style={{ backgroundColor: BRAND_COLOR, minHeight: 'auto' }}
-                >
-                  <FileText
-                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/70"
-                    style={{ minHeight: 'auto' }}
-                  />
-                  <span
-                    className="text-white/90 font-medium text-xs sm:text-sm tracking-wide"
-                    style={{ minHeight: 'auto' }}
-                  >
+                <div className="px-5 sm:px-6 py-3 sm:py-4 flex items-center gap-2 rounded-t-2xl bg-gray-200">
+                  <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
+                  <span className="text-gray-800 font-medium text-xs sm:text-sm tracking-wide">
                     가입 정보 입력
                   </span>
                 </div>
@@ -184,23 +131,16 @@ function MembershipCertificateContent() {
                   <p className="text-xs text-gray-400 mb-1">
                     후불제 상조기업 예담라이프
                   </p>
-                  <p
-                    className="text-lg font-extrabold"
-                    style={{ color: BRAND_COLOR }}
-                  >
+                  <p className="text-lg font-extrabold text-gray-900">
                     전국 365일 24시간 긴급출동
                   </p>
                 </div>
                 <a
-                  href="tel:1660-0959"
-                  className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold transition-all hover:opacity-90 cursor-pointer"
-                  style={{
-                    backgroundColor: BRAND_COLOR_LIGHT,
-                    color: BRAND_COLOR,
-                  }}
+                  href={CONTACT_TEL_HREF}
+                  className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold transition-all hover:bg-gray-200 cursor-pointer bg-gray-100 text-gray-800"
                 >
                   <Phone className="w-4 h-4" />
-                  대표번호 1660-0959
+                  대표번호 {CONTACT_PHONE}
                 </a>
               </div>
 
@@ -240,24 +180,29 @@ function MembershipCertificateContent() {
                 </div>
               </div>
 
-              {/* 제출 버튼 */}
-              <div className="mt-10 text-center">
-                <button
-                  type="submit"
-                  className="inline-flex items-center justify-center gap-2 px-12 py-4 rounded-2xl text-white font-bold text-lg shadow-lg transition-all hover:opacity-90 hover:shadow-xl hover:-translate-y-0.5 cursor-pointer"
-                  style={{ backgroundColor: BRAND_COLOR }}
-                >
-                  <FileText className="w-5 h-5" />
-                  가입증서 보기
-                </button>
-                <p className="text-xs text-gray-400 mt-4">
-                  가입 시 입력한 이름과 연락처를 입력해주세요.
-                </p>
-              </div>
             </form>
           </div>
         </section>
       </div>
+
+      {/* 하단 고정 가입증서 보기 버튼 */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 sm:pb-4 pointer-events-none safe-area-bottom">
+        <div className="mx-auto max-w-2xl sm:px-6 flex sm:rounded-xl overflow-hidden sm:shadow-xl">
+          <button
+            type="button"
+            onClick={() =>
+              handleSubmit({
+                preventDefault: () => {},
+              } as React.FormEvent)
+            }
+            className="pointer-events-auto flex-1 h-14 flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white font-bold text-base transition-colors cursor-pointer"
+          >
+            <FileText className="w-5 h-5 shrink-0" />
+            <span className="leading-none">가입증서 보기</span>
+          </button>
+        </div>
+      </div>
+      <div className="h-16" />
     </>
   );
 }

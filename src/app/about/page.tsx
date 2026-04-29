@@ -1,4 +1,5 @@
 'use client';
+import { CONTACT_PHONE, CONTACT_TEL_HREF } from '@/constants/contact';
 
 import { Suspense, useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -600,10 +601,10 @@ function AboutPageContent() {
                         대표전화
                       </p>
                       <a
-                        href="tel:1660-0959"
+                        href={CONTACT_TEL_HREF}
                         className="text-sm font-bold text-gray-900 hover:opacity-80 cursor-pointer"
                       >
-                        1660-0959
+                        {CONTACT_PHONE}
                       </a>
                     </div>
                   </div>

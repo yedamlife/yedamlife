@@ -12,16 +12,21 @@ export function GlobalHeader() {
   if (pathname.startsWith('/admin') || pathname.startsWith('/burial-plus/products/')) return null;
 
   // URL 기반 활성 탭 감지
+  const membershipSlug = pathname.startsWith('/membership/general')
+    ? 'general-funeral'
+    : pathname.startsWith('/membership/corporate')
+      ? 'corporate-funeral'
+      : null;
   const slugIdx = categoryTabs.findIndex((tab) => {
     const slug = 'slug' in tab ? tab.slug : undefined;
     if (!slug) return false;
+    if (membershipSlug) return slug === membershipSlug;
     return pathname === `/${slug}` || pathname.startsWith(`/${slug}/`);
   });
   const activeCategoryIdx = pathname === '/' ? 0 : slugIdx;
 
-  // about, membership 등에서는 카테고리 탭 숨김
-  const hideCategoryTabs =
-    pathname.startsWith('/about') || pathname.startsWith('/membership');
+  // about 등에서는 카테고리 탭 숨김 (membership 가입신청서는 노출)
+  const hideCategoryTabs = pathname.startsWith('/about');
 
   const handleCategoryChange = (idx: number) => {
     const tab = categoryTabs[idx];

@@ -14,6 +14,7 @@ import {
   Ambulance,
   MessageSquareText,
   Megaphone,
+  CreditCard,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -71,6 +72,13 @@ const menuItems: MenuItem[] = [
     icon: <Ambulance className="size-4" />,
     children: [
       { label: '예약 관리', href: '/admin/funeral-escort/reservations' },
+    ],
+  },
+  {
+    label: '멤버십관리',
+    icon: <CreditCard className="size-4" />,
+    children: [
+      { label: '실물 카드 신청 내역', href: '/admin/membership/card-requests' },
     ],
   },
   {

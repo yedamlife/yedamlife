@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     let query = supabase
       .from('funeral_halls')
       .select(
-        'facility_cd, company_name, funeral_type, public_label, manage_class, mortuary_count, parking_count, full_address, facility_fees, sido_cd'
+        'facility_cd, company_name, funeral_type, public_label, manage_class, mortuary_count, parking_count, full_address, facility_fees, service_items, sido_cd'
       )
       .eq('gungu_cd', gungu)
       .order('mortuary_count', { ascending: false });

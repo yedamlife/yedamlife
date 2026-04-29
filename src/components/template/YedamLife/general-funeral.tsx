@@ -1,4 +1,5 @@
 'use client';
+import { CONTACT_PHONE, CONTACT_TEL_HREF } from '@/constants/contact';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -611,7 +612,7 @@ export function GeneralFuneral({
                   <div className="relative grid grid-cols-2 sm:flex items-stretch z-10">
                     {/* 좌: 전화 상담 (모바일 숨김) */}
                     <a
-                      href="tel:1660-0959"
+                      href={CONTACT_TEL_HREF}
                       className="group/phone hidden sm:flex flex-1 items-center gap-2.5 sm:gap-3 pl-4 sm:pl-5 pr-3 sm:pr-4 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80"
                     >
                       <Phone
@@ -623,7 +624,7 @@ export function GeneralFuneral({
                           전화 상담
                         </span>
                         <span className="block text-[14.5px] sm:text-[15.5px] font-extrabold text-gray-900">
-                          1660-0959
+                          {CONTACT_PHONE}
                         </span>
                       </p>
                     </a>
@@ -660,23 +661,23 @@ export function GeneralFuneral({
                     {/* 우: 장례비용 계산 */}
                     <button
                       onClick={() => setCostModalOpen(true)}
-                      className="group/calc flex items-center gap-2.5 sm:gap-3 pl-4 sm:pl-5 pr-3 sm:pr-4 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 border-l border-gray-200/80 sm:border-l-0 sm:flex-1"
+                      className="group/calc flex items-center gap-2.5 pl-4 pr-3 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 border-l border-gray-200/80 sm:border-l-0 sm:flex-[1.25]"
                     >
                       <Calculator
                         className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-gray-900 transition-transform duration-300 group-hover/calc:-rotate-6 group-hover/calc:scale-110"
                         strokeWidth={1.7}
                       />
-                      <p className="flex-1 text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
+                      <p className="min-w-0 text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
                         <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
                           30초만에
                         </span>
-                        <span className="block text-[14.5px] sm:text-[15.5px] font-extrabold text-gray-900">
+                        <span className="block text-[14.5px] sm:text-[14.5px] font-extrabold text-gray-900">
                           <span style={{ color: BRAND_COLOR }}>장례비용</span>{' '}
                           계산
                         </span>
                       </p>
                       <ArrowRight
-                        className="shrink-0 w-[16px] h-[16px] sm:w-[18px] sm:h-[18px] text-gray-400 transition-all duration-300 group-hover/calc:text-gray-900 group-hover/calc:translate-x-1"
+                        className="shrink-0 ml-auto w-[16px] h-[16px] sm:w-[18px] sm:h-[18px] text-gray-400 transition-all duration-300 group-hover/calc:text-gray-900 group-hover/calc:translate-x-1"
                         strokeWidth={1.8}
                       />
                     </button>
@@ -2565,7 +2566,7 @@ export function GeneralFuneral({
                   className="text-2xl sm:text-3xl font-extrabold"
                   style={{ color: 'black' }}
                 >
-                  1660.0959
+                  {CONTACT_PHONE}
                 </span>
               </div>
               <a
@@ -2920,7 +2921,7 @@ export function GeneralFuneral({
               <div className="relative grid grid-cols-2 sm:flex sm:flex-row sm:items-stretch z-10">
                 {/* 전화 상담 */}
                 <a
-                  href="tel:1660-0959"
+                  href={CONTACT_TEL_HREF}
                   className="group/phone flex items-center justify-center sm:flex-1 gap-2.5 px-4 py-3.5 sm:py-4 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80"
                 >
                   <Phone
@@ -3211,6 +3212,12 @@ export function GeneralFuneral({
                           funeral_gown_required: '상담 후 결정',
                           additional_service: '상담 후 결정',
                           contact_number: consultForm.phone,
+                          // 알림톡용 추가 필드
+                          name: consultForm.name,
+                          phone: consultForm.phone,
+                          product: consultForm.product,
+                          region: consultForm.region,
+                          preferred_time: consultForm.timeSlot,
                         }),
                       },
                     );

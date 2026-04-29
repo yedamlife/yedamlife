@@ -1,4 +1,5 @@
 'use client';
+import { CONTACT_TEL_HREF } from '@/constants/contact';
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -521,7 +522,7 @@ export default function BurialProductDetailPage() {
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#222] safe-area-bottom">
         <div className="flex items-center divide-x divide-white/20">
           <a
-            href="tel:1660-0959"
+            href={CONTACT_TEL_HREF}
             className="flex-1 flex items-center justify-center gap-2 py-4.5 text-white cursor-pointer"
           >
             <Phone className="w-5 h-5" />
