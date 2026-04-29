@@ -2676,7 +2676,7 @@ export function FuneralCostModal({
                     className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-white text-sm font-bold cursor-pointer"
                     style={{ backgroundColor: BRAND_COLOR }}
                   >
-                    {recommended.name}로 평균 {discountPct}% 할인 받기
+                    {recommended.name}로 평균 20% 할인 받기
                     <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>
