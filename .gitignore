@@ -30,3 +30,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python crawling/extraction scripts (one-off)
+*.py
+
+# crawled raw data (json dumps)
+/json/
