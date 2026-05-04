@@ -41,6 +41,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from('funeral_halls')
       .select('facility_cd, facility_fees, service_items')
+      .is('deleted_at', null)
       .limit(2000)
       .returns<HallRow[]>();
 

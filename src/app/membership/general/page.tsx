@@ -2,7 +2,7 @@
 import { CONTACT_PHONE, CONTACT_TEL_HREF } from '@/constants/contact';
 
 import { useState, useRef, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { Gift, Phone, CheckCircle2, FileText, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -59,7 +59,7 @@ const membershipConsulting = [
 ];
 
 // ── 종교 옵션 ──
-const religionOptions = ['무교', '기독교', '천주교', '불교', '원불교', '기타'];
+const religionOptions = ['무교', '기독교', '천주교', '불교', '기타'];
 
 export default function MembershipGeneralPage() {
   return (
@@ -71,6 +71,7 @@ export default function MembershipGeneralPage() {
 
 function MembershipGeneralPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const homeUrl = searchParams.get('from') || '/';
   const [formData, setFormData] = useState({
     name: '',
@@ -90,6 +91,7 @@ function MembershipGeneralPageContent() {
   const [submitted, setSubmitted] = useState(false);
   const [showPostcode, setShowPostcode] = useState(false);
   const postcodeRef = useRef<HTMLDivElement>(null);
+  const privacySectionRef = useRef<HTMLDivElement>(null);
 
   const today = new Date();
   const formattedDate = `${today.getFullYear()}년 ${String(today.getMonth() + 1).padStart(2, '0')}월 ${String(today.getDate()).padStart(2, '0')}일`;
@@ -157,6 +159,10 @@ function MembershipGeneralPageContent() {
     }
     if (!privacyAgreed) {
       toast.warning('개인정보 이용·제공·활용 동의가 필요합니다.');
+      privacySectionRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
       return;
     }
 
@@ -184,6 +190,9 @@ function MembershipGeneralPageContent() {
       const result = await res.json();
       if (result.success) {
         setSubmitted(true);
+      } else if (result.error === 'duplicate') {
+        toast.error(result.message || '이미 신청된 내역이 있습니다.');
+        router.push('/membership/general');
       } else {
         toast.error(
           result.message || '오류가 발생했습니다. 다시 시도해주세요.',
@@ -223,8 +232,7 @@ function MembershipGeneralPageContent() {
           </p>
           <a
             href={homeUrl}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold transition-all hover:opacity-90"
-            style={{ backgroundColor: BRAND_COLOR }}
+            className="inline-flex bg-gray-100 items-center gap-2 px-6 py-3 rounded-xl text-black font-semibold transition-all hover:opacity-90"
           >
             홈으로 돌아가기
           </a>
@@ -296,7 +304,7 @@ function MembershipGeneralPageContent() {
                 {/* 회원명 / 연락처 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
+                    <label className="block text-sm font-semibold text-black mb-2">
                       회원명 <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -308,7 +316,7 @@ function MembershipGeneralPageContent() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
+                    <label className="block text-sm font-semibold text-black mb-2">
                       연락처 <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -324,7 +332,7 @@ function MembershipGeneralPageContent() {
                 {/* 생년월일 / 성별 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
+                    <label className="block text-sm font-semibold text-black mb-2">
                       생년월일
                     </label>
                     <input
@@ -336,7 +344,7 @@ function MembershipGeneralPageContent() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
+                    <label className="block text-sm font-semibold text-black mb-2">
                       성별
                     </label>
                     <div className="flex gap-3 mt-1">
@@ -366,7 +374,7 @@ function MembershipGeneralPageContent() {
 
                 {/* 종교 */}
                 <div>
-                  <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
+                  <label className="block text-sm font-semibold text-black mb-2">
                     종교
                   </label>
                   <Select
@@ -403,7 +411,7 @@ function MembershipGeneralPageContent() {
                 <div className="space-y-5">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
+                      <label className="block text-sm font-semibold text-black mb-2">
                         보호자 성명
                       </label>
                       <input
@@ -417,7 +425,7 @@ function MembershipGeneralPageContent() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
+                      <label className="block text-sm font-semibold text-black mb-2">
                         관계
                       </label>
                       <input
@@ -432,7 +440,7 @@ function MembershipGeneralPageContent() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
+                    <label className="block text-sm font-semibold text-black mb-2">
                       보호자 연락처
                     </label>
                     <input
@@ -449,7 +457,7 @@ function MembershipGeneralPageContent() {
 
                 {/* 주소 */}
                 <div>
-                  <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
+                  <label className="block text-sm font-semibold text-black mb-2">
                     주소
                   </label>
                   <button
@@ -554,7 +562,7 @@ function MembershipGeneralPageContent() {
 
                 {/* 추천인 */}
                 <div>
-                  <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
+                  <label className="block text-sm font-semibold text-black mb-2">
                     추천인
                   </label>
                   <input
@@ -854,7 +862,10 @@ function MembershipGeneralPageContent() {
             </div>
 
             {/* 동의 체크 */}
-            <div className="mt-8 bg-white rounded-2xl border border-gray-100 p-6">
+            <div
+              ref={privacySectionRef}
+              className="mt-8 bg-white rounded-2xl border border-gray-100 p-6 scroll-mt-24"
+            >
               <button
                 type="button"
                 onClick={() => setPrivacyAgreed(!privacyAgreed)}
@@ -885,7 +896,6 @@ function MembershipGeneralPageContent() {
                 </div>
               </div>
             </div>
-
           </div>
         </section>
       </div>

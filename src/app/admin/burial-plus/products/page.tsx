@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, Plus, Trash2, GripVertical, Loader2 } from 'lucide-react';
+import { Search, Plus, Trash2, GripVertical, Loader2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/components/ui/utils';
@@ -42,6 +42,7 @@ interface Row {
   full_address: string | null;
   public_label: string | null;
   categories: string[];
+  religions: string[] | null;
   photos: Array<{ fileurl_full?: string | null }> | null;
   min_price: number | null;
   is_recommended: boolean;
@@ -70,6 +71,7 @@ export default function Page() {
   const [category, setCategory] = useState<string>('전체');
   const [publicFilter, setPublicFilter] = useState<'전체' | '공설' | '사설'>('전체');
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [hasReligion, setHasReligion] = useState(false);
 
   const sortCol = SORT_COLUMN[category] ?? 'sort_all';
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -89,9 +91,10 @@ export default function Page() {
       if (publicFilter !== '전체') params.set('public_label', publicFilter);
       if (activeFilter === 'active') params.set('is_active', 'true');
       if (activeFilter === 'inactive') params.set('is_active', 'false');
+      if (hasReligion) params.set('has_religion', 'true');
       return params;
     },
-    [debouncedSearch, category, publicFilter, activeFilter],
+    [debouncedSearch, category, publicFilter, activeFilter, hasReligion],
   );
 
   // 필터 변경 시 초기화하고 첫 페이지 로드
@@ -289,6 +292,19 @@ export default function Page() {
               </button>
             ))}
           </div>
+
+          <button
+            type="button"
+            onClick={() => setHasReligion((v) => !v)}
+            className={cn(
+              'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+              hasReligion
+                ? 'border-gray-900 bg-gray-900 text-white'
+                : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
+            )}
+          >
+            종교 있음
+          </button>
         </div>
 
       </div>
@@ -311,6 +327,7 @@ export default function Page() {
                   <th className="px-4 py-3 text-left font-medium text-gray-500">사진</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">장지명</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">카테고리</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">종교</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">지역</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">구분</th>
                   <th className="px-4 py-3 text-right font-medium text-gray-500">최소금액</th>
@@ -322,13 +339,13 @@ export default function Page() {
               <tbody>
                 {initialLoading ? (
                   <tr>
-                    <td colSpan={10} className="py-12 text-center text-gray-400">
+                    <td colSpan={11} className="py-12 text-center text-gray-400">
                       로딩 중...
                     </td>
                   </tr>
                 ) : data.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="py-12 text-center text-gray-400">
+                    <td colSpan={11} className="py-12 text-center text-gray-400">
                       데이터가 없습니다.
                     </td>
                   </tr>
@@ -412,6 +429,34 @@ function CategoryChips({ categories }: { categories: string[] }) {
   );
 }
 
+const RELIGION_STYLE: Record<string, string> = {
+  '무교': 'bg-gray-100 text-gray-600',
+  '기독교': 'bg-blue-50 text-blue-700',
+  '불교': 'bg-amber-50 text-amber-700',
+  '천주교': 'bg-rose-50 text-rose-700',
+};
+
+function ReligionChips({ religions }: { religions: string[] | null }) {
+  if (!religions || religions.length === 0) {
+    return <span className="text-xs text-gray-300">-</span>;
+  }
+  return (
+    <div className="flex flex-wrap gap-1">
+      {religions.map((r) => (
+        <span
+          key={r}
+          className={cn(
+            'rounded-full px-2 py-0.5 text-xs',
+            RELIGION_STYLE[r] ?? 'bg-gray-100 text-gray-700',
+          )}
+        >
+          {r}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function SortableRow({ row, onClick, onToggleRecommended, onToggleActive, onDelete }: RowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: row.id,
@@ -448,6 +493,9 @@ function SortableRow({ row, onClick, onToggleRecommended, onToggleActive, onDele
       <td className="px-4 py-3 cursor-pointer" onClick={onClick}>
         <CategoryChips categories={row.categories} />
       </td>
+      <td className="px-4 py-3 cursor-pointer" onClick={onClick}>
+        <ReligionChips religions={row.religions} />
+      </td>
       <td className="px-4 py-3 cursor-pointer text-gray-600" onClick={onClick}>
         {row.sido_name ?? '-'}
       </td>
@@ -475,8 +523,17 @@ function SortableRow({ row, onClick, onToggleRecommended, onToggleActive, onDele
 
 function RecommendedToggle({ recommended, onClick }: { recommended: boolean; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="text-lg leading-none" title={recommended ? '추천 해제' : '추천 설정'}>
-      {recommended ? '⭐' : '☆'}
+    <button
+      onClick={onClick}
+      className="inline-flex items-center justify-center cursor-pointer"
+      title={recommended ? '추천 해제' : '추천 설정'}
+    >
+      <Star
+        className={cn(
+          'size-4 transition-colors',
+          recommended ? 'fill-yellow-400 text-yellow-400' : 'fill-none text-gray-300 hover:text-gray-400',
+        )}
+      />
     </button>
   );
 }

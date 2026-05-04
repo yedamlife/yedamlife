@@ -14,7 +14,11 @@ export async function PATCH(request: Request) {
   }
 
   const updates = body.ids.map((id, idx) =>
-    supabase.from(TABLE).update({ sort_order: idx, updated_at: new Date().toISOString() }).eq('id', id),
+    supabase
+      .from(TABLE)
+      .update({ sort_order: idx, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .is('deleted_at', null),
   );
 
   const results = await Promise.all(updates);

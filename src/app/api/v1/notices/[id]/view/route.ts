@@ -10,9 +10,18 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
 
   if (error) {
     // fallback: rpc가 없으면 직접 업데이트
-    const { data } = await supabase.from(TABLE).select('view_count').eq('id', id).single();
+    const { data } = await supabase
+      .from(TABLE)
+      .select('view_count')
+      .eq('id', id)
+      .is('deleted_at', null)
+      .single();
     if (data) {
-      await supabase.from(TABLE).update({ view_count: (data.view_count ?? 0) + 1 }).eq('id', id);
+      await supabase
+        .from(TABLE)
+        .update({ view_count: (data.view_count ?? 0) + 1 })
+        .eq('id', id)
+        .is('deleted_at', null);
     }
   }
 

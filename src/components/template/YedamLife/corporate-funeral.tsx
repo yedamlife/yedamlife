@@ -107,6 +107,135 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+function ProcessSteps() {
+  const steps = [
+    {
+      emoji: '💬',
+      num: '01',
+      title: '사전 미팅',
+      desc: '기업 상황과 필요를 파악하고\n후불제 상조를 안내합니다',
+    },
+    {
+      emoji: '🎯',
+      num: '02',
+      title: '맞춤 컨설팅',
+      desc: '계약 항목과 제공 내역을\n구체적으로 확정합니다',
+    },
+    {
+      emoji: '🤝',
+      num: '03',
+      title: 'MOU 체결',
+      desc: '계약 체결 및 협약서를\n작성합니다',
+    },
+    {
+      emoji: '📢',
+      num: '04',
+      title: '사내 공지',
+      desc: '기업상조 복지를\n임직원에게 안내합니다',
+    },
+    {
+      emoji: '📅',
+      num: '05',
+      title: '정기 미팅',
+      desc: '개선점을 논의하며\n서비스를 보완합니다',
+    },
+  ];
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const startedRef = useRef(false);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !startedRef.current) {
+            startedRef.current = true;
+            steps.forEach((_, idx) => {
+              setTimeout(() => setActiveIndex(idx), idx * 350);
+            });
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.3 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [steps.length]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      {/* 데스크톱: 가로 연결선 (배경 회색) */}
+      <div
+        className="hidden sm:block absolute top-8 left-[10%] right-[10%] h-0.5 bg-gray-200"
+        aria-hidden
+      />
+      {/* 데스크톱: 가로 연결선 (진행) */}
+      <div
+        className="hidden sm:block absolute top-8 left-[10%] h-0.5 bg-gray-900 transition-all duration-500 ease-out"
+        style={{
+          width: `${activeIndex < 0 ? 0 : (activeIndex / (steps.length - 1)) * 80}%`,
+        }}
+        aria-hidden
+      />
+
+      <div className="relative grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-5 sm:gap-y-0 sm:gap-x-4">
+        {steps.map((s, idx) => {
+          const isActive = idx <= activeIndex;
+          return (
+            <div
+              key={s.num}
+              className="relative flex flex-col items-center text-center"
+            >
+              {/* 번호 배지 */}
+              <div
+                className={`relative z-10 flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-lg ring-4 ring-gray-50 bg-white border transition-all duration-500 ${
+                  isActive
+                    ? 'border-gray-900 scale-110 opacity-100'
+                    : 'border-gray-200 opacity-40'
+                }`}
+              >
+                <span>{s.emoji}</span>
+                <span
+                  className={`absolute -top-1 -right-1 text-[10px] font-extrabold rounded-full w-6 h-6 flex items-center justify-center shadow transition-colors duration-500 ${
+                    isActive
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-300 text-gray-500'
+                  }`}
+                >
+                  {s.num}
+                </span>
+              </div>
+
+              {/* 텍스트 */}
+              <div
+                className={`mt-4 sm:mt-5 px-1 transition-all duration-500 ${
+                  isActive
+                    ? 'opacity-100 translate-y-0'
+                    : 'opacity-40 translate-y-1'
+                }`}
+              >
+                <p className="text-[10px] sm:text-[11px] font-bold tracking-[0.15em] sm:tracking-[0.2em] mb-1 text-gray-500">
+                  STEP {s.num}
+                </p>
+                <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1.5 break-keep">
+                  {s.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed break-keep whitespace-pre-line">
+                  {s.desc}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export interface CorporateFuneralProps {
   googleFormUrl: string;
   corpChartProductIdx: number;
@@ -142,6 +271,9 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
   // 제안서 문의 모달
   const [showProposalModal, setShowProposalModal] = useState(false);
   const [showCorpConsultModal, setShowCorpConsultModal] = useState(false);
+  const [corpDetailProductId, setCorpDetailProductId] = useState<
+    'corp-1' | 'corp-2' | null
+  >(null);
 
   // 상담 신청 폼 state
   const [corpConsultForm, setCorpConsultForm] = useState({
@@ -157,8 +289,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
   useEffect(() => {
     const handler = () => setShowCorpConsultModal(true);
     window.addEventListener('open-corp-consult-modal', handler);
-    return () =>
-      window.removeEventListener('open-corp-consult-modal', handler);
+    return () => window.removeEventListener('open-corp-consult-modal', handler);
   }, []);
 
   // 모바일 캐러셀: 확장 배열 [last, ...all, first]
@@ -535,7 +666,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                 key={card.title}
                 className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col"
               >
-                <div className="aspect-4/3 overflow-hidden">
+                <div className="h-48 sm:aspect-4/3 sm:h-auto overflow-hidden">
                   <img
                     src={card.image}
                     alt={card.title}
@@ -571,59 +702,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-            {[
-              {
-                emoji: '💬',
-                step: 'STEP 01',
-                title: '사전 미팅',
-                desc: '기업 상황과 필요를 파악하고\n후불제 상조를 안내합니다',
-              },
-              {
-                emoji: '🎯',
-                step: 'STEP 02',
-                title: '맞춤 컨설팅',
-                desc: '계약 항목과 제공 내역을\n구체적으로 확정합니다',
-              },
-              {
-                emoji: '🤝',
-                step: 'STEP 03',
-                title: 'MOU 체결',
-                desc: '계약 체결 및 협약서를\n작성합니다',
-              },
-              {
-                emoji: '📢',
-                step: 'STEP 04',
-                title: '사내 공지',
-                desc: '기업상조 복지를\n임직원에게 안내합니다',
-              },
-              {
-                emoji: '📅',
-                step: 'STEP 05',
-                title: '정기 미팅',
-                desc: '개선점을 논의하며\n서비스를 보완합니다',
-              },
-            ].map((s) => (
-              <div
-                key={s.step}
-                className="bg-white rounded-2xl border border-gray-200 px-5 py-7 flex flex-col items-center text-center"
-              >
-                <div className="text-3xl mb-4">{s.emoji}</div>
-                <p
-                  className="text-[11px] font-bold tracking-[0.2em] mb-2"
-                  style={{ color: BRAND_COLOR }}
-                >
-                  {s.step}
-                </p>
-                <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">
-                  {s.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                  {s.desc}
-                </p>
-              </div>
-            ))}
-          </div>
+          <ProcessSteps />
         </div>
       </section>
 
@@ -658,31 +737,28 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
             ))}
           </div>
 
-          {/* 차트: 예담라이프 vs 선불제상조 vs 장례식장 상조 비교 */}
+          {/* 차트: 예담라이프 vs 선불제상조 비교 */}
           {(() => {
             const priceMap = [
               {
                 facilityFee: 100,
-                yedamFee: 120,
-                prepaidFee: 270,
-                funeralHomeFee: 450,
+                yedamFee: 230,
+                prepaidFee: 380,
               },
               {
                 facilityFee: 150,
-                yedamFee: 180,
-                prepaidFee: 340,
-                funeralHomeFee: 550,
+                yedamFee: 330,
+                prepaidFee: 500,
               },
             ];
             const p = priceMap[corpChartProductIdx];
             const totalYedam = p.facilityFee + p.yedamFee;
             const totalPrepaid = p.facilityFee + p.prepaidFee;
-            const totalFuneral = p.facilityFee + p.funeralHomeFee;
-            const maxTotal = totalFuneral;
+            const maxTotal = totalPrepaid;
             const maxBarH = 220;
             const h = (val: number) => Math.round((val / maxTotal) * maxBarH);
             const savingPercent = Math.round(
-              ((totalFuneral - totalYedam) / totalFuneral) * 100,
+              ((totalPrepaid - totalYedam) / totalPrepaid) * 100,
             );
 
             const bars = [
@@ -702,14 +778,6 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                 lightColor: '#e5e7eb',
                 isHighlight: false,
               },
-              {
-                label: '장례식장',
-                total: totalFuneral,
-                serviceFee: p.funeralHomeFee,
-                darkColor: '#6b7280',
-                lightColor: '#e5e7eb',
-                isHighlight: false,
-              },
             ];
 
             return (
@@ -717,7 +785,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                 <div
                   className="grid justify-center transition-all duration-500"
                   style={{
-                    gridTemplateColumns: 'repeat(3, minmax(70px, 110px)) auto',
+                    gridTemplateColumns: 'repeat(2, minmax(60px, 90px)) auto',
                     gap: '0 clamp(8px, 3vw, 40px)',
                   }}
                 >
@@ -773,25 +841,30 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                       </div>
                     </div>
                   ))}
-                  {/* 우측: 상조 비용 라벨 — 가장 큰 막대(장례식장) 기준 중간 */}
-                  <div
-                    className="self-end pl-2"
-                    style={{
-                      paddingBottom: `${Math.round(h(bars[2].serviceFee) / 2 - 8)}px`,
-                    }}
-                  >
-                    <span className="text-[11px] sm:text-xs font-semibold text-gray-500 whitespace-nowrap">
-                      서비스별
+                  {/* 우측: 상조 비용 라벨 + 점선 브래킷 */}
+                  <div className="self-end flex items-center gap-1.5 -ml-4">
+                    <svg
+                      width={32}
+                      height={h(bars[1].serviceFee)}
+                      viewBox={`0 0 32 ${h(bars[1].serviceFee)}`}
+                      style={{ display: 'block', minWidth: 32, flexShrink: 0 }}
+                      aria-hidden="true"
+                    >
+                      <path
+                        d={`M 2 4 C 16 4, 16 ${h(bars[1].serviceFee) / 2}, 16 ${h(bars[1].serviceFee) / 2} C 16 ${h(bars[1].serviceFee) / 2}, 16 ${h(bars[1].serviceFee) - 4}, 2 ${h(bars[1].serviceFee) - 4}`}
+                        stroke="#374151"
+                        strokeWidth="2.5"
+                        strokeDasharray="6 4"
+                        strokeLinecap="round"
+                        fill="none"
+                      />
+                    </svg>
+                    <span className="text-[11px] sm:text-xs font-semibold whitespace-nowrap" style={{ color: '#374151' }}>
+                      장례식장 &apos;상조&apos;
                       <br />
-                      상조 평균 비용
+                      평균 비용
                     </span>
                   </div>
-
-                  {/* Row 3: 절취선 — 전체 너비 관통 */}
-                  <div
-                    className="border-t-[3px] border-dashed"
-                    style={{ gridColumn: '1 / -1', borderColor: '#7a6240' }}
-                  />
 
                   {/* Row 4: 장례식장 비용 (연한색, 높이 동일) */}
                   {bars.map((bar) => (
@@ -814,14 +887,26 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                       </div>
                     </div>
                   ))}
-                  {/* 우측: 장례식장 비용 라벨 */}
-                  <div className="self-center pl-2">
-                    <span className="text-[11px] sm:text-xs font-semibold text-gray-500 whitespace-nowrap">
-                      장례식장 평균 비용
-                    </span>
-                    <br />
-                    <span className="text-[10px] text-gray-400 whitespace-nowrap">
-                      - 상조 금액과 별도
+                  {/* 우측: 장례식장 비용 라벨 + 점선 브래킷 */}
+                  <div className="self-center flex items-center gap-1.5 -ml-4">
+                    <svg
+                      width={32}
+                      height={h(p.facilityFee)}
+                      viewBox={`0 0 32 ${h(p.facilityFee)}`}
+                      style={{ display: 'block', minWidth: 32, flexShrink: 0 }}
+                      aria-hidden="true"
+                    >
+                      <path
+                        d={`M 2 4 C 16 4, 16 ${h(p.facilityFee) / 2}, 16 ${h(p.facilityFee) / 2} C 16 ${h(p.facilityFee) / 2}, 16 ${h(p.facilityFee) - 4}, 2 ${h(p.facilityFee) - 4}`}
+                        stroke="#374151"
+                        strokeWidth="2.5"
+                        strokeDasharray="6 4"
+                        strokeLinecap="round"
+                        fill="none"
+                      />
+                    </svg>
+                    <span className="text-[11px] sm:text-xs font-semibold whitespace-nowrap" style={{ color: '#374151' }}>
+                      장례식장 기본 이용료
                     </span>
                   </div>
 
@@ -1113,7 +1198,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
       {/* ── 5. 기업상조 상품안내 (카드 리스트) ── */}
       <section
         id="sec-corp-products"
-        className="py-16 sm:py-24 overflow-hidden bg-gray-50"
+        className="py-16 sm:py-24 overflow-hidden bg-white"
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
@@ -1188,48 +1273,33 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                               → {product.discountPrice}
                             </span>
                           </div>
-                          {product.id === 'corp-1' ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() =>
+                                setCorpDetailProductId(
+                                  corpFuneralProducts[originalIdx].id as
+                                    | 'corp-1'
+                                    | 'corp-2',
+                                )
+                              }
+                              className="flex-1 px-1 py-2.5 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer hover:bg-gray-100 bg-white border border-gray-300 text-gray-700 whitespace-nowrap"
+                            >
+                              자세히 보기
+                            </button>
                             <button
                               onClick={() => {
                                 setCorpConsultForm((p) => ({
                                   ...p,
-                                  product: 'corp-1',
+                                  product: corpFuneralProducts[originalIdx]
+                                    .id as 'corp-1' | 'corp-2',
                                 }));
                                 setShowCorpConsultModal(true);
                               }}
-                              className="w-full px-1 py-2.5 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer hover:bg-gray-200 bg-gray-100 text-gray-700 whitespace-nowrap"
+                              className="flex-1 px-1 py-2.5 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer hover:bg-gray-200 bg-gray-100 text-gray-700 whitespace-nowrap"
                             >
                               상담신청
                             </button>
-                          ) : (
-                            <div className="flex rounded-lg overflow-hidden border border-gray-200">
-                              <button
-                                onClick={() => {
-                                  setCorpConsultForm((p) => ({
-                                    ...p,
-                                    product: product.id,
-                                  }));
-                                  setShowCorpConsultModal(true);
-                                }}
-                                className="flex-1 px-1 py-2.5 text-[11px] font-semibold transition-colors cursor-pointer hover:bg-gray-100 bg-white text-gray-700 whitespace-nowrap"
-                              >
-                                상담신청
-                              </button>
-                              <span className="w-px bg-gray-200" />
-                              <a
-                                href="/membership/corporate"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex-1 px-1 py-2.5 text-[11px] font-bold transition-opacity cursor-pointer text-center inline-flex items-center justify-center whitespace-nowrap hover:opacity-90"
-                                style={{
-                                  backgroundColor: BRAND_COLOR_LIGHT,
-                                  color: BRAND_COLOR,
-                                }}
-                              >
-                                80만원 혜택받기
-                              </a>
-                            </div>
-                          )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1345,696 +1415,33 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                       → {product.discountPrice}
                     </span>
                   </div>
-                  <div className="mt-auto">
-                    {product.id === 'corp-1' ? (
-                      <button
-                        onClick={() => {
-                          setCorpConsultForm((p) => ({
-                            ...p,
-                            product: 'corp-1',
-                          }));
-                          setShowCorpConsultModal(true);
-                        }}
-                        className="w-full py-2.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer hover:bg-gray-200 bg-gray-100 text-gray-700"
-                      >
-                        상담신청
-                      </button>
-                    ) : (
-                      <div className="flex rounded-lg overflow-hidden border border-gray-200">
-                        <button
-                          onClick={() => {
-                            setCorpConsultForm((p) => ({
-                              ...p,
-                              product: product.id,
-                            }));
-                            setShowCorpConsultModal(true);
-                          }}
-                          className="flex-1 py-2.5 text-xs font-semibold transition-colors cursor-pointer hover:bg-gray-100 bg-white text-gray-700"
-                        >
-                          상담신청
-                        </button>
-                        <span className="w-px bg-gray-200" />
-                        <a
-                          href="/membership/corporate"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 py-2.5 text-xs font-bold transition-opacity cursor-pointer text-center inline-flex items-center justify-center hover:opacity-90"
-                          style={{
-                            backgroundColor: BRAND_COLOR_LIGHT,
-                            color: BRAND_COLOR,
-                          }}
-                        >
-                          80만원 혜택받기
-                        </a>
-                      </div>
-                    )}
+                  <div className="mt-auto flex gap-2">
+                    <button
+                      onClick={() =>
+                        setCorpDetailProductId(
+                          product.id as 'corp-1' | 'corp-2',
+                        )
+                      }
+                      className="flex-1 py-2.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer hover:bg-gray-100 bg-white border border-gray-300 text-gray-700"
+                    >
+                      자세히 보기
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCorpConsultForm((p) => ({
+                          ...p,
+                          product: product.id as 'corp-1' | 'corp-2',
+                        }));
+                        setShowCorpConsultModal(true);
+                      }}
+                      className="flex-1 py-2.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer hover:bg-gray-200 bg-gray-100 text-gray-700"
+                    >
+                      상담신청
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 13. 장례상품 안내 ── */}
-      <section
-        id="sec-corp-inquiry"
-        className="py-16 sm:py-24 bg-white overflow-hidden"
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-              예담라이프 장례상품 안내
-            </h2>
-            <p className="text-sm sm:text-base text-gray-500 mt-3">
-              가족의 마음을 담아 정성스럽게 예담라이프가 준비해드립니다
-            </p>
-          </div>
-
-          {/* Sticky 탭 */}
-          <div className="sticky top-0 z-20 pt-2 pb-4">
-            <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
-              <button
-                onClick={() => setCorpTableFilter('all')}
-                className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${corpTableFilter === 'all' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-              >
-                전체비교
-              </button>
-              {corpFuneralProducts.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() =>
-                    setCorpTableFilter(p.id as 'corp-1' | 'corp-2')
-                  }
-                  className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${corpTableFilter === p.id ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                >
-                  {p.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ===== 카드 UI (신규 — 기본 표시) ===== */}
-          {viewMode === 'card' && (
-            <div className="mt-8">
-              {/* 전체비교 탭 — 카드 그리드 */}
-              {corpTableFilter === 'all' && (
-                <div>
-                  {corpComparisonData.map((section) => (
-                    <div
-                      key={section.category}
-                      className="mb-10 max-w-3xl mx-auto"
-                    >
-                      <div
-                        className="w-8 h-1 rounded-full mb-3"
-                        style={{ backgroundColor: BRAND_COLOR }}
-                      />
-                      <h3 className="text-lg sm:text-xl font-extrabold text-gray-900 mb-5">
-                        {section.category.replace(/\n/g, ' ')}
-                      </h3>
-                      <div className="grid gap-x-4 sm:gap-x-6 gap-y-6 justify-items-center grid-cols-3 sm:grid-cols-4">
-                        {section.items.map((item) => {
-                          const images = PRODUCT_LABEL_IMAGES[item.label];
-                          return (
-                            <div
-                              key={item.label}
-                              className="flex flex-col items-center text-center w-full"
-                            >
-                              {images ? (
-                                <div
-                                  className="w-full aspect-square rounded-lg overflow-hidden bg-gray-50 cursor-pointer"
-                                  onClick={() => setLightboxSrc(images[0].src)}
-                                >
-                                  <img
-                                    src={images[0].src}
-                                    alt={images[0].alt}
-                                    className="w-full h-full object-cover hover:scale-105 transition-transform"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="w-full aspect-square rounded-lg bg-gray-100 flex items-center justify-center">
-                                  <span className="text-2xl text-gray-300">
-                                    {section.category.includes('인력')
-                                      ? '👤'
-                                      : section.category.includes('차량')
-                                        ? '🚐'
-                                        : section.category.includes('상복')
-                                          ? '👔'
-                                          : '📦'}
-                                  </span>
-                                </div>
-                              )}
-                              <div className="mt-2 w-full min-w-0">
-                                <div className="relative flex items-center justify-center gap-1 mb-1.5">
-                                  <h4 className="text-sm font-medium text-gray-500">
-                                    {item.label}
-                                  </h4>
-                                  {'sub' in item && item.sub && (
-                                    <button
-                                      type="button"
-                                      className="shrink-0 cursor-pointer"
-                                      onClick={() =>
-                                        setTooltipLabel(
-                                          tooltipLabel === item.label
-                                            ? null
-                                            : item.label,
-                                        )
-                                      }
-                                    >
-                                      <Info className="w-3.5 h-3.5 text-gray-500 hover:text-gray-700 transition-colors" />
-                                    </button>
-                                  )}
-                                  {tooltipLabel === item.label &&
-                                    'sub' in item &&
-                                    item.sub && (
-                                      <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 z-10 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
-                                        {item.sub}
-                                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45" />
-                                      </div>
-                                    )}
-                                </div>
-                                {item.values.every((v, i) => i === 0 || !v) &&
-                                item.values[0] ? (
-                                  <p className="text-xs font-bold text-gray-900 mt-1">
-                                    {item.values[0]}
-                                  </p>
-                                ) : (
-                                  <ul className="border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-100">
-                                    {corpFuneralProducts.map((p, idx) => (
-                                      <li
-                                        key={p.id}
-                                        className="flex items-center justify-between gap-2 px-2 py-1.5 text-xs"
-                                      >
-                                        <span className="text-gray-500 whitespace-nowrap shrink-0">
-                                          {p.name}
-                                        </span>
-                                        <span
-                                          className={`font-semibold text-right ${item.values[idx] && item.values[idx] !== '-' ? 'text-gray-700' : 'text-gray-300'}`}
-                                        >
-                                          {item.values[idx] || '-'}
-                                        </span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* 상품별 탭 — 카드 그리드 */}
-              {corpTableFilter !== 'all' &&
-                (() => {
-                  const product = corpFuneralProducts.find(
-                    (p) => p.id === corpTableFilter,
-                  );
-                  if (!product) return null;
-                  const valIdx = corpTableFilter === 'corp-1' ? 0 : 1;
-                  return (
-                    <div className="max-w-3xl mx-auto">
-                      {/* 추천 대상 */}
-                      <div className="mb-10">
-                        <div
-                          className="w-8 h-1 rounded-full mb-3"
-                          style={{ backgroundColor: BRAND_COLOR }}
-                        />
-                        <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-snug mb-4">
-                          {product.name},
-                          <br />
-                          다음과 같은 분께 추천드립니다.
-                        </h3>
-                        <ul className="space-y-2">
-                          {product.summary.map((rec, i) => (
-                            <li
-                              key={i}
-                              className="flex items-start gap-2 text-sm text-gray-600"
-                            >
-                              <span className="text-gray-400 shrink-0 mt-0.5">
-                                ·
-                              </span>
-                              <span>{rec}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      {/* 카테고리별 이미지 카드 그리드 */}
-                      {corpComparisonData.map((section) => {
-                        const filtered = section.items.filter(
-                          (item) =>
-                            item.values[valIdx] &&
-                            item.values[valIdx] !== '-' &&
-                            item.values[valIdx] !== 'x',
-                        );
-                        if (filtered.length === 0) return null;
-                        return (
-                          <div key={section.category} className="mb-10">
-                            <div
-                              className="w-8 h-1 rounded-full mb-3"
-                              style={{ backgroundColor: BRAND_COLOR }}
-                            />
-                            <h3 className="text-lg sm:text-xl font-extrabold text-gray-900 mb-5">
-                              {section.category.replace(/\n/g, ' ')}
-                            </h3>
-                            <div className="grid gap-x-4 sm:gap-x-6 gap-y-6 justify-items-center grid-cols-3 sm:grid-cols-4">
-                              {filtered.map((item) => {
-                                const images = PRODUCT_LABEL_IMAGES[item.label];
-                                return (
-                                  <div
-                                    key={item.label}
-                                    className="flex flex-col items-center text-center w-full"
-                                  >
-                                    {images ? (
-                                      <div
-                                        className="w-full aspect-square rounded-lg overflow-hidden bg-gray-50 cursor-pointer"
-                                        onClick={() =>
-                                          setLightboxSrc(images[0].src)
-                                        }
-                                      >
-                                        <img
-                                          src={images[0].src}
-                                          alt={images[0].alt}
-                                          className="w-full h-full object-cover hover:scale-105 transition-transform"
-                                        />
-                                      </div>
-                                    ) : (
-                                      <div className="w-full aspect-square rounded-lg bg-gray-100 flex items-center justify-center">
-                                        <span className="text-2xl text-gray-300">
-                                          📦
-                                        </span>
-                                      </div>
-                                    )}
-                                    <div className="mt-2">
-                                      <div className="relative flex items-center justify-center gap-1">
-                                        <h4 className="text-sm font-medium text-gray-500">
-                                          {item.label}
-                                        </h4>
-                                        {'sub' in item && item.sub && (
-                                          <button
-                                            type="button"
-                                            className="shrink-0 cursor-pointer"
-                                            onClick={() =>
-                                              setTooltipLabel(
-                                                tooltipLabel === item.label
-                                                  ? null
-                                                  : item.label,
-                                              )
-                                            }
-                                          >
-                                            <Info className="w-3.5 h-3.5 text-gray-500 hover:text-gray-700 transition-colors" />
-                                          </button>
-                                        )}
-                                        {tooltipLabel === item.label &&
-                                          'sub' in item &&
-                                          item.sub && (
-                                            <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 z-10 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
-                                              {item.sub}
-                                              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45" />
-                                            </div>
-                                          )}
-                                      </div>
-                                      <p className="text-sm font-bold mt-0.5 whitespace-pre-line text-gray-900">
-                                        {item.values[valIdx]}
-                                      </p>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {/* 안내사항 */}
-                      <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
-                        <button
-                          type="button"
-                          className="w-full flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                          onClick={() => setCorpNoticeOpen((prev) => !prev)}
-                        >
-                          <Info className="w-4 h-4 text-red-600 shrink-0" />
-                          <span className="text-sm font-medium text-gray-600">
-                            주요정보 안내사항
-                          </span>
-                          <ChevronDown
-                            className="w-4 h-4 text-gray-400 ml-auto transition-transform"
-                            style={{
-                              transform: corpNoticeOpen
-                                ? 'rotate(180deg)'
-                                : 'rotate(0deg)',
-                            }}
-                          />
-                        </button>
-                        {corpNoticeOpen && (
-                          <div className="px-4 py-3">
-                            {corpNoticeItems.map((section) => (
-                              <div
-                                key={section.category}
-                                className="mb-3 last:mb-0"
-                              >
-                                <p className="text-sm font-bold text-gray-700 mb-1">
-                                  {section.category}
-                                </p>
-                                {section.items.map((item, idx) => (
-                                  <p
-                                    key={idx}
-                                    className="text-sm text-gray-600 leading-relaxed pl-2"
-                                  >
-                                    · {item}
-                                  </p>
-                                ))}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })()}
-            </div>
-          )}
-
-          {/* ===== 테이블 UI (기존 — Cmd+B로 전환) ===== */}
-          {viewMode === 'table' && (
-            <>
-              {/* 전체 비교표 탭 */}
-              {corpTableFilter === 'all' && (
-                <div>
-                  <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                    <table className="min-w-[700px] w-full border-collapse text-sm">
-                      <thead>
-                        <tr>
-                          <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-24">
-                            항목
-                          </th>
-                          <th className="p-3 text-left bg-gray-50 border border-gray-200 font-bold text-gray-700 w-56">
-                            내용
-                          </th>
-                          {corpFuneralProducts.map((p) => (
-                            <th
-                              key={p.id}
-                              className="p-3 text-center border border-gray-200 font-bold text-gray-900"
-                              style={{ backgroundColor: '#f5f0eb' }}
-                            >
-                              <div>{p.name}</div>
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {corpComparisonData.map((section) =>
-                          section.items.map((item, itemIdx) => (
-                            <tr
-                              key={`${section.category}-${item.label}`}
-                              className="hover:bg-gray-50"
-                            >
-                              {itemIdx === 0 && (
-                                <td
-                                  className="p-3 border border-gray-200 font-bold text-gray-700 whitespace-pre-line align-middle"
-                                  rowSpan={section.items.length}
-                                >
-                                  {section.category}
-                                </td>
-                              )}
-                              <td className="p-3 border border-gray-200 text-gray-700 text-center">
-                                <div className="font-medium">{item.label}</div>
-                                {'sub' in item && item.sub && (
-                                  <div className="text-xs text-gray-400">
-                                    {item.sub}
-                                  </div>
-                                )}
-                                {PRODUCT_LABEL_IMAGES[item.label] && (
-                                  <div className="flex justify-center gap-2 mt-2">
-                                    {PRODUCT_LABEL_IMAGES[item.label].map(
-                                      (img) => (
-                                        <div
-                                          key={img.alt}
-                                          className="w-24 h-24 rounded overflow-hidden cursor-pointer"
-                                          onClick={() =>
-                                            setLightboxSrc(img.src)
-                                          }
-                                        >
-                                          <img
-                                            src={img.src}
-                                            alt={img.alt}
-                                            className="w-full h-full object-cover scale-110"
-                                          />
-                                        </div>
-                                      ),
-                                    )}
-                                  </div>
-                                )}
-                              </td>
-                              {item.values[0] && item.values[1] === '' ? (
-                                <td
-                                  className="p-3 border border-gray-200 text-center text-gray-600 align-middle"
-                                  colSpan={2}
-                                >
-                                  {item.values[0]}
-                                </td>
-                              ) : (
-                                item.values.map((val, vi) => (
-                                  <td
-                                    key={vi}
-                                    className="p-3 border border-gray-200 text-center text-gray-600 whitespace-pre-line align-middle"
-                                  >
-                                    {val || '-'}
-                                  </td>
-                                ))
-                              )}
-                            </tr>
-                          )),
-                        )}
-                        {/* 가격 행 */}
-                        <tr className="bg-gray-50">
-                          <td
-                            className="p-3 border border-gray-200 font-bold text-gray-700"
-                            colSpan={2}
-                          >
-                            사전가입 시, 할인가
-                          </td>
-                          {corpFuneralProducts.map((p) => (
-                            <td
-                              key={p.id}
-                              className="p-3 border border-gray-200 text-center"
-                            >
-                              <div className="text-xs text-gray-400 line-through">
-                                {p.originalPrice}
-                              </div>
-                              <div
-                                className="text-base font-extrabold"
-                                style={{ color: BRAND_COLOR }}
-                              >
-                                → {p.discountPrice}
-                              </div>
-                            </td>
-                          ))}
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* 상품별 탭 */}
-              {corpTableFilter !== 'all' &&
-                (() => {
-                  const product = corpFuneralProducts.find(
-                    (p) => p.id === corpTableFilter,
-                  );
-                  if (!product) return null;
-                  const valIdx = corpTableFilter === 'corp-1' ? 0 : 1;
-                  return (
-                    <div>
-                      {/* 추천 대상 */}
-                      <div className="mb-10">
-                        <div className="flex items-start gap-6 flex-col sm:flex-row">
-                          <div className="shrink-0">
-                            <div
-                              className="w-8 h-1 rounded-full mb-3"
-                              style={{ backgroundColor: BRAND_COLOR }}
-                            />
-                            <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-snug">
-                              {product.name},
-                              <br />
-                              다음과 같은 분께 추천드립니다.
-                            </h3>
-                          </div>
-                          <ul className="space-y-2 pt-1">
-                            {product.summary.map((rec, i) => (
-                              <li
-                                key={i}
-                                className="flex items-start gap-2 text-sm text-gray-600"
-                              >
-                                <span className="text-gray-400 shrink-0 mt-0.5">
-                                  ·
-                                </span>
-                                <span>{rec}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-
-                      {/* 상품 정보 테이블 */}
-                      <div className="mb-10">
-                        <div
-                          className="w-8 h-1 rounded-full mb-3"
-                          style={{ backgroundColor: BRAND_COLOR }}
-                        />
-                        <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-6">
-                          {product.name} 상품정보
-                        </h3>
-
-                        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                          <table className="min-w-[500px] w-full border-collapse text-sm">
-                            <thead>
-                              <tr>
-                                <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700 w-24">
-                                  구분
-                                </th>
-                                <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700">
-                                  필수항목
-                                </th>
-                                <th className="p-3 text-center bg-gray-50 border-t-2 border-b border-gray-300 font-bold text-gray-700">
-                                  내용
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {corpComparisonData.map((section) => {
-                                const filtered = section.items.filter(
-                                  (item) =>
-                                    item.values[valIdx] &&
-                                    item.values[valIdx] !== '-' &&
-                                    item.values[valIdx] !== 'x',
-                                );
-                                if (filtered.length === 0) return null;
-                                return filtered.map((item, itemIdx) => (
-                                  <tr
-                                    key={`${section.category}-${item.label}-${itemIdx}`}
-                                    className="border-b border-gray-200"
-                                  >
-                                    {itemIdx === 0 && (
-                                      <td
-                                        className="p-3 text-center font-bold text-gray-700 whitespace-pre-line align-middle border-r border-gray-200 w-24"
-                                        rowSpan={filtered.length}
-                                      >
-                                        {section.category}
-                                      </td>
-                                    )}
-                                    <td className="p-3 text-center text-gray-700 align-middle border-r border-gray-200">
-                                      <div className="font-medium">
-                                        {item.label}
-                                      </div>
-                                      {'sub' in item && item.sub && (
-                                        <div className="text-xs text-gray-400 whitespace-pre-line">
-                                          {item.sub}
-                                        </div>
-                                      )}
-                                      {PRODUCT_LABEL_IMAGES[item.label] && (
-                                        <div className="flex justify-center gap-2 mt-2">
-                                          {PRODUCT_LABEL_IMAGES[item.label].map(
-                                            (img) => (
-                                              <div
-                                                key={img.alt}
-                                                className="w-24 h-24 rounded overflow-hidden cursor-pointer"
-                                                onClick={() =>
-                                                  setLightboxSrc(img.src)
-                                                }
-                                              >
-                                                <img
-                                                  src={img.src}
-                                                  alt={img.alt}
-                                                  className="w-full h-full object-cover scale-110"
-                                                />
-                                              </div>
-                                            ),
-                                          )}
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td className="p-3 text-center text-gray-900 font-medium align-middle whitespace-pre-line">
-                                      {item.values[valIdx] || '-'}
-                                    </td>
-                                  </tr>
-                                ));
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-
-                        {/* 주요정보 안내사항 - 접기/펼치기 */}
-                        <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
-                          <button
-                            type="button"
-                            className="w-full flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                            onClick={() => setCorpNoticeOpen((prev) => !prev)}
-                          >
-                            <Info className="w-4 h-4 text-red-600 shrink-0" />
-                            <span className="text-sm font-medium text-gray-600">
-                              주요정보 안내사항
-                            </span>
-                            <ChevronDown
-                              className="w-4 h-4 text-gray-400 ml-auto transition-transform"
-                              style={{
-                                transform: corpNoticeOpen
-                                  ? 'rotate(180deg)'
-                                  : 'rotate(0deg)',
-                              }}
-                            />
-                          </button>
-                          {corpNoticeOpen && (
-                            <div className="overflow-x-auto">
-                              <table className="w-full border-collapse text-sm">
-                                <tbody>
-                                  {corpNoticeItems.map((section) =>
-                                    section.items.map((item, idx) => (
-                                      <tr
-                                        key={`${section.category}-${idx}`}
-                                        className="border-t border-gray-200"
-                                      >
-                                        {idx === 0 && (
-                                          <td
-                                            className="p-3 sm:p-4 text-center font-bold text-gray-700 align-middle border-r border-gray-200 w-20 sm:w-28 bg-gray-50 whitespace-nowrap"
-                                            rowSpan={section.items.length}
-                                          >
-                                            {section.category}
-                                          </td>
-                                        )}
-                                        <td className="p-3 sm:p-4 text-gray-600 align-middle leading-relaxed">
-                                          · {item}
-                                        </td>
-                                      </tr>
-                                    )),
-                                  )}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-            </>
-          )}
-
-          {/* 상담 신청 CTA */}
-          <div className="mt-8 text-center">
-            <button
-              onClick={() => setShowCorpConsultModal(true)}
-              className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-10 py-4 text-base sm:text-lg font-bold text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
-              style={{ backgroundColor: BRAND_COLOR }}
-            >
-              <ScrollText className="w-5 h-5" />
-              기업상조 상담 신청하기
-            </button>
           </div>
         </div>
       </section>
@@ -2393,6 +1800,161 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
         open={showProposalModal}
         onClose={() => setShowProposalModal(false)}
       />
+
+      {/* ══════════════ 기업상조 상품 상세 모달 ══════════════ */}
+      {corpDetailProductId &&
+        (() => {
+          const product = corpFuneralProducts.find(
+            (p) => p.id === corpDetailProductId,
+          );
+          if (!product) return null;
+          const valIdx = corpDetailProductId === 'corp-1' ? 0 : 1;
+          const close = () => setCorpDetailProductId(null);
+          return (
+            <div
+              className="fixed inset-0 z-100 flex items-center justify-center bg-black/50"
+              onClick={close}
+            >
+              <div
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="px-6 py-4 flex items-center justify-between bg-gray-100 rounded-t-2xl shrink-0">
+                  <span className="font-bold text-gray-800">
+                    {product.name} 상세 내역
+                  </span>
+                  <button
+                    onClick={close}
+                    className="p-1 hover:bg-black/5 rounded-lg cursor-pointer transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5">
+                  {/* 가격 */}
+                  <div className="text-center mb-5">
+                    <div className="text-sm text-gray-400 line-through">
+                      {product.originalPrice}
+                    </div>
+                    <div className="flex items-center justify-center gap-2 mt-1">
+                      <span className="text-xs text-gray-500">
+                        (30만 원 공제)
+                      </span>
+                      <span
+                        className="text-2xl font-extrabold"
+                        style={{ color: BRAND_COLOR }}
+                      >
+                        {product.discountPrice}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 추천 대상 */}
+                  {product.summary?.length > 0 && (
+                    <div className="mb-5 bg-gray-50 rounded-xl p-4">
+                      <p className="text-xs font-bold text-gray-500 mb-2 tracking-wider">
+                        이런 분께 추천드립니다
+                      </p>
+                      <ul className="space-y-1.5">
+                        {product.summary.map((rec, i) => (
+                          <li
+                            key={i}
+                            className="flex items-start gap-2 text-sm text-gray-700"
+                          >
+                            <span className="text-gray-400 shrink-0 mt-0.5">
+                              ·
+                            </span>
+                            <span>{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* 카테고리별 표 */}
+                  <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="px-3 py-2.5 text-center font-bold text-gray-700 w-24 border-b border-gray-200">
+                            항목
+                          </th>
+                          <th className="px-3 py-2.5 text-center font-bold text-gray-700 border-b border-l border-gray-200">
+                            지원
+                          </th>
+                          <th className="px-3 py-2.5 text-center font-bold text-gray-700 border-b border-l border-gray-200">
+                            세부지원
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {corpComparisonData.map((section) => {
+                          const filtered = section.items.filter(
+                            (item) =>
+                              item.values[valIdx] &&
+                              item.values[valIdx] !== '-' &&
+                              item.values[valIdx] !== 'x',
+                          );
+                          if (filtered.length === 0) return null;
+                          return filtered.map((item, idx) => (
+                            <tr
+                              key={`${section.category}-${item.label}`}
+                              className="border-t border-gray-200"
+                            >
+                              {idx === 0 && (
+                                <td
+                                  className="px-3 py-2.5 text-center font-bold text-gray-700 align-middle bg-gray-50 whitespace-pre-line text-xs sm:text-sm"
+                                  rowSpan={filtered.length}
+                                >
+                                  {section.category}
+                                </td>
+                              )}
+                              <td className="px-3 py-2.5 text-gray-700 align-middle border-l border-gray-200 text-xs sm:text-sm">
+                                <div className="font-medium">{item.label}</div>
+                                {'sub' in item && item.sub && (
+                                  <div className="text-[11px] text-gray-400 mt-0.5">
+                                    {item.sub}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="px-3 py-2.5 text-center text-gray-900 font-medium align-middle border-l border-gray-200 whitespace-pre-line text-xs sm:text-sm">
+                                {item.values[valIdx]}
+                              </td>
+                            </tr>
+                          ));
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="px-5 sm:px-6 py-4 border-t border-gray-200 shrink-0 flex gap-2">
+                  <button
+                    onClick={close}
+                    className="flex-1 py-3 text-sm font-bold rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors cursor-pointer"
+                  >
+                    닫기
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCorpConsultForm((p) => ({
+                        ...p,
+                        product: product.id as 'corp-1' | 'corp-2',
+                      }));
+                      close();
+                      setShowCorpConsultModal(true);
+                    }}
+                    className="flex-1 py-3 text-sm font-bold rounded-xl text-white transition-colors cursor-pointer"
+                    style={{ backgroundColor: BRAND_COLOR }}
+                  >
+                    상담 신청
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
       {/* ══════════════ 기업상조 상담 신청 모달 ══════════════ */}
       {showCorpConsultModal && (

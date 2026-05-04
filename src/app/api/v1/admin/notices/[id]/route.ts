@@ -6,7 +6,12 @@ const EDITABLE_FIELDS = ['title', 'content', 'category', 'is_active', 'sort_orde
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { data, error } = await supabase.from(TABLE).select('*').eq('id', id).single();
+  const { data, error } = await supabase
+    .from(TABLE)
+    .select('*')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .single();
 
   if (error) {
     if (error.code === 'PGRST116') {
@@ -37,6 +42,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .from(TABLE)
     .update(payload)
     .eq('id', id)
+    .is('deleted_at', null)
     .select('id')
     .single();
 
@@ -52,7 +58,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { error } = await supabase.from(TABLE).delete().eq('id', id);
+  const { error } = await supabase
+    .from(TABLE)
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+    .is('deleted_at', null);
 
   if (error) {
     return NextResponse.json(

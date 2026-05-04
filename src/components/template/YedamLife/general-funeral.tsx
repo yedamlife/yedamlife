@@ -210,15 +210,41 @@ export function GeneralFuneral({
 
   useEffect(() => {
     const namePool = [
-      '김*철', '박*솔', '박*안', '임*순', '이*민', '정*혜', '최*우',
-      '강*진', '윤*서', '한*규', '조*아', '서*호', '문*경', '오*빈',
-      '신*경', '권*영', '황*수', '안*지', '송*현', '류*연',
-      '백*재', '남*호', '장*미', '홍*기', '구*린', '나*은',
-      '전*아', '문*수', '주*혁', '심*나',
+      '김*철',
+      '박*솔',
+      '박*안',
+      '임*순',
+      '이*민',
+      '정*혜',
+      '최*우',
+      '강*진',
+      '윤*서',
+      '한*규',
+      '조*아',
+      '서*호',
+      '문*경',
+      '오*빈',
+      '신*경',
+      '권*영',
+      '황*수',
+      '안*지',
+      '송*현',
+      '류*연',
+      '백*재',
+      '남*호',
+      '장*미',
+      '홍*기',
+      '구*린',
+      '나*은',
+      '전*아',
+      '문*수',
+      '주*혁',
+      '심*나',
     ];
     const statusPool = ['전화상담완료', '상담신청'];
     const timePool = ['방금', '1분전', '2분전', '3분전', '5분전', '7분전'];
-    const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+    const pick = <T,>(arr: T[]): T =>
+      arr[Math.floor(Math.random() * arr.length)];
 
     let counter = 1000;
     const swap = (slotIdx: number) => {
@@ -616,8 +642,8 @@ export function GeneralFuneral({
                       className="group/phone hidden sm:flex flex-1 items-center gap-2.5 sm:gap-3 pl-4 sm:pl-5 pr-3 sm:pr-4 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80"
                     >
                       <Phone
-                        className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-gray-900 transition-transform duration-300 group-hover/phone:-rotate-12"
-                        strokeWidth={1.7}
+                        className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-gray-800 transition-transform duration-300 group-hover/phone:-rotate-12"
+                        strokeWidth={1.9}
                       />
                       <p className="text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
                         <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
@@ -632,14 +658,40 @@ export function GeneralFuneral({
                     {/* 구분선 (모바일 숨김) */}
                     <span className="hidden sm:block w-px bg-gray-200/80" />
 
-                    {/* 중: 장지+ */}
+                    {/* 중: 장례비용 계산 */}
+                    <button
+                      onClick={() => setCostModalOpen(true)}
+                      className="group/calc flex items-center gap-2.5 pl-4 pr-3 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 sm:flex-[1.25]"
+                    >
+                      <Calculator
+                        className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-blue-800 transition-transform duration-300 group-hover/calc:-rotate-6 group-hover/calc:scale-110"
+                        strokeWidth={1.9}
+                      />
+                      <p className="min-w-0 text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
+                        <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
+                          30초만에
+                        </span>
+                        <span className="block text-[14.5px] sm:text-[14.5px] font-extrabold text-gray-900">
+                          <span>장례비용</span> 계산
+                        </span>
+                      </p>
+                      <ArrowRight
+                        className="shrink-0 ml-auto w-[16px] h-[16px] sm:w-[18px] sm:h-[18px] text-gray-400 transition-all duration-300 group-hover/calc:text-gray-900 group-hover/calc:translate-x-1"
+                        strokeWidth={1.8}
+                      />
+                    </button>
+
+                    {/* 구분선 (모바일에서는 grid 컬럼 차지하지 않도록 숨김 — 대신 우측 버튼 좌측 보더) */}
+                    <span className="hidden sm:block w-px bg-gray-200/80" />
+
+                    {/* 우: 장지+ */}
                     <a
                       href="/burial-plus"
-                      className="group/burial flex items-center gap-2.5 sm:gap-3 pl-4 sm:pl-5 pr-3 sm:pr-4 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 sm:flex-1"
+                      className="group/burial flex items-center gap-2.5 sm:gap-3 pl-4 sm:pl-5 pr-3 sm:pr-4 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 border-l border-gray-200/80 sm:border-l-0 sm:flex-1"
                     >
                       <MapPin
-                        className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-gray-900 transition-transform duration-300 group-hover/burial:-translate-y-0.5 group-hover/burial:scale-110"
-                        strokeWidth={1.7}
+                        className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-amber-900 transition-transform duration-300 group-hover/burial:-translate-y-0.5 group-hover/burial:scale-110"
+                        strokeWidth={1.9}
                       />
                       <p className="flex-1 text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
                         <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
@@ -654,33 +706,6 @@ export function GeneralFuneral({
                         strokeWidth={1.8}
                       />
                     </a>
-
-                    {/* 구분선 (모바일에서는 grid 컬럼 차지하지 않도록 숨김 — 대신 우측 버튼 좌측 보더) */}
-                    <span className="hidden sm:block w-px bg-gray-200/80" />
-
-                    {/* 우: 장례비용 계산 */}
-                    <button
-                      onClick={() => setCostModalOpen(true)}
-                      className="group/calc flex items-center gap-2.5 pl-4 pr-3 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 border-l border-gray-200/80 sm:border-l-0 sm:flex-[1.25]"
-                    >
-                      <Calculator
-                        className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-gray-900 transition-transform duration-300 group-hover/calc:-rotate-6 group-hover/calc:scale-110"
-                        strokeWidth={1.7}
-                      />
-                      <p className="min-w-0 text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
-                        <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
-                          30초만에
-                        </span>
-                        <span className="block text-[14.5px] sm:text-[14.5px] font-extrabold text-gray-900">
-                          <span style={{ color: BRAND_COLOR }}>장례비용</span>{' '}
-                          계산
-                        </span>
-                      </p>
-                      <ArrowRight
-                        className="shrink-0 ml-auto w-[16px] h-[16px] sm:w-[18px] sm:h-[18px] text-gray-400 transition-all duration-300 group-hover/calc:text-gray-900 group-hover/calc:translate-x-1"
-                        strokeWidth={1.8}
-                      />
-                    </button>
                   </div>
                 </div>
               </div>
@@ -992,25 +1017,31 @@ export function GeneralFuneral({
                         </div>
                       </div>
                     ))}
-                    {/* 우측: 상조 비용 라벨 — 가장 큰 막대(장례식장) 기준 중간 */}
-                    <div
-                      className="self-end pl-2"
-                      style={{
-                        paddingBottom: `${Math.round(h(bars[2].serviceFee) / 2 - 8)}px`,
-                      }}
-                    >
-                      <span className="text-[11px] sm:text-xs font-semibold text-gray-500 whitespace-nowrap">
-                        서비스별
+                    {/* 우측: 상조 비용 라벨 + 점선 브래킷 */}
+                    <div className="self-end flex items-center gap-1.5 -ml-4">
+                      <svg
+                        width={32}
+                        height={h(bars[2].serviceFee)}
+                        viewBox={`0 0 32 ${h(bars[2].serviceFee)}`}
+                        style={{ display: 'block', minWidth: 32, flexShrink: 0 }}
+                        aria-hidden="true"
+                      >
+                        <path
+                          d={`M 2 4 C 16 4, 16 ${h(bars[2].serviceFee) / 2}, 16 ${h(bars[2].serviceFee) / 2} C 16 ${h(bars[2].serviceFee) / 2}, 16 ${h(bars[2].serviceFee) - 4}, 2 ${h(bars[2].serviceFee) - 4}`}
+                          stroke="#374151"
+                          strokeWidth="2.5"
+                          strokeDasharray="6 4"
+                          strokeLinecap="round"
+                          fill="none"
+                        />
+                      </svg>
+                      <span className="text-[11px] sm:text-xs font-semibold whitespace-nowrap" style={{ color: '#374151' }}>
+                        장례식장 &apos;상조&apos;
                         <br />
-                        상조 평균 비용
+                        평균 비용
                       </span>
                     </div>
 
-                    {/* Row 3: 빨간 절취선 — 전체 너비 관통 */}
-                    <div
-                      className="border-t-[3px] border-dashed"
-                      style={{ gridColumn: '1 / -1', borderColor: '#7a6240' }}
-                    />
 
                     {/* Row 4: 장례식장 비용 (연한색, 높이 동일) */}
                     {bars.map((bar) => (
@@ -1033,14 +1064,26 @@ export function GeneralFuneral({
                         </div>
                       </div>
                     ))}
-                    {/* 우측: 장례식장 비용 라벨 */}
-                    <div className="self-center pl-2">
-                      <span className="text-[11px] sm:text-xs font-semibold text-gray-500 whitespace-nowrap">
-                        장례식장 평균 비용
-                      </span>
-                      <br />
-                      <span className="text-[10px] text-gray-400 whitespace-nowrap">
-                        - 상조 금액과 별도
+                    {/* 우측: 장례식장 비용 라벨 + 점선 브래킷 */}
+                    <div className="self-center flex items-center gap-1.5 -ml-4">
+                      <svg
+                        width={32}
+                        height={h(p.facilityFee)}
+                        viewBox={`0 0 32 ${h(p.facilityFee)}`}
+                        style={{ display: 'block', minWidth: 32, flexShrink: 0 }}
+                        aria-hidden="true"
+                      >
+                        <path
+                          d={`M 2 4 C 16 4, 16 ${h(p.facilityFee) / 2}, 16 ${h(p.facilityFee) / 2} C 16 ${h(p.facilityFee) / 2}, 16 ${h(p.facilityFee) - 4}, 2 ${h(p.facilityFee) - 4}`}
+                          stroke="#374151"
+                          strokeWidth="2.5"
+                          strokeDasharray="6 4"
+                          strokeLinecap="round"
+                          fill="none"
+                        />
+                      </svg>
+                      <span className="text-[11px] sm:text-xs font-semibold whitespace-nowrap" style={{ color: '#374151' }}>
+                        장례식장 기본 이용료
                       </span>
                     </div>
 
@@ -2925,8 +2968,8 @@ export function GeneralFuneral({
                   className="group/phone flex items-center justify-center sm:flex-1 gap-2.5 px-4 py-3.5 sm:py-4 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80"
                 >
                   <Phone
-                    className="shrink-0 w-[20px] h-[20px] text-gray-900 transition-transform duration-300 group-hover/phone:-rotate-12"
-                    strokeWidth={1.7}
+                    className="shrink-0 w-[20px] h-[20px] text-slate-700 transition-transform duration-300 group-hover/phone:-rotate-12"
+                    strokeWidth={1.9}
                   />
                   <p className="text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
                     <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
@@ -2947,8 +2990,8 @@ export function GeneralFuneral({
                   className="group/consult flex items-center justify-center sm:flex-1 gap-2.5 px-4 py-3.5 sm:py-4 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 border-l border-gray-200/80 sm:border-l-0"
                 >
                   <ScrollText
-                    className="shrink-0 w-[20px] h-[20px] text-gray-900 transition-transform duration-300 group-hover/consult:scale-110"
-                    strokeWidth={1.7}
+                    className="shrink-0 w-[20px] h-[20px] text-amber-800 transition-transform duration-300 group-hover/consult:scale-110"
+                    strokeWidth={1.9}
                   />
                   <p className="text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
                     <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
@@ -2970,17 +3013,14 @@ export function GeneralFuneral({
                   className="group/join flex items-center justify-center sm:flex-1 gap-2.5 px-4 py-3.5 sm:py-4 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 border-t border-gray-200/80 sm:border-t-0"
                 >
                   <FileText
-                    className="shrink-0 w-[20px] h-[20px] text-gray-900 transition-transform duration-300 group-hover/join:scale-110"
-                    strokeWidth={1.7}
+                    className="shrink-0 w-[20px] h-[20px] text-emerald-800 transition-transform duration-300 group-hover/join:scale-110"
+                    strokeWidth={1.9}
                   />
                   <p className="text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
                     <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
                       20만원 할인
                     </span>
-                    <span
-                      className="block text-[13px] sm:text-[14px] font-extrabold"
-                      style={{ color: BRAND_COLOR }}
-                    >
+                    <span className="block text-[13px] sm:text-[14px] font-extrabold">
                       가입신청
                     </span>
                   </p>
@@ -2994,8 +3034,8 @@ export function GeneralFuneral({
                   className="group/calc flex items-center justify-center sm:flex-1 gap-2.5 px-4 py-3.5 sm:py-4 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 border-t border-l border-gray-200/80 sm:border-t-0 sm:border-l-0"
                 >
                   <Calculator
-                    className="shrink-0 w-[20px] h-[20px] text-gray-900 transition-transform duration-300 group-hover/calc:-rotate-6 group-hover/calc:scale-110"
-                    strokeWidth={1.7}
+                    className="shrink-0 w-[20px] h-[20px] text-blue-800 transition-transform duration-300 group-hover/calc:-rotate-6 group-hover/calc:scale-110"
+                    strokeWidth={1.9}
                   />
                   <p className="text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
                     <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">

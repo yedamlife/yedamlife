@@ -18,6 +18,7 @@ export async function GET(request: Request) {
     .select('id, author, written_at, title, content, tags')
     .eq('category', category)
     .eq('is_active', true)
+    .is('deleted_at', null)
     .order('display_order', { ascending: true })
     .order('created_at', { ascending: false })
     .limit(limit);

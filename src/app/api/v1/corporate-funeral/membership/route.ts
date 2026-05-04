@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { sendAlimtalk, productLabel } from '@/lib/alimtalk';
+import { sendAlimtalk } from '@/lib/alimtalk';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    const requiredFields = [
-      'name', 'phone', 'gender',
-      'address', 'company_name', 'product',
-    ];
+    const requiredFields = ['name', 'phone', 'company_name'];
     const missing = requiredFields.filter((f) => !body[f]);
     if (missing.length > 0) {
       return NextResponse.json(
@@ -39,13 +36,11 @@ export async function POST(request: Request) {
       .insert({
         name: body.name,
         phone: body.phone,
-        gender: body.gender,
-        address: body.address,
-        address_detail: body.address_detail || null,
         company_name: body.company_name,
         position: body.position || null,
-        product: body.product,
+        manager_email: body.manager_email || null,
         referrer: body.referrer || null,
+        other_requirements: body.other_requirements || null,
         privacy_agreed: body.privacy_agreed,
       })
       .select('id')
@@ -66,10 +61,9 @@ export async function POST(request: Request) {
         휴대폰: body.phone,
         기업명: body.company_name,
         직급: body.position,
-        주소: body.address,
-        상세주소: body.address_detail,
-        가입상품: productLabel(body.product),
+        담당자이메일: body.manager_email,
         추천인: body.referrer,
+        기타요구사항: body.other_requirements,
       },
       { customerPhone: body.phone, host: request.headers.get('host') },
     ).catch(() => {});

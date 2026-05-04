@@ -13,6 +13,10 @@ export interface SendArgs {
   templateCode: string;
   recipients: string[];
   content: string;
+  /** 알림톡 발송 실패 시 NCP 가 자동 폴백할 SMS/LMS 본문. 없으면 폴백 안 함. */
+  smsContent?: string | null;
+  /** SMS 발신번호 (NCP 콘솔에 사전 등록된 번호) */
+  smsFrom?: string | null;
 }
 
 export interface SendResult {
@@ -30,6 +34,8 @@ export async function sendNcpAlimtalk(args: SendArgs): Promise<SendResult> {
     templateCode,
     recipients,
     content,
+    smsContent,
+    smsFrom,
   } = args;
 
   const path = `/alimtalk/v2/services/${encodeURIComponent(serviceId)}/messages`;
@@ -43,6 +49,12 @@ export async function sendNcpAlimtalk(args: SendArgs): Promise<SendResult> {
     secretKey,
   });
 
+  // SMS 폴백: smsContent 와 smsFrom 둘 다 있을 때만 활성화
+  // type 은 NCP 의 byte 환산(EUC-KR 기준 한글 2바이트) 90 초과 시 LMS
+  const useFailover = !!(smsContent && smsFrom);
+  const failoverType =
+    smsContent && Buffer.byteLength(smsContent, 'utf8') > 90 ? 'LMS' : 'SMS';
+
   const body = {
     plusFriendId,
     templateCode,
@@ -50,6 +62,14 @@ export async function sendNcpAlimtalk(args: SendArgs): Promise<SendResult> {
       to,
       content,
       countryCode: '82',
+      ...(useFailover && {
+        useSmsFailover: true,
+        failoverConfig: {
+          type: failoverType,
+          from: smsFrom!,
+          content: smsContent!,
+        },
+      }),
     })),
   };
 

@@ -46,10 +46,14 @@ export async function GET(request: Request) {
   const category = searchParams.get('category') || '전체';
   const activeFilter = searchParams.get('is_active');
   const publicLabel = searchParams.get('public_label') || undefined;
+  const hasReligion = searchParams.get('has_religion');
 
   const sortCol = SORT_COLUMN[category] ?? 'sort_all';
 
-  let query = supabase.from(TABLE).select(SELECT_COLUMNS, { count: cursor ? undefined : 'exact' });
+  let query = supabase
+    .from(TABLE)
+    .select(SELECT_COLUMNS, { count: cursor ? undefined : 'exact' })
+    .is('deleted_at', null);
 
   if (category && category !== '전체') {
     query = query.contains('categories', [category]);
@@ -61,6 +65,10 @@ export async function GET(request: Request) {
 
   if (activeFilter === 'true') query = query.eq('is_active', true);
   else if (activeFilter === 'false') query = query.eq('is_active', false);
+
+  if (hasReligion === 'true') {
+    query = query.overlaps('religions', ['기독교', '불교', '천주교']);
+  }
 
   if (search) {
     query = query.ilike('company_name', `%${search}%`);

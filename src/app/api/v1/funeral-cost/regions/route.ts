@@ -9,7 +9,8 @@ export async function GET(request: Request) {
     if (type === 'sido') {
       const { data, error } = await supabase
         .from('funeral_halls')
-        .select('sido_cd, org_name');
+        .select('sido_cd, org_name')
+        .is('deleted_at', null);
 
       if (error) {
         return NextResponse.json(
@@ -47,7 +48,8 @@ export async function GET(request: Request) {
       const { data, error } = await supabase
         .from('funeral_halls')
         .select('gungu_cd, org_name')
-        .eq('sido_cd', sido);
+        .eq('sido_cd', sido)
+        .is('deleted_at', null);
 
       if (error) {
         return NextResponse.json(

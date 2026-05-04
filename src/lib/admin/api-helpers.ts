@@ -31,7 +31,7 @@ export async function getList(
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
-  let query = supabase.from(table).select('*', { count: 'exact' });
+  let query = supabase.from(table).select('*', { count: 'exact' }).is('deleted_at', null);
 
   if (status) {
     query = query.eq('status', status);
@@ -72,7 +72,12 @@ export async function getList(
 }
 
 export async function getDetail(table: string, id: string) {
-  const { data, error } = await supabase.from(table).select('*').eq('id', id).single();
+  const { data, error } = await supabase
+    .from(table)
+    .select('*')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .single();
 
   if (error) {
     if (error.code === 'PGRST116') {
@@ -96,6 +101,7 @@ export async function updateRecord(table: string, id: string, body: Record<strin
     .from(table)
     .update({ ...body, updated_at: new Date().toISOString() })
     .eq('id', id)
+    .is('deleted_at', null)
     .select('id')
     .single();
 
@@ -111,7 +117,11 @@ export async function updateRecord(table: string, id: string, body: Record<strin
 }
 
 export async function deleteRecord(table: string, id: string) {
-  const { error } = await supabase.from(table).delete().eq('id', id);
+  const { error } = await supabase
+    .from(table)
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+    .is('deleted_at', null);
 
   if (error) {
     console.error(`[Admin API] ${table} delete error:`, error);
@@ -126,7 +136,7 @@ export async function deleteRecord(table: string, id: string) {
 
 export async function getStatusCounts(table: string) {
   // status 컬럼만 전체 조회 후 JS에서 집계 (DB 1회)
-  const { data } = await supabase.from(table).select('status');
+  const { data } = await supabase.from(table).select('status').is('deleted_at', null);
   const rows = data || [];
   const total = rows.length;
   let pending = 0;

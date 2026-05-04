@@ -60,7 +60,8 @@ export async function GET(request: Request) {
   let query = supabase
     .from(TABLE)
     .select(SELECT_COLUMNS, { count: cursor ? undefined : 'exact' })
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .is('deleted_at', null);
 
   if (category && category !== '전체') {
     query = query.contains('categories', [category]);

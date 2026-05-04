@@ -22,6 +22,7 @@ export default async function NoticesPage() {
     .from('notices')
     .select('id, title, category, created_at')
     .eq('is_active', true)
+    .is('deleted_at', null)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: false });
 

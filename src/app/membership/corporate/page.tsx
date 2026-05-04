@@ -3,29 +3,12 @@ import { CONTACT_PHONE, CONTACT_TEL_HREF } from '@/constants/contact';
 
 import { useState, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Script from 'next/script';
-import { Gift, Phone, CheckCircle2, FileText, Search, X } from 'lucide-react';
+import { Gift, Phone, CheckCircle2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
 } from '@/components/template/YedamLife/constants';
-
-// ── 기업상조 상품 옵션 ──
-const productOptions = [
-  {
-    id: 'corp-1',
-    name: '예담 기업 1호',
-    originalPrice: '150만원',
-    discountPrice: '130만원',
-  },
-  {
-    id: 'corp-2',
-    name: '예담 기업 2호',
-    originalPrice: '250만원',
-    discountPrice: '230만원',
-  },
-];
 
 // ── 제공 서비스 (8개) ──
 const serviceBenefits = [
@@ -68,71 +51,18 @@ function MembershipCorporatePageContent() {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    birthDate: '',
-    gender: '남',
-    religion: '무교',
-    address: '',
-    addressDetail: '',
     companyName: '',
     position: '',
-    product: '',
+    managerEmail: '',
     referrer: '',
+    otherRequirements: '',
   });
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [showPostcode, setShowPostcode] = useState(false);
-  const postcodeRef = useRef<HTMLDivElement>(null);
+  const privacySectionRef = useRef<HTMLDivElement>(null);
 
   const today = new Date();
   const formattedDate = `${today.getFullYear()}년 ${String(today.getMonth() + 1).padStart(2, '0')}월 ${String(today.getDate()).padStart(2, '0')}일`;
-
-  const openAddressSearch = () => {
-    const run = () => {
-      const daum = (window as unknown as Record<string, unknown>).daum as
-        | {
-            Postcode: new (opts: {
-              oncomplete: (data: {
-                address: string;
-                buildingName: string;
-              }) => void;
-              onclose: () => void;
-              width: string;
-              height: string;
-            }) => { embed: (el: HTMLElement) => void };
-          }
-        | undefined;
-      if (!daum?.Postcode || !postcodeRef.current) return;
-
-      postcodeRef.current.innerHTML = '';
-      setShowPostcode(true);
-
-      new daum.Postcode({
-        width: '100%',
-        height: '100%',
-        oncomplete: (data) => {
-          const addr = data.buildingName
-            ? `${data.address} (${data.buildingName})`
-            : data.address;
-          updateField('address', addr);
-          setShowPostcode(false);
-        },
-        onclose: () => {
-          setShowPostcode(false);
-        },
-      }).embed(postcodeRef.current);
-    };
-
-    if ((window as unknown as Record<string, unknown>).daum) {
-      run();
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src =
-      '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
-    script.onload = run;
-    document.head.appendChild(script);
-  };
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -140,15 +70,17 @@ function MembershipCorporatePageContent() {
     const missing: string[] = [];
     if (!formData.name) missing.push('신청인');
     if (!formData.phone) missing.push('휴대폰');
-    if (!formData.address) missing.push('주소');
     if (!formData.companyName) missing.push('회사명');
-    if (!formData.product) missing.push('가입상품');
     if (missing.length > 0) {
       toast.warning(`다음 항목을 입력해주세요: ${missing.join(', ')}`);
       return;
     }
     if (!privacyAgreed) {
       toast.warning('개인정보 이용·제공·활용 동의가 필요합니다.');
+      privacySectionRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
       return;
     }
 
@@ -160,15 +92,11 @@ function MembershipCorporatePageContent() {
         body: JSON.stringify({
           name: formData.name,
           phone: formData.phone,
-          birth_date: formData.birthDate,
-          gender: formData.gender,
-          religion: formData.religion,
-          address: formData.address,
-          address_detail: formData.addressDetail,
           company_name: formData.companyName,
           position: formData.position,
-          product: formData.product,
+          manager_email: formData.managerEmail,
           referrer: formData.referrer,
+          other_requirements: formData.otherRequirements,
           privacy_agreed: privacyAgreed,
         }),
       });
@@ -214,8 +142,7 @@ function MembershipCorporatePageContent() {
           </p>
           <a
             href={homeUrl}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold transition-all hover:opacity-90"
-            style={{ backgroundColor: BRAND_COLOR }}
+            className="inline-flex bg-gray-100 items-center gap-2 px-6 py-3 rounded-xl text-black font-semibold transition-all hover:opacity-90"
           >
             홈으로 돌아가기
           </a>
@@ -226,10 +153,6 @@ function MembershipCorporatePageContent() {
 
   return (
     <>
-      <Script
-        src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"
-        strategy="lazyOnload"
-      />
       <style>{`
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
         html, body {
@@ -289,7 +212,7 @@ function MembershipCorporatePageContent() {
                 {/* 신청인 / 휴대폰 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
+                    <label className="block text-sm font-semibold text-black mb-2">
                       신청인 <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -301,7 +224,7 @@ function MembershipCorporatePageContent() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
+                    <label className="block text-sm font-semibold text-black mb-2">
                       휴대폰 <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -312,37 +235,6 @@ function MembershipCorporatePageContent() {
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a5a2b]/30 transition-all bg-gray-50 focus:bg-white"
                     />
                   </div>
-                </div>
-
-                {/* 주소 */}
-                <div>
-                  <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
-                    주소
-                  </label>
-                  <button
-                    type="button"
-                    onClick={openAddressSearch}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 hover:bg-gray-100 transition-all mb-3 flex items-center justify-between cursor-pointer text-left"
-                    style={{ minHeight: 'auto' }}
-                  >
-                    <span
-                      className={
-                        formData.address ? 'text-gray-900' : 'text-gray-400'
-                      }
-                    >
-                      {formData.address || '주소 검색'}
-                    </span>
-                    <Search className="w-4 h-4 text-gray-400 shrink-0" />
-                  </button>
-                  <input
-                    type="text"
-                    placeholder="상세주소를 입력해주세요"
-                    value={formData.addressDetail}
-                    onChange={(e) =>
-                      updateField('addressDetail', e.target.value)
-                    }
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a5a2b]/30 transition-all bg-gray-50 focus:bg-white"
-                  />
                 </div>
 
                 {/* 구분선 */}
@@ -357,7 +249,7 @@ function MembershipCorporatePageContent() {
                 {/* 기업명 / 직급 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
+                    <label className="block text-sm font-semibold text-black mb-2">
                       기업명
                     </label>
                     <input
@@ -371,7 +263,7 @@ function MembershipCorporatePageContent() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
+                    <label className="block text-sm font-semibold text-black mb-2">
                       직급
                     </label>
                     <input
@@ -384,92 +276,49 @@ function MembershipCorporatePageContent() {
                   </div>
                 </div>
 
-                {/* 구분선 */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-gray-100" />
-                  <span className="text-xs font-medium text-gray-400">
-                    가입 상품 선택
-                  </span>
-                  <div className="flex-1 h-px bg-gray-100" />
-                </div>
-
-                {/* 가입상품 */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    가입상품 <span className="text-red-500">*</span>
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {productOptions.map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => updateField('product', p.id)}
-                        className="relative flex items-center gap-3 p-4 rounded-xl border text-left transition-all cursor-pointer"
-                        style={{
-                          backgroundColor:
-                            formData.product === p.id
-                              ? BRAND_COLOR_LIGHT
-                              : '#f9fafb',
-                          borderColor:
-                            formData.product === p.id ? BRAND_COLOR : '#e5e7eb',
-                        }}
-                      >
-                        <div
-                          className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0"
-                          style={{
-                            borderColor:
-                              formData.product === p.id
-                                ? BRAND_COLOR
-                                : '#d1d5db',
-                          }}
-                        >
-                          {formData.product === p.id && (
-                            <div
-                              className="w-2.5 h-2.5 rounded-full"
-                              style={{ backgroundColor: BRAND_COLOR }}
-                            />
-                          )}
-                        </div>
-                        <div>
-                          <p
-                            className="text-sm font-bold"
-                            style={{
-                              color:
-                                formData.product === p.id
-                                  ? BRAND_COLOR
-                                  : '#374151',
-                            }}
-                          >
-                            {p.name}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            <span className="line-through mr-1">
-                              {p.originalPrice}
-                            </span>
-                            <span
-                              className="font-semibold"
-                              style={{ color: BRAND_COLOR }}
-                            >
-                              {p.discountPrice}
-                            </span>
-                          </p>
-                        </div>
-                      </button>
-                    ))}
+                {/* 담당자 이메일 / 추천인 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-black mb-2">
+                      담당자 이메일
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="example@company.com"
+                      value={formData.managerEmail}
+                      onChange={(e) =>
+                        updateField('managerEmail', e.target.value)
+                      }
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a5a2b]/30 transition-all bg-gray-50 focus:bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-black mb-2">
+                      추천인
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="추천인을 입력해주세요"
+                      value={formData.referrer}
+                      onChange={(e) => updateField('referrer', e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a5a2b]/30 transition-all bg-gray-50 focus:bg-white"
+                    />
                   </div>
                 </div>
 
-                {/* 추천인 */}
+                {/* 기타 요구사항 */}
                 <div>
-                  <label className="block text-sm font-semibold text-[#4a5a2b] mb-2">
-                    추천인
+                  <label className="block text-sm font-semibold text-black mb-2">
+                    기타 요구사항
                   </label>
-                  <input
-                    type="text"
-                    placeholder="추천인을 입력해주세요"
-                    value={formData.referrer}
-                    onChange={(e) => updateField('referrer', e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a5a2b]/30 transition-all bg-gray-50 focus:bg-white"
+                  <textarea
+                    placeholder="기타 요구사항을 입력해주세요"
+                    rows={4}
+                    value={formData.otherRequirements}
+                    onChange={(e) =>
+                      updateField('otherRequirements', e.target.value)
+                    }
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a5a2b]/30 transition-all bg-gray-50 focus:bg-white resize-none"
                   />
                 </div>
               </div>
@@ -769,7 +618,10 @@ function MembershipCorporatePageContent() {
             </div>
 
             {/* 동의 체크 */}
-            <div className="mt-8 bg-white rounded-2xl border border-gray-100 p-6">
+            <div
+              ref={privacySectionRef}
+              className="mt-8 bg-white rounded-2xl border border-gray-100 p-6 scroll-mt-24"
+            >
               <button
                 type="button"
                 onClick={() => setPrivacyAgreed(!privacyAgreed)}
@@ -803,29 +655,6 @@ function MembershipCorporatePageContent() {
           </div>
         </section>
       </div>
-      {/* 주소 검색 팝업 */}
-      <div
-        className="fixed inset-0 z-200 flex items-center justify-center bg-black/40"
-        style={{ display: showPostcode ? 'flex' : 'none' }}
-        onClick={() => setShowPostcode(false)}
-      >
-        <div
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden flex flex-col"
-          style={{ height: '500px' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="px-6 py-3 flex items-center justify-between border-b border-gray-200 shrink-0">
-            <span className="font-bold text-sm text-gray-800">주소 검색</span>
-            <button
-              onClick={() => setShowPostcode(false)}
-              className="p-1 hover:bg-black/5 rounded-lg cursor-pointer transition-colors"
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
-          <div ref={postcodeRef} className="flex-1" />
-        </div>
-      </div>
 
       {/* 하단 고정 전화 상담 / 가입 신청 버튼 */}
       <div className="fixed bottom-0 left-0 right-0 z-50 sm:pb-4 pointer-events-none safe-area-bottom">
@@ -845,7 +674,7 @@ function MembershipCorporatePageContent() {
           >
             <FileText className="w-5 h-5 shrink-0" />
             <span className="leading-none">
-              {submitting ? '신청 중...' : '가입 신청'}
+              {submitting ? '신청 중...' : '상담 신청'}
             </span>
           </button>
         </div>

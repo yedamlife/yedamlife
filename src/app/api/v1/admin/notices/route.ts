@@ -17,7 +17,8 @@ export async function GET(request: Request) {
     .select(
       'id, uuid, title, category, is_active, sort_order, view_count, created_at',
       { count: 'exact' },
-    );
+    )
+    .is('deleted_at', null);
 
   if (search) {
     query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`);

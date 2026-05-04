@@ -8,8 +8,7 @@ import type { Column } from '@/components/admin/data-table';
 interface Row {
   id: number;
   status?: string;
-  member_no: string | null;
-  matched_member_no: string | null;
+  membership_no: string | null;
   membership_type: string | null;
   membership_id: number | null;
   name: string;
@@ -20,13 +19,6 @@ interface Row {
   created_at: string;
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  pending: '신청',
-  shipped: '발송',
-  done: '완료',
-  canceled: '취소',
-};
-
 const TYPE_LABEL: Record<string, string> = {
   general: '일반상조',
   corporate: '기업상조',
@@ -35,9 +27,9 @@ const TYPE_LABEL: Record<string, string> = {
 const columns: Column<Row>[] = [
   { key: 'id', label: 'ID' },
   {
-    key: 'matched_member_no',
+    key: 'membership_no',
     label: '회원번호',
-    render: (row) => row.matched_member_no || row.member_no || '-',
+    render: (row) => row.membership_no || '-',
   },
   {
     key: 'membership_type',
@@ -52,11 +44,6 @@ const columns: Column<Row>[] = [
     label: '주소',
     render: (row) =>
       `[${row.zonecode}] ${row.address}${row.detail_address ? ' ' + row.detail_address : ''}`,
-  },
-  {
-    key: 'status',
-    label: '상태',
-    render: (row) => STATUS_LABEL[row.status || 'pending'] || row.status,
   },
   {
     key: 'created_at',

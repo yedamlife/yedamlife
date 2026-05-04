@@ -10,7 +10,7 @@ const MEMBERSHIP_TYPE_LABEL: Record<string, string> = {
 };
 
 const fields = [
-  { key: 'matched_member_no', label: '회원번호', editable: false },
+  { key: 'membership_no', label: '회원번호', editable: false },
   { key: 'name', label: '성함' },
   { key: 'phone', label: '연락처' },
   { key: 'zonecode', label: '우편번호' },

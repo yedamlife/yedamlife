@@ -14,6 +14,7 @@ import {
   ArrowRight,
   ChevronDown,
   RotateCcw,
+  BarChart2,
 } from 'lucide-react';
 import {
   Select,
@@ -62,9 +63,10 @@ function getAreaSqm(fee: FacilityFee): number | null {
 }
 
 // 사용료 단위 판별
-//  - 시간당 (예: '시간당', '1시간') → 24시간 x 2일 = 48 적용
+//  - 시간당 (예: '시간당', '1시간', '/h') → 24시간 x 2일 = 48 적용
 //  - 일/24시간 단위 (예: '1일', '24시간 기준', '1실/24시간 기준') → 2일 적용
-//  - 그 외 → 데이터 그대로 사용
+//  - 1회/회 명시 → 1회성 비용으로 그대로 사용
+//  - 단위 미기재 → 24시간 기준으로 판단, 2일 적용
 function getFeeMultiplier(fee: FacilityFee): {
   multiplier: number;
   unitLabel: string;
@@ -73,16 +75,31 @@ function getFeeMultiplier(fee: FacilityFee): {
     typeof fee['서비스내용'] === 'string' ? (fee['서비스내용'] as string) : ''
   }`;
   const desc = raw.replace(/\s/g, '');
-  if (/시간당|1시간|시간\/회/.test(desc)) {
+  if (/시간당|1시간|시간\/회|\/[hH](?![a-zA-Z])/.test(desc)) {
     return { multiplier: 48, unitLabel: '24시간 x 2일' };
   }
   if (/24시간|일/.test(desc)) {
     return { multiplier: 2, unitLabel: '2일' };
   }
-  return { multiplier: 1, unitLabel: '' };
+  if (/\d*회/.test(desc)) {
+    return { multiplier: 1, unitLabel: '' };
+  }
+  return { multiplier: 2, unitLabel: '24시간' };
 }
 
 type FuneralType = '3day' | 'nobinso';
+type CurrentSituation = 'preparing' | 'within_month' | 'within_days' | 'after';
+
+const CURRENT_SITUATION_OPTIONS: { value: CurrentSituation; label: string }[] =
+  [
+    { value: 'preparing', label: '급하지 않지만 미리 알아보려고 해요.' },
+    {
+      value: 'within_month',
+      label: '1주에서 한 달 정도 기간이 남은 것 같아요.',
+    },
+    { value: 'within_days', label: '임종이 며칠 남지 않았어요.' },
+    { value: 'after', label: '임종하신 상태입니다.' },
+  ];
 type SizeKey = 'small' | 'medium' | 'large' | 'premium' | 'vip';
 
 /* ─── 상수 ─── */
@@ -175,6 +192,28 @@ const SIZE_CATEGORIES: {
   },
 ];
 
+/* ─── 장례식장 이용료 옵션 (제단 꽃 장식 / 제사 비용) ─── */
+type FlowerDecorKey = 'normal' | 'special' | 'premium' | 'top';
+type RitualKey = 'none' | 'formal' | 'simple' | 'christian';
+
+const FLOWER_DECOR_OPTIONS: {
+  key: FlowerDecorKey;
+  label: string;
+  price: number;
+}[] = [
+  { key: 'normal', label: '일반형 평균', price: 700000 },
+  { key: 'special', label: '특선형 평균', price: 1000000 },
+  { key: 'premium', label: '고급형 평균', price: 1500000 },
+  { key: 'top', label: '최고급형 평균', price: 2000000 },
+];
+
+const RITUAL_OPTIONS: { key: RitualKey; label: string; price: number }[] = [
+  { key: 'none', label: '제사 없음', price: 0 },
+  { key: 'formal', label: '정식 제사 평균', price: 550000 },
+  { key: 'simple', label: '약식 제사 평균', price: 280000 },
+  { key: 'christian', label: '기독교 헌화 평균', price: 75000 },
+];
+
 /* ─── 평균 상조비용 상수 ─── */
 type SangjoItem = {
   label: string;
@@ -218,7 +257,7 @@ const SANGJO_ITEMS_NOBINSO: SangjoItem[] = [
     price: 250000,
     items: [
       { label: '도자기 유골함 평균', price: 230000 },
-      { label: '나무 유골함 평균', price: 20000 },
+      { label: '목함 평균', price: 50000 },
     ],
   },
 ];
@@ -259,15 +298,15 @@ const SANGJO_ITEMS_3DAY: SangjoItem[] = [
     price: 250000,
     items: [
       { label: '도자기 유골함 평균', price: 230000 },
-      { label: '나무 유골함 평균', price: 20000 },
+      { label: '목함 평균', price: 50000 },
     ],
   },
   {
     label: '상복',
-    price: 52000,
+    price: 80000,
     items: [
-      { label: '남자상복 1벌', price: 30000 },
-      { label: '여자상복 1벌', price: 22000 },
+      { label: '남자상복 1벌', price: 50000 },
+      { label: '여자상복 1벌', price: 30000 },
     ],
   },
 ];
@@ -290,7 +329,7 @@ const LIVE_STATS_KEYWORDS = [
   '장례지도사',
   '입관지도사',
   '오동나무',
-  '나무 유골함',
+  '목함',
   '도자기 유골함',
   '영정사진',
 ] as const;
@@ -301,17 +340,20 @@ const hasLiveStatsLabel = (label: string): boolean =>
 // 라이브 라벨 안에서 강조할 숫자 색상 (파란색 계열).
 const LIVE_LABEL_HIGHLIGHT = '#2563eb';
 
-// 기본 선택 해제 키: '나무 유골함'은 기본 비선택, '도자기 유골함'이 기본 선택.
+// 단일 선택(라디오) 부모 라벨. 첫 번째 sub가 기본 선택, 나머지는 기본 비선택.
+const RADIO_PARENT_LABELS: ReadonlySet<string> = new Set(['유골함']);
+
+// 기본 선택 해제 키: '유골함'은 첫 번째(도자기 유골함)만 선택, '목함'은 비선택.
 // 두 데이터 구조 모두에서 동일 인덱스를 보장하기 위해 양쪽을 스캔해 합집합으로 처리.
 const createInitialUnselectedSangjoKeys = (): Set<string> => {
   const set = new Set<string>();
   const collect = (items: SangjoItem[]) => {
     items.forEach((item, i) => {
-      item.items?.forEach((sub, j) => {
-        if (sub.label.includes('나무 유골함')) {
-          set.add(`${i}:${j}`);
-        }
-      });
+      if (RADIO_PARENT_LABELS.has(item.label) && item.items) {
+        item.items.forEach((_, j) => {
+          if (j !== 0) set.add(`${i}:${j}`);
+        });
+      }
     });
   };
   collect(SANGJO_ITEMS_3DAY);
@@ -412,8 +454,10 @@ export function FuneralCostModal({
   // Steps
   const [step, setStep] = useState(1);
 
-  // Step 1: 장례형태
+  // Step 1: 장례형태 + 현재 상황
   const [funeralType, setFuneralType] = useState<FuneralType | null>(null);
+  const [currentSituation, setCurrentSituation] =
+    useState<CurrentSituation | null>(null);
 
   // Step 2: 지역
   const [sidoList, setSidoList] = useState<Region[]>([]);
@@ -443,10 +487,14 @@ export function FuneralCostModal({
   const [encoffinListOpen, setEncoffinListOpen] = useState(true);
   const [mortuaryListOpen, setMortuaryListOpen] = useState(true);
   // 상조비용 항목별 선택 해제 키 (예: "0:1" = 인력지원의 입관지도사). 비어있으면 전체 선택.
-  // 단, '나무 유골함'은 기본 비선택 (도자기 유골함이 기본).
+  // 단, '목함'은 기본 비선택 (도자기 유골함이 기본).
   const [unselectedSangjoKeys, setUnselectedSangjoKeys] = useState<Set<string>>(
     () => createInitialUnselectedSangjoKeys(),
   );
+
+  // 장례식장 이용료 — 제단 꽃 장식 / 제사 비용 단일 선택
+  const [flowerDecor, setFlowerDecor] = useState<FlowerDecorKey>('normal');
+  const [ritual, setRitual] = useState<RitualKey>('none');
 
   // 메이크업 통계 (실시간 쿼리)
   const [makeupStats, setMakeupStats] = useState<{
@@ -558,84 +606,84 @@ export function FuneralCostModal({
             return {
               ...sub,
               price: makeupStats.avg_amount,
-              note: `'메이크업 비용' 제공하는 ${makeupStats.hall_count}개 장례식장 실시간 평균 비용`,
+              note: `메이크업 비용을 공개하는 ${makeupStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
           if (sub.label.includes('수의') && shroudStats) {
             return {
               ...sub,
               price: shroudStats.avg_amount,
-              note: `'수의 비용' 제공하는 ${shroudStats.hall_count}개 장례식장 실시간 평균 비용`,
+              note: `수의 비용을 공개하는 ${shroudStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
           if (sub.label.includes('남자상복') && mourningStats?.male) {
             return {
               ...sub,
-              price: mourningStats.male.median_amount,
-              note: `'남자상복 비용' 제공하는 ${mourningStats.male.hall_count}개 장례식장 실시간 평균 비용`,
+              price: 50000,
+              note: `남자상복 비용을 공개하는 ${mourningStats.male.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
           if (sub.label.includes('여자상복') && mourningStats?.female) {
             return {
               ...sub,
-              price: mourningStats.female.median_amount,
-              note: `'여자상복 비용' 제공하는 ${mourningStats.female.hall_count}개 장례식장 실시간 평균 비용`,
+              price: 30000,
+              note: `여자상복 비용을 공개하는 ${mourningStats.female.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
           if (sub.label.includes('장의버스') && vehicleStats) {
             return {
               ...sub,
               price: vehicleStats.bus.median_amount,
-              note: `'장의버스 비용' 제공하는 ${vehicleStats.hall_count}개 장례식장 실시간 평균 비용`,
+              note: `장의버스 비용을 공개하는 ${vehicleStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
           if (sub.label.includes('리무진') && vehicleStats) {
             return {
               ...sub,
               price: vehicleStats.limo.median_amount,
-              note: `'리무진 비용' 제공하는 ${vehicleStats.hall_count}개 장례식장 실시간 평균 비용`,
+              note: `리무진 비용을 공개하는 ${vehicleStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
           if (sub.label.includes('장례지도사') && directorStats) {
             return {
               ...sub,
               price: directorStats.median_amount,
-              note: `'장례지도사 비용' 제공하는 ${directorStats.hall_count}개 장례식장 실시간 평균 비용`,
+              note: `장례지도사 비용을 공개하는 ${directorStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
           if (sub.label.includes('입관지도사') && directorStats) {
             return {
               ...sub,
               price: directorStats.median_amount,
-              note: `'입관지도사 비용' 제공하는 ${directorStats.hall_count}개 장례식장 실시간 평균 비용`,
+              note: `입관지도사 비용을 공개하는 ${directorStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
           if (sub.label.includes('오동나무') && coffinStats) {
             return {
               ...sub,
               price: coffinStats.median_amount,
-              note: `'오동나무 관 비용' 제공하는 ${coffinStats.hall_count}개 장례식장 실시간 평균 비용`,
+              note: `오동나무 관 비용을 공개하는 ${coffinStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
-          if (sub.label.includes('나무 유골함') && urnStats?.wood) {
+          if (sub.label.includes('목함') && urnStats?.wood) {
             return {
               ...sub,
-              price: urnStats.wood.median_amount,
-              note: `'나무 유골함 비용' 제공하는 ${urnStats.wood.hall_count}개 장례식장 실시간 평균 비용`,
+              price: 50000,
+              note: `목함 비용을 공개하는 ${urnStats.wood.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
           if (sub.label.includes('도자기 유골함') && urnStats?.ceramic) {
             return {
               ...sub,
               price: urnStats.ceramic.median_amount,
-              note: `'도자기 유골함 비용' 제공하는 ${urnStats.ceramic.hall_count}개 장례식장 실시간 평균 비용`,
+              note: `도자기 유골함 비용을 공개하는 ${urnStats.ceramic.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
           if (sub.label.includes('영정사진') && portraitStats) {
             return {
               ...sub,
               price: portraitStats.median_amount,
-              note: `'영정사진 비용' 제공하는 ${portraitStats.hall_count}개 장례식장 실시간 평균 비용`,
+              note: `영정사진 비용을 공개하는 ${portraitStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
           return sub;
@@ -668,6 +716,7 @@ export function FuneralCostModal({
   // Contact step
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [ageGroup, setAgeGroup] = useState('');
 
   // ── URL 쿼리 파라미터에서 상태 복원 ──
   useEffect(() => {
@@ -834,6 +883,7 @@ export function FuneralCostModal({
     setGuestCount(120);
     setName('');
     setPhone('');
+    setAgeGroup('');
     setShowFeeTooltip(true);
     // URL 파라미터 정리
     const params = new URLSearchParams(window.location.search);
@@ -1112,12 +1162,18 @@ export function FuneralCostModal({
 
     const transfer = costs.transfer;
     const food = costs.food * guestCount;
+    const flowerDecorPrice =
+      FLOWER_DECOR_OPTIONS.find((o) => o.key === flowerDecor)?.price ?? 0;
+    const ritualPrice =
+      RITUAL_OPTIONS.find((o) => o.key === ritual)?.price ?? 0;
     const basicTotal =
       facilityFee +
       encoffin +
       transfer +
       mortuary +
       food +
+      flowerDecorPrice +
+      ritualPrice +
       extraEncoffinTotal +
       extraMortuaryTotal;
     const sangjoTotal = computeSangjoTotal(applyMakeupStats(SANGJO_ITEMS_3DAY));
@@ -1147,6 +1203,8 @@ export function FuneralCostModal({
       selectedEncoffinItems,
       facilityFee,
       food,
+      flowerDecorPrice,
+      ritualPrice,
       basicTotal,
       sangjoTotal,
       total,
@@ -1169,6 +1227,8 @@ export function FuneralCostModal({
     hasAreaData,
     getFeesForSize,
     getBinsoFees,
+    flowerDecor,
+    ritual,
   ]);
 
   // 추천 상품
@@ -1259,10 +1319,7 @@ export function FuneralCostModal({
                 ].map((opt) => (
                   <button
                     key={opt.key}
-                    onClick={() => {
-                      setFuneralType(opt.key);
-                      setStep(2);
-                    }}
+                    onClick={() => setFuneralType(opt.key)}
                     className="p-5 rounded-xl border-2 text-left cursor-pointer transition-colors hover:border-gray-400"
                     style={{
                       borderColor:
@@ -1277,6 +1334,57 @@ export function FuneralCostModal({
                   </button>
                 ))}
               </div>
+
+              <div className="mt-8">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
+                  현재 상황을 알려주세요
+                </h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  상황에 맞춰 안내드릴 수 있도록 도와드립니다.
+                </p>
+                <div className="space-y-2">
+                  {CURRENT_SITUATION_OPTIONS.map((opt) => {
+                    const selected = currentSituation === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        onClick={() => setCurrentSituation(opt.value)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left cursor-pointer transition-colors ${
+                          selected
+                            ? 'border-gray-900 bg-gray-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                            selected ? 'border-gray-900' : 'border-gray-300'
+                          }`}
+                        >
+                          {selected && (
+                            <span className="w-2.5 h-2.5 rounded-full bg-gray-900" />
+                          )}
+                        </span>
+                        <span
+                          className={`text-sm sm:text-base font-medium ${
+                            selected ? 'text-gray-900' : 'text-gray-700'
+                          }`}
+                        >
+                          {opt.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <button
+                onClick={() => setStep(2)}
+                disabled={!funeralType || !currentSituation}
+                className="mt-8 w-full py-4 rounded-xl text-white font-bold text-base transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ backgroundColor: BRAND_COLOR }}
+              >
+                다음
+              </button>
             </div>
           )}
 
@@ -1535,9 +1643,9 @@ export function FuneralCostModal({
           {step === contactStep && selectedHall && (
             <div>
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
-                선택하신 장례식장 정보와
+                선택하신 장례식장 비용을
                 <br />
-                주변 장지까지 함께 보내드려요.
+                알림톡으로 전송해드립니다.
               </h3>
               <p className="text-sm text-gray-500 mb-6">
                 {selectedHall.company_name}
@@ -1558,7 +1666,7 @@ export function FuneralCostModal({
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    전화번호
+                    휴대폰 번호
                   </label>
                   <input
                     type="tel"
@@ -1570,6 +1678,36 @@ export function FuneralCostModal({
                     placeholder="숫자만 입력해주세요 (예: 01012345678)"
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
                   />
+                  <p className="mt-1.5 text-xs text-gray-500">
+                    기재해주신 전화번호로 알림톡 또는 문자를 전송해드립니다.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    연령대
+                  </label>
+                  <Select value={ageGroup} onValueChange={setAgeGroup}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="선택해주세요" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[110]">
+                      {[
+                        '10대',
+                        '20대',
+                        '30대',
+                        '40대',
+                        '50대',
+                        '60대',
+                        '70대',
+                        '80대',
+                        '90대',
+                      ].map((g) => (
+                        <SelectItem key={g} value={g}>
+                          {g}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -1643,19 +1781,20 @@ export function FuneralCostModal({
                       checkedDetails.every((d) => d.multiplier === 48);
                     const allDaily =
                       checkedDetails.length > 0 &&
-                      checkedDetails.every((d) => d.multiplier === 3);
+                      checkedDetails.every((d) => d.multiplier === 2);
                     const unitLabel = allHourly
                       ? '24시간 x 2일'
                       : allDaily
-                        ? '3일'
+                        ? '24시간'
                         : '';
                     const hasBinsoSelected =
                       funeralType === '3day' && checkedFeeIndexes.length > 0;
 
                     return (
-                      <div className="mb-4">
+                      <div className="mb-4 rounded-2xl bg-white border border-gray-200 p-4">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-base font-bold text-gray-700">
+                          <p className="text-base font-bold text-gray-900 flex items-center gap-2">
+                            <span className="inline-block w-1 h-4 rounded-full bg-gray-400" />
                             장례식장 이용료
                           </p>
                           <p
@@ -1669,7 +1808,7 @@ export function FuneralCostModal({
                           * <span className="font-semibold">실제비용</span>은
                           아래{' '}
                           <span className="font-semibold">‘전부 확인하기’</span>{' '}
-                          버튼을 눌러 세부 항목과 금액을 한 번 더 확인해 주세요.
+                          버튼을 눌러 세부 항목과 금액을 확인해 주세요.
                         </p>
                         <div className="border border-gray-200 rounded-xl overflow-hidden text-sm">
                           {funeralType === '3day' && (
@@ -1695,9 +1834,23 @@ export function FuneralCostModal({
                                     {checkedTotal.toLocaleString()}원
                                   </span>
                                 ) : (
-                                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
-                                    선택 필요
-                                  </span>
+                                  <button
+                                    onClick={() => {
+                                      setFeeListOpen(true);
+                                      setTimeout(() => {
+                                        document
+                                          .getElementById('fc-table-binso')
+                                          ?.scrollIntoView({
+                                            behavior: 'smooth',
+                                            block: 'start',
+                                          });
+                                      }, 0);
+                                    }}
+                                    className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 cursor-pointer transition-colors"
+                                  >
+                                    선택하러 가기
+                                    <ArrowRight className="w-3 h-3" />
+                                  </button>
                                 )}
                               </div>
                               {result.selectedFacilityItems?.map((f, i) => (
@@ -1852,7 +2005,7 @@ export function FuneralCostModal({
                             </span>
                           </div>
                           {funeralType === '3day' && (
-                            <div className="px-4 py-2.5 flex justify-between items-center">
+                            <div className="px-4 py-2.5 flex justify-between items-center border-b border-gray-100">
                               <span className="text-gray-600 flex items-center gap-1.5">
                                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
                                   필수
@@ -1872,6 +2025,137 @@ export function FuneralCostModal({
                               </span>
                             </div>
                           )}
+                          {funeralType === '3day' && (
+                            <div className="px-4 py-3 border-b border-gray-100">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-gray-600 flex items-center gap-1.5">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
+                                    필수
+                                  </span>
+                                  제단 꽃 장식
+                                </span>
+                                <span className="font-semibold text-gray-900 flex items-center gap-1.5">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
+                                    평균비용
+                                  </span>
+                                  {(
+                                    FLOWER_DECOR_OPTIONS.find(
+                                      (o) => o.key === flowerDecor,
+                                    )?.price ?? 0
+                                  ).toLocaleString()}
+                                  원
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-1.5 pl-1">
+                                {FLOWER_DECOR_OPTIONS.map((opt) => {
+                                  const selected = flowerDecor === opt.key;
+                                  return (
+                                    <button
+                                      key={opt.key}
+                                      type="button"
+                                      onClick={() => setFlowerDecor(opt.key)}
+                                      className="flex items-center gap-2 cursor-pointer text-left text-[13px]"
+                                    >
+                                      <span
+                                        className="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0"
+                                        style={{
+                                          borderColor: selected
+                                            ? BRAND_COLOR
+                                            : '#d1d5db',
+                                          backgroundColor: selected
+                                            ? BRAND_COLOR
+                                            : 'transparent',
+                                        }}
+                                      >
+                                        {selected && (
+                                          <Check className="w-2.5 h-2.5 text-white" />
+                                        )}
+                                      </span>
+                                      <span
+                                        className={
+                                          selected
+                                            ? 'text-gray-700'
+                                            : 'text-gray-400'
+                                        }
+                                      >
+                                        {opt.label}
+                                        <span
+                                          className={`ml-1 font-bold ${selected ? 'text-gray-900' : 'text-gray-400'}`}
+                                        >
+                                          {opt.price.toLocaleString()}원
+                                        </span>
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          {funeralType === '3day' && (
+                            <div className="px-4 py-3">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-gray-600 flex items-center gap-1.5">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
+                                    필수
+                                  </span>
+                                  제사 비용
+                                </span>
+                                <span className="font-semibold text-gray-900 flex items-center gap-1.5">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
+                                    평균비용
+                                  </span>
+                                  {(
+                                    RITUAL_OPTIONS.find((o) => o.key === ritual)
+                                      ?.price ?? 0
+                                  ).toLocaleString()}
+                                  원
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-1.5 pl-1">
+                                {RITUAL_OPTIONS.map((opt) => {
+                                  const selected = ritual === opt.key;
+                                  return (
+                                    <button
+                                      key={opt.key}
+                                      type="button"
+                                      onClick={() => setRitual(opt.key)}
+                                      className="flex items-center gap-2 cursor-pointer text-left text-[13px]"
+                                    >
+                                      <span
+                                        className="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0"
+                                        style={{
+                                          borderColor: selected
+                                            ? BRAND_COLOR
+                                            : '#d1d5db',
+                                          backgroundColor: selected
+                                            ? BRAND_COLOR
+                                            : 'transparent',
+                                        }}
+                                      >
+                                        {selected && (
+                                          <Check className="w-2.5 h-2.5 text-white" />
+                                        )}
+                                      </span>
+                                      <span
+                                        className={
+                                          selected
+                                            ? 'text-gray-700'
+                                            : 'text-gray-400'
+                                        }
+                                      >
+                                        {opt.label}
+                                        <span
+                                          className={`ml-1 font-bold ${selected ? 'text-gray-900' : 'text-gray-400'}`}
+                                        >
+                                          {opt.price.toLocaleString()}원
+                                        </span>
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -1885,9 +2169,10 @@ export function FuneralCostModal({
                     );
 
                     return (
-                      <div className="mt-6 mb-5">
+                      <div className="mt-4 mb-5 rounded-2xl bg-white border border-gray-200 p-4">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-base font-bold text-gray-700">
+                          <p className="text-base font-bold text-gray-900 flex items-center gap-2">
+                            <span className="inline-block w-1 h-4 rounded-full bg-gray-400" />
                             장례식장 상조비용
                           </p>
                           <p
@@ -1926,12 +2211,22 @@ export function FuneralCostModal({
                                   type="button"
                                   onClick={() => {
                                     if (hasSubs) {
+                                      const isRadio = RADIO_PARENT_LABELS.has(
+                                        item.label,
+                                      );
                                       setUnselectedSangjoKeys((prev) => {
                                         const next = new Set(prev);
                                         if (parentSelected) {
                                           item.items!.forEach((_, j) =>
                                             next.add(`${i}:${j}`),
                                           );
+                                        } else if (isRadio) {
+                                          // 라디오: 첫 번째만 선택
+                                          item.items!.forEach((_, j) => {
+                                            if (j === 0)
+                                              next.delete(`${i}:${j}`);
+                                            else next.add(`${i}:${j}`);
+                                          });
                                         } else {
                                           item.items!.forEach((_, j) =>
                                             next.delete(`${i}:${j}`),
@@ -1978,9 +2273,26 @@ export function FuneralCostModal({
                                       <div className="w-full mt-3 pl-4 flex items-center gap-2 text-[13px]">
                                         <button
                                           type="button"
-                                          onClick={() =>
-                                            toggleSangjoKey(subKey)
-                                          }
+                                          onClick={() => {
+                                            if (
+                                              RADIO_PARENT_LABELS.has(
+                                                item.label,
+                                              )
+                                            ) {
+                                              setUnselectedSangjoKeys(
+                                                (prev) => {
+                                                  const next = new Set(prev);
+                                                  item.items!.forEach((_, k) =>
+                                                    next.add(`${i}:${k}`),
+                                                  );
+                                                  next.delete(subKey);
+                                                  return next;
+                                                },
+                                              );
+                                            } else {
+                                              toggleSangjoKey(subKey);
+                                            }
+                                          }}
                                           className="flex items-center gap-2 cursor-pointer text-left flex-1 min-w-0"
                                         >
                                           <span
@@ -2002,7 +2314,7 @@ export function FuneralCostModal({
                                             className={
                                               subSelected
                                                 ? 'text-gray-600'
-                                                : 'text-gray-400 line-through'
+                                                : 'text-gray-400'
                                             }
                                           >
                                             {sub.label}
@@ -2067,16 +2379,16 @@ export function FuneralCostModal({
                                             <span className="text-[11px] text-gray-400 leading-relaxed">
                                               ㄴ
                                             </span>
-                                            <span className="inline-flex items-center text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                            <span className="inline-block text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-2xl bg-gray-100 text-gray-600 break-keep">
                                               {sub.note
                                                 .split('\n')[0]
                                                 .split(
-                                                  /(\d{1,3}(?:,\d{3})*(?:건|개|원))/,
+                                                  /(\d{1,3}(?:,\d{3})*(?:건|개|원)|예담라이프)/,
                                                 )
                                                 .map((part, k) =>
                                                   /^\d{1,3}(?:,\d{3})*(?:건|개|원)$/.test(
                                                     part,
-                                                  ) ? (
+                                                  ) || part === '예담라이프' ? (
                                                     <span
                                                       key={k}
                                                       className="font-extrabold mx-0.5"
@@ -2549,11 +2861,7 @@ export function FuneralCostModal({
                                 key={idx}
                                 onClick={() =>
                                   setCheckedEncoffinIndexes(
-                                    isManuallyChecked
-                                      ? checkedEncoffinIndexes.filter(
-                                          (i) => i !== idx,
-                                        )
-                                      : [...checkedEncoffinIndexes, idx],
+                                    isManuallyChecked ? [] : [idx],
                                   )
                                 }
                                 className="w-full px-4 py-2.5 flex items-center gap-3 text-sm border-t border-gray-100 text-left cursor-pointer transition-colors"
@@ -2605,6 +2913,339 @@ export function FuneralCostModal({
                         })()}
                     </div>
                   )}
+
+                  {/* ── 차트로 비교하기 ── */}
+                  {(() => {
+                    let yedam: { product: string; price: number };
+                    if (funeralType === 'nobinso') {
+                      yedam = { product: '예담 1호', price: 1300000 };
+                    } else if (selectedSize === 'large') {
+                      yedam = { product: '예담 3호', price: 3400000 };
+                    } else if (
+                      selectedSize === 'premium' ||
+                      selectedSize === 'vip'
+                    ) {
+                      yedam = { product: '예담 4호', price: 4600000 };
+                    } else {
+                      yedam = { product: '예담 2호', price: 2300000 };
+                    }
+
+                    const prepayPrice = 1800000;
+                    const hallSangjo = result.sangjoTotal;
+                    const facility = result.basicTotal;
+
+                    const yedamTotal = yedam.price + facility;
+                    const prepayTotal = prepayPrice + facility;
+                    const hallTotal = hallSangjo + facility;
+
+                    const saving = Math.max(0, hallTotal - yedamTotal);
+                    const savePct =
+                      hallTotal > 0
+                        ? Math.round((saving / hallTotal) * 100)
+                        : 0;
+
+                    const maxTop = Math.max(
+                      yedam.price,
+                      prepayPrice,
+                      hallSangjo,
+                      1,
+                    );
+                    const topMaxPx = 160;
+                    const minTopPx = 32;
+                    const facilityPx = 56;
+                    const heightOf = (v: number) =>
+                      Math.max(minTopPx, Math.round((v / maxTop) * topMaxPx));
+
+                    const fmt10k = (v: number) =>
+                      `${Math.round(v / 10000).toLocaleString()}만`;
+                    const fmt10kWon = (v: number) =>
+                      `${Math.round(v / 10000).toLocaleString()}만원`;
+
+                    const bars: {
+                      label: string;
+                      isHighlight: boolean;
+                      sangjo: number;
+                      total: number;
+                      barColor: string;
+                      labelColor: string;
+                    }[] = [
+                      {
+                        label: yedam.product,
+                        isHighlight: true,
+                        sangjo: yedam.price,
+                        total: yedamTotal,
+                        barColor: '#5b7fb6',
+                        labelColor: '#111827',
+                      },
+                      {
+                        label: '선불제상조',
+                        isHighlight: false,
+                        sangjo: prepayPrice,
+                        total: prepayTotal,
+                        barColor: '#9ca3af',
+                        labelColor: '#111827',
+                      },
+                      {
+                        label: selectedHall.company_name,
+                        isHighlight: false,
+                        sangjo: hallSangjo,
+                        total: hallTotal,
+                        barColor: '#6b7280',
+                        labelColor: '#111827',
+                      },
+                    ];
+
+                    return (
+                      <div id="fc-chart-section" className="mt-8 mb-6">
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                          <span className="inline-block w-1 h-4 rounded-full bg-gray-400" />
+                          차트로 비교하기
+                        </h3>
+                        {/* 필수 항목 미선택 유효성 라벨 */}
+                        {(() => {
+                          const warnings: { msg: string; targetId: string }[] =
+                            [];
+                          if (
+                            funeralType === '3day' &&
+                            checkedFeeIndexes.length === 0
+                          ) {
+                            warnings.push({
+                              msg: '장례식장 빈소 사용료가 선택되지 않았습니다.',
+                              targetId: 'fc-table-binso',
+                            });
+                          }
+                          if (
+                            mortuaryCategoryItems.length > 0 &&
+                            checkedMortuaryIndexes.length === 0
+                          ) {
+                            warnings.push({
+                              msg: '안치실 이용료가 선택되지 않았습니다.',
+                              targetId: 'fc-table-mortuary',
+                            });
+                          }
+                          if (
+                            encoffinCategoryItems.length > 0 &&
+                            checkedEncoffinIndexes.length === 0
+                          ) {
+                            warnings.push({
+                              msg: '염습/입관 사용료가 선택되지 않았습니다.',
+                              targetId: 'fc-table-encoffin',
+                            });
+                          }
+                          if (warnings.length === 0) return null;
+                          return (
+                            <div className="mb-4 flex flex-col gap-1.5">
+                              {warnings.map((w) => (
+                                <button
+                                  key={w.targetId}
+                                  type="button"
+                                  onClick={() =>
+                                    document
+                                      .getElementById(w.targetId)
+                                      ?.scrollIntoView({
+                                        behavior: 'smooth',
+                                        block: 'center',
+                                      })
+                                  }
+                                  className="flex items-center justify-between w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
+                                >
+                                  <span>{w.msg}</span>
+                                  <span className="ml-2 shrink-0">›</span>
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                        <div className="rounded-2xl bg-[#f3f6fb] border border-gray-200 p-4 sm:p-5">
+                          <div
+                            className="grid justify-center transition-all duration-500"
+                            style={{
+                              gridTemplateColumns:
+                                'repeat(3, minmax(52px, 72px)) auto',
+                              gap: '0 clamp(6px, 2vw, 20px)',
+                            }}
+                          >
+                            {/* Row 1: 상조비용 막대 + 총합 말풍선 */}
+                            {bars.map((b, i) => {
+                              const topH = heightOf(b.sangjo);
+                              return (
+                                <div
+                                  key={`s-${i}`}
+                                  className="self-end flex flex-col items-center"
+                                >
+                                  <div className="mb-2">
+                                    {b.isHighlight ? (
+                                      <div
+                                        className="relative"
+                                        style={{
+                                          animation:
+                                            'heartbeat 2s ease-in-out infinite',
+                                        }}
+                                      >
+                                        <div
+                                          className="px-2.5 py-1 rounded-lg text-xs font-bold text-white whitespace-nowrap text-center"
+                                          style={{
+                                            backgroundColor: b.barColor,
+                                          }}
+                                        >
+                                          {saving > 0 && (
+                                            <>
+                                              <span className="text-[10px] font-semibold text-white/80">
+                                                최대 {savePct}% 절약
+                                              </span>
+                                              <br />
+                                            </>
+                                          )}
+                                          {fmt10kWon(b.total)}
+                                        </div>
+                                        <div
+                                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45"
+                                          style={{
+                                            backgroundColor: b.barColor,
+                                          }}
+                                        />
+                                      </div>
+                                    ) : (
+                                      <span className="text-xs font-bold text-gray-400 whitespace-nowrap">
+                                        {fmt10kWon(b.total)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div
+                                    className="w-full rounded-t-xl flex items-center justify-center transition-all duration-500"
+                                    style={{
+                                      height: `${topH}px`,
+                                      backgroundColor: b.barColor,
+                                    }}
+                                  >
+                                    {topH > 24 && (
+                                      <span className="text-xs font-bold text-white/90">
+                                        {fmt10k(b.sangjo)}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            {/* 우측: 상조 평균 비용 브래킷 */}
+                            <div className="self-end flex items-center gap-1.5 ml-0 sm:-ml-3">
+                              {(() => {
+                                const maxH = heightOf(
+                                  Math.max(...bars.map((b) => b.sangjo)),
+                                );
+                                const w = 28;
+                                return (
+                                  <svg
+                                    width={w}
+                                    height={maxH}
+                                    viewBox={`0 0 ${w} ${maxH}`}
+                                    style={{
+                                      display: 'block',
+                                      minWidth: w,
+                                      flexShrink: 0,
+                                    }}
+                                    aria-hidden="true"
+                                  >
+                                    <path
+                                      d={`M 2 4 C 14 4, 14 ${maxH / 2}, 14 ${maxH / 2} C 14 ${maxH / 2}, 14 ${maxH - 4}, 2 ${maxH - 4}`}
+                                      stroke="#374151"
+                                      strokeWidth="2.5"
+                                      strokeDasharray="6 4"
+                                      strokeLinecap="round"
+                                      fill="none"
+                                    />
+                                  </svg>
+                                );
+                              })()}
+                              <span
+                                className="text-[11px] font-semibold whitespace-nowrap leading-tight"
+                                style={{ color: '#374151' }}
+                              >
+                                장례식장 &apos;상조&apos;
+                                <br />
+                                평균 비용
+                              </span>
+                            </div>
+
+                            {/* 구분선 */}
+                            <div style={{ gridColumn: '1 / -1' }} />
+
+                            {/* Row 2: 이용료 막대 */}
+                            {bars.map((_, i) => (
+                              <div
+                                key={`f-${i}`}
+                                className="w-full bg-gray-200 rounded-b-xl flex items-center justify-center transition-all duration-500"
+                                style={{ height: `${facilityPx}px` }}
+                              >
+                                <span
+                                  className="text-[10px] sm:text-xs font-bold"
+                                  style={{ color: '#9ca3af' }}
+                                >
+                                  {fmt10k(facility)}
+                                </span>
+                              </div>
+                            ))}
+                            {/* 우측: 기본 이용료 브래킷 */}
+                            <div className="self-center flex items-center gap-1.5 ml-0 sm:-ml-3">
+                              {(() => {
+                                const w = 28;
+                                return (
+                                  <svg
+                                    width={w}
+                                    height={facilityPx}
+                                    viewBox={`0 0 ${w} ${facilityPx}`}
+                                    style={{
+                                      display: 'block',
+                                      minWidth: w,
+                                      flexShrink: 0,
+                                    }}
+                                    aria-hidden="true"
+                                  >
+                                    <path
+                                      d={`M 2 4 C 14 4, 14 ${facilityPx / 2}, 14 ${facilityPx / 2} C 14 ${facilityPx / 2}, 14 ${facilityPx - 4}, 2 ${facilityPx - 4}`}
+                                      stroke="#374151"
+                                      strokeWidth="2.5"
+                                      strokeDasharray="6 4"
+                                      strokeLinecap="round"
+                                      fill="none"
+                                    />
+                                  </svg>
+                                );
+                              })()}
+                              <span
+                                className="text-[11px] font-semibold whitespace-nowrap leading-tight"
+                                style={{ color: '#374151' }}
+                              >
+                                장례식장
+                                <br />
+                                기본 이용료
+                              </span>
+                            </div>
+
+                            {/* Row 3: 하단 라벨 */}
+                            {bars.map((b, i) => (
+                              <div
+                                key={`l-${i}`}
+                                className="pt-2.5 flex items-start justify-center gap-1"
+                              >
+                                <span
+                                  className="inline-block w-2 h-2 rounded-full shrink-0 mt-0.5"
+                                  style={{ backgroundColor: b.barColor }}
+                                />
+                                <span
+                                  className={`truncate leading-tight max-w-[52px] ${b.isHighlight ? 'text-xs font-bold' : 'text-[10px] sm:text-[11px] font-semibold'}`}
+                                  style={{ color: b.labelColor }}
+                                >
+                                  {b.label}
+                                </span>
+                              </div>
+                            ))}
+                            <div />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   <p className="text-xs text-gray-400 text-center">
                     ※ 본 금액은 평균 데이터 기반 추정치이며, 실제 비용과 차이가
@@ -2660,6 +3301,16 @@ export function FuneralCostModal({
                 }}
               >
                 <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      const el = document.getElementById('fc-chart-section');
+                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    className="shrink-0 flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
+                    <BarChart2 className="w-5 h-5" />
+                    <span className="text-[10px] font-semibold whitespace-nowrap">차트로 비교</span>
+                  </button>
                   <a
                     href="#inquiry"
                     onClick={(e) => {
@@ -2676,7 +3327,7 @@ export function FuneralCostModal({
                     className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-white text-sm font-bold cursor-pointer"
                     style={{ backgroundColor: BRAND_COLOR }}
                   >
-                    {recommended.name}로 평균 20% 할인 받기
+                    {recommended.name}로 상담 받기
                     <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>

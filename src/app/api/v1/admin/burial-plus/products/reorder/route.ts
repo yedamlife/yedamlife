@@ -38,7 +38,8 @@ export async function PATCH(request: Request) {
       supabase
         .from('bp_products')
         .update({ [sortCol]: it.sort_value, updated_at: new Date().toISOString() })
-        .eq('id', it.id),
+        .eq('id', it.id)
+        .is('deleted_at', null),
     ),
   );
 

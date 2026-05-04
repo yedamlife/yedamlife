@@ -25,6 +25,7 @@ export default async function NoticeDetailPage({
     .select('id, title, content, category, created_at')
     .eq('id', id)
     .eq('is_active', true)
+    .is('deleted_at', null)
     .single();
 
   if (!notice) notFound();

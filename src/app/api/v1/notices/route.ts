@@ -11,7 +11,8 @@ export async function GET(request: Request) {
   let query = supabase
     .from(TABLE)
     .select('id, title, category, created_at')
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .is('deleted_at', null);
 
   if (category) {
     query = query.eq('category', category);

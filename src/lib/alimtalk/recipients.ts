@@ -4,7 +4,7 @@
 import type { TemplateKey } from './templates';
 
 // localhost(dev 환경) 발송 대상 번호 목록
-const DEV_PHONES = ['01091622508', '01062704860', '01063300959'];
+const DEV_PHONES = ['01091622508']; //'01062704860', '01063300959'];
 const DEFAULT_ADMINS = ['01062704860', '01063300959'];
 const EC_ADMIN_EXTRA = '01040898272';
 

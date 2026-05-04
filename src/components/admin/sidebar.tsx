@@ -32,7 +32,7 @@ const menuItems: MenuItem[] = [
     href: '/admin/dashboard',
   },
   {
-    label: '일반상조',
+    label: '후불제 상조',
     icon: <Heart className="size-4" />,
     children: [
       { label: '상담 신청', href: '/admin/general-funeral/consultations' },
@@ -41,7 +41,7 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    label: '기업상조',
+    label: '기업 상조',
     icon: <Building2 className="size-4" />,
     children: [
       { label: '상담 신청', href: '/admin/corporate-funeral/consultations' },
@@ -50,7 +50,7 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    label: '유품정리',
+    label: '유품 정리',
     icon: <Package className="size-4" />,
     children: [{ label: '견적 신청', href: '/admin/estate-cleanup/estimates' }],
   },
@@ -63,7 +63,7 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    label: '사후행정케어',
+    label: '사후 행정 케어',
     icon: <FileText className="size-4" />,
     children: [{ label: '상담 신청', href: '/admin/post-care/consultations' }],
   },
@@ -75,7 +75,7 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    label: '멤버십관리',
+    label: '실물 카드 관리',
     icon: <CreditCard className="size-4" />,
     children: [
       { label: '실물 카드 신청 내역', href: '/admin/membership/card-requests' },

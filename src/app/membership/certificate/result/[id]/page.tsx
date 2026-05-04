@@ -1,10 +1,9 @@
 'use client';
-import { CONTACT_PHONE, CONTACT_TEL_HREF } from '@/constants/contact';
 
-import { Suspense, useState, useRef, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { use, useState, useRef, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import {
-  Phone,
   Shield,
   Award,
   Share2,
@@ -24,35 +23,60 @@ const SUPABASE_BASE =
   'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife';
 
 const VIP_BENEFITS = [
-  { title: '장지 컨설팅', desc: '전문가 무료상담 (현장답사 가능)' },
-  { title: '개장 및 이장 컨설팅', desc: '전문가 무료상담 (현장답사 가능)' },
+  {
+    title: '장지 컨설팅',
+    desc: '전문가 무료상담 (현장답사 가능)',
+    href: '/burial-plus',
+    cta: '장지+',
+  },
+  {
+    title: '개장 및 이장 컨설팅',
+    desc: '전문가 무료상담 (현장답사 가능)',
+    href: '/post-care',
+    cta: '사후행정케어',
+  },
   {
     title: '고인 유품정리 컨설팅',
     desc: '유품정리 전문가 상담 (무료 방문견적)',
+    href: '/cleanup',
+    cta: '유품정리',
   },
   {
     title: '법률 컨설팅',
     desc: '법률 및 세무 전문가 상담 (상속/증여/세금 등)',
+    href: '/post-care',
+    cta: '사후행정케어',
   },
   {
     title: '장례운구의전 지원 컨설팅',
     desc: '장례 운구지원 전문 상담',
+    href: '/funeral-escort',
+    cta: '운구의전',
   },
 ];
 
-export default function CertificateResultPage() {
-  return (
-    <Suspense>
-      <CertificateResultContent />
-    </Suspense>
-  );
+interface CertificateData {
+  id: string;
+  name: string;
+  phone: string;
+  membership_no: string;
+  membership_code: string;
+  daily_sequence: number;
+  religion: string | null;
+  created_at: string;
+  membership_created_at: string | null;
 }
 
-function CertificateResultContent() {
+export default function CertificateResultPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const searchParams = useSearchParams();
-  const name = searchParams.get('name') || '';
-  const phone = searchParams.get('phone') || '';
   const homeUrl = searchParams.get('from') || '/';
+  const router = useRouter();
+
   const [showShareToast, setShowShareToast] = useState(false);
   const [showCardModal, setShowCardModal] = useState(false);
   const [cardForm, setCardForm] = useState({
@@ -65,7 +89,10 @@ function CertificateResultContent() {
   const [cardSubmitted, setCardSubmitted] = useState(false);
   const certificateRef = useRef<HTMLDivElement>(null);
 
-  // 카카오 주소검색 스크립트 로드
+  const [certData, setCertData] = useState<CertificateData | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(true);
+  const [lookupState, setLookupState] = useState<'ok' | 'error'>('ok');
+
   useEffect(() => {
     if (document.getElementById('daum-postcode-script')) return;
     const script = document.createElement('script');
@@ -75,6 +102,27 @@ function CertificateResultContent() {
     script.async = true;
     document.head.appendChild(script);
   }, []);
+
+  useEffect(() => {
+    if (!id) return;
+    fetch(`/api/v1/membership/certificate/${id}`)
+      .then(async (res) => {
+        const json = await res.json();
+        if (json.success && json.data) {
+          setCertData(json.data);
+          setLookupState('ok');
+          return;
+        }
+        if (res.status === 404 || json.error === 'not_found') {
+          toast.error('가입 신청 내역이 없습니다.');
+          router.replace('/membership/certificate');
+          return;
+        }
+        setLookupState('error');
+      })
+      .catch(() => setLookupState('error'))
+      .finally(() => setLookupLoading(false));
+  }, [id, router]);
 
   const openPostcode = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -102,7 +150,6 @@ function CertificateResultContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          member_no: memberNo,
           name: cardForm.name,
           phone: cardForm.phone,
           zonecode: cardForm.zonecode,
@@ -121,33 +168,20 @@ function CertificateResultContent() {
     }
   };
 
-  const [memberNo, setMemberNo] = useState<string>('');
-  const [lookupLoading, setLookupLoading] = useState(true);
-  const [lookupError, setLookupError] = useState(false);
-
-  useEffect(() => {
-    if (!name || !phone) return;
-    const params = new URLSearchParams({ name, phone });
-    fetch(`/api/v1/membership/lookup?${params.toString()}`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data?.membership_no) {
-          setMemberNo(json.data.membership_no);
-        } else {
-          setLookupError(true);
-        }
-      })
-      .catch(() => setLookupError(true))
-      .finally(() => setLookupLoading(false));
-  }, [name, phone]);
-  const today = new Date();
-  const formattedDate = `${today.getFullYear()}년 ${String(today.getMonth() + 1).padStart(2, '0')}월 ${String(today.getDate()).padStart(2, '0')}일`;
-  const formattedPhone = phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  const dateSource = certData?.membership_created_at || certData?.created_at;
+  const createdDate = dateSource ? new Date(dateSource) : null;
+  const formattedDate = createdDate
+    ? `${createdDate.getFullYear()}년 ${String(createdDate.getMonth() + 1).padStart(2, '0')}월 ${String(createdDate.getDate()).padStart(2, '0')}일`
+    : '';
+  const name = certData?.name ?? '';
+  const memberNo = certData?.membership_code ?? '';
+  const formattedPhone = (certData?.phone ?? '').replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
 
   const handleShare = async () => {
+    if (!certData) return;
     const shareData = {
       title: '예담라이프 가입증서',
-      text: `${name}님의 예담라이프 후불제 상조 가입증서입니다.`,
+      text: `${certData.name}님의 예담라이프 후불제 상조 가입증서입니다.`,
       url: window.location.href,
     };
     try {
@@ -163,23 +197,6 @@ function CertificateResultContent() {
     }
   };
 
-  if (!name || !phone) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#faf8f5]">
-        <div className="text-center space-y-4 px-4">
-          <p className="text-gray-500">잘못된 접근입니다.</p>
-          <a
-            href="/membership/certificate"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold transition-all hover:opacity-90"
-            style={{ backgroundColor: BRAND_COLOR }}
-          >
-            가입증서 조회로 이동
-          </a>
-        </div>
-      </div>
-    );
-  }
-
   if (lookupLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#faf8f5]">
@@ -190,15 +207,15 @@ function CertificateResultContent() {
     );
   }
 
-  if (lookupError) {
+  if (lookupState === 'error' || !certData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#faf8f5]">
         <div className="text-center space-y-4 px-4">
           <p className="text-gray-700 font-semibold">
-            가입 내역을 찾을 수 없습니다.
+            정보를 불러올 수 없습니다.
           </p>
           <p className="text-gray-500 text-sm">
-            입력하신 이름과 연락처로 가입된 회원이 없습니다.
+            잠시 후 다시 시도해주세요.
           </p>
           <a
             href="/membership/certificate"
@@ -234,7 +251,6 @@ function CertificateResultContent() {
         }
       `}</style>
 
-      {/* 공유 토스트 */}
       {showShareToast && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm px-5 py-3 rounded-full shadow-xl animate-fade-in-up">
           <div className="flex items-center gap-2">
@@ -248,15 +264,12 @@ function CertificateResultContent() {
         className="min-h-screen"
         style={{ fontFamily: 'Pretendard, sans-serif' }}
       >
-        {/* ── 배경 ── */}
         <div className="fixed inset-0 -z-10 bg-white" />
 
         <div className="relative max-w-lg mx-auto px-4 sm:px-6 py-8 sm:py-12">
-          {/* ── 1. 회원증 (Certificate) ── */}
           <div className="animate-fade-in-up" ref={certificateRef}>
             <div className="relative rounded-3xl overflow-hidden shadow-xl bg-white border border-gray-200">
               <div className="px-6 sm:px-10 pt-8 pb-10">
-                {/* 회원번호 & 인증 */}
                 <div className="flex items-start justify-between mb-6">
                   <div>
                     <p className="text-[10px] text-gray-400 tracking-wider mb-0.5">
@@ -277,7 +290,6 @@ function CertificateResultContent() {
                   </div>
                 </div>
 
-                {/* 타이틀 */}
                 <div className="text-center mb-8">
                   <div className="flex items-center justify-center gap-3 mb-3">
                     <div className="h-px w-10 bg-gradient-to-r from-transparent to-gray-300" />
@@ -292,7 +304,6 @@ function CertificateResultContent() {
                   </p>
                 </div>
 
-                {/* 회원 정보 */}
                 <div className="rounded-2xl p-5 sm:p-6 mb-6 bg-gray-50 border border-gray-100">
                   <div className="space-y-0">
                     <div className="flex items-center py-3.5 border-b border-gray-200">
@@ -322,7 +333,6 @@ function CertificateResultContent() {
                   </div>
                 </div>
 
-                {/* 증명 문구 */}
                 <p className="text-center text-sm text-gray-600 leading-relaxed">
                   귀하는 후불제 상조기업{' '}
                   <span className="font-bold text-gray-900">예담라이프</span>의
@@ -333,17 +343,14 @@ function CertificateResultContent() {
             </div>
           </div>
 
-          {/* ── 2. VIP 멤버십 카드 ── */}
           <div className="mt-8 animate-fade-in-up animate-delay-1">
             <div className="rounded-3xl overflow-hidden shadow-xl bg-white">
-              {/* 카드 이미지 영역 */}
               <div className="relative aspect-[1.6/1] rounded-t-3xl overflow-hidden">
                 <img
                   src={`${SUPABASE_BASE}/member_card_bg.png`}
                   alt="VIP Membership Card"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
-                {/* 회원번호 & 이름 오버레이 */}
                 <div className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-between">
                   <div className="flex items-start justify-between">
                     <p
@@ -359,7 +366,6 @@ function CertificateResultContent() {
                 </div>
               </div>
 
-              {/* VIP 혜택 */}
               <div className="p-6 sm:p-8">
                 <div className="flex items-center gap-2 mb-1">
                   <Crown className="w-4 h-4" style={{ color: '#c5a55a' }} />
@@ -375,28 +381,29 @@ function CertificateResultContent() {
                   {VIP_BENEFITS.map((b, i) => (
                     <div
                       key={i}
-                      className="flex items-start gap-3 py-3.5 border-b border-gray-100 last:border-0"
+                      className="flex items-center gap-3 py-3.5 border-b border-gray-100 last:border-0"
                     >
                       <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                        className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
                         style={{ backgroundColor: BRAND_COLOR_LIGHT }}
                       >
-                        <Check
-                          className="w-3 h-3"
-                          style={{ color: BRAND_COLOR }}
-                        />
+                        <Check className="w-3 h-3" style={{ color: BRAND_COLOR }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900">
-                          {b.title}
-                        </p>
+                        <p className="text-sm font-semibold text-gray-900">{b.title}</p>
                         <p className="text-xs text-gray-400 mt-0.5">{b.desc}</p>
                       </div>
+                      <a
+                        href={b.href}
+                        className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition-colors"
+                      >
+                        {b.cta}
+                        <ChevronRight className="w-3 h-3" />
+                      </a>
                     </div>
                   ))}
                 </div>
 
-                {/* 자세히보기 */}
                 <div className="mt-5 flex justify-center">
                   <a
                     href={homeUrl}
@@ -410,7 +417,6 @@ function CertificateResultContent() {
             </div>
           </div>
 
-          {/* ── 3. 안내 사항 ── */}
           <div className="mt-6 animate-fade-in-up animate-delay-2">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 p-5 space-y-2.5">
               <div className="flex items-start gap-2.5">
@@ -436,11 +442,9 @@ function CertificateResultContent() {
             </div>
           </div>
 
-          {/* 하단 고정 버튼 영역 확보용 여백 */}
           <div className="h-20" />
         </div>
 
-        {/* ── 5. 하단 고정 액션 버튼 ── */}
         <div className="fixed bottom-0 left-0 right-0 z-50 sm:pb-4 pointer-events-none safe-area-bottom">
           <div className="mx-auto max-w-2xl sm:px-6 flex sm:rounded-xl overflow-hidden sm:shadow-xl">
             <button
@@ -471,7 +475,6 @@ function CertificateResultContent() {
         </div>
       </div>
 
-      {/* ── 실물카드수령 모달 ── */}
       {showCardModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -481,7 +484,6 @@ function CertificateResultContent() {
             className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 헤더 */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h3 className="font-bold text-gray-900">실물카드 수령 신청</h3>
               <button
@@ -516,7 +518,6 @@ function CertificateResultContent() {
               </div>
             ) : (
               <div className="px-6 py-5 space-y-4">
-                {/* 성함 / 연락처 */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">
@@ -546,7 +547,6 @@ function CertificateResultContent() {
                   </div>
                 </div>
 
-                {/* 주소 */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                     주소
@@ -588,7 +588,6 @@ function CertificateResultContent() {
                   />
                 </div>
 
-                {/* 제출 */}
                 <button
                   onClick={handleCardSubmit}
                   disabled={

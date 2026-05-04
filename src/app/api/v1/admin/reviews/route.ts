@@ -17,7 +17,8 @@ export async function GET(request: Request) {
     .from(TABLE)
     .select('id, uuid, category, author, written_at, title, tags, is_active, display_order, created_at', {
       count: 'exact',
-    });
+    })
+    .is('deleted_at', null);
 
   if (category) query = query.eq('category', category);
 

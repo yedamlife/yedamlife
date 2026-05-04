@@ -29,38 +29,36 @@ export async function POST(request: Request) {
     // 가입 내역 매칭 (general → corporate 순)
     let membershipType: 'general' | 'corporate' | null = null;
     let membershipId: string | null = null;
-    let matchedMemberNo: string | null = null;
 
     const gf = await supabase
       .from('gf_membership_applications')
-      .select('id, membership_no, phone')
+      .select('id, phone')
       .eq('name', body.name)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     const gfMatch = gf.data?.find((r) => normalizePhone(r.phone || '') === phoneNorm);
     if (gfMatch) {
       membershipType = 'general';
       membershipId = gfMatch.id;
-      matchedMemberNo = gfMatch.membership_no;
     } else {
       const cf = await supabase
         .from('cf_membership_applications')
-        .select('id, membership_no, phone')
+        .select('id, phone')
         .eq('name', body.name)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       const cfMatch = cf.data?.find((r) => normalizePhone(r.phone || '') === phoneNorm);
       if (cfMatch) {
         membershipType = 'corporate';
         membershipId = cfMatch.id;
-        matchedMemberNo = cfMatch.membership_no;
       }
     }
 
     const { data, error } = await supabase
       .from('membership_card_requests')
       .insert({
-        member_no: body.member_no || matchedMemberNo,
         name: body.name,
         phone: body.phone,
         zonecode: body.zonecode,
@@ -68,7 +66,6 @@ export async function POST(request: Request) {
         detail_address: body.detail_address || null,
         membership_type: membershipType,
         membership_id: membershipId,
-        matched_member_no: matchedMemberNo,
       })
       .select('id')
       .single();

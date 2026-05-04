@@ -52,6 +52,7 @@ export async function POST(request: Request) {
         .from('bp_products')
         .select('company_name')
         .eq('id', body.product_id)
+        .is('deleted_at', null)
         .single();
       productName = prod?.company_name ?? null;
     }

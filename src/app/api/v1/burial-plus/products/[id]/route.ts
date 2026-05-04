@@ -14,6 +14,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     .select(SELECT_COLUMNS)
     .eq('id', id)
     .eq('is_active', true)
+    .is('deleted_at', null)
     .single();
 
   if (error) {

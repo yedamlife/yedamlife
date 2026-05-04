@@ -308,12 +308,12 @@ YDM{도메인}{용도}V{버전}
 
 ### 2-2. 기업 상조 멤버십 신청
 
-**수집 항목**: 신청인 *, 휴대폰 *, 기업명 *, 직급, 주소 *, 상세주소, 가입상품 *, 추천인
+**수집 항목**: 신청인 *, 휴대폰 *, 기업명 *, 직급, 담당자 이메일, 추천인, 기타 요구사항
 
 | 항목 | 값 |
 |------|-----|
-| **템플릿 코드** | `YDMCFMEMBERV1` |
-| **템플릿 명**   | `기업상조_멤버십신청_v1` |
+| **템플릿 코드** | `YDMCFMEMBERV2` |
+| **템플릿 명**   | `기업상조_멤버십신청_v2` |
 | **발송 시점**   | `POST /api/v1/corporate-funeral/membership` 성공 시 |
 | **수신자**     | `phone` |
 
@@ -327,12 +327,12 @@ YDM{도메인}{용도}V{버전}
 ■ 휴대폰: #{휴대폰}
 ■ 기업명: #{기업명}
 ■ 직급: #{직급}
-■ 주소: #{주소} #{상세주소}
-■ 가입상품: #{가입상품}
+■ 담당자 이메일: #{담당자이메일}
 ■ 추천인: #{추천인}
+■ 기타 요구사항: #{기타요구사항}
 ```
 
-**변수 매핑**: `#{신청인}=name`, `#{휴대폰}=phone`, `#{기업명}=company_name`, `#{직급}=position`, `#{주소}=address`, `#{상세주소}=address_detail`, `#{가입상품}=product`, `#{추천인}=referrer`
+**변수 매핑**: `#{신청인}=name`, `#{휴대폰}=phone`, `#{기업명}=company_name`, `#{직급}=position`, `#{담당자이메일}=manager_email`, `#{추천인}=referrer`, `#{기타요구사항}=other_requirements`
 
 ---
 
@@ -497,7 +497,7 @@ export const ALIMTALK_TEMPLATES = {
   BP_CONSULT: 'YDMBPCONSULTV1',
   PC_CONSULT: 'YDMPCCONSULTV1',
   GF_MEMBER: 'YDMGFMEMBERV1',
-  CF_MEMBER: 'YDMCFMEMBERV1',
+  CF_MEMBER: 'YDMCFMEMBERV2',
   MC_CARD: 'YDMMCCARDV1',
   FC_RESULT: 'YEDAMFCRESULTV1',
   TEL_CALL: 'YDMTELCALLV1',

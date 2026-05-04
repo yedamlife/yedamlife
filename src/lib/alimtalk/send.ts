@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import {
   TEMPLATES,
   TEMPLATE_BUILDERS,
+  TEMPLATE_SMS_BUILDERS,
   TEMPLATE_NAMES,
   parseTemplateKey,
   type TemplateKey,
@@ -92,6 +93,9 @@ export async function sendAlimtalk(
   const templateCode = TEMPLATES[templateKey];
   const templateName = TEMPLATE_NAMES[templateKey];
   const content = TEMPLATE_BUILDERS[templateKey](vars);
+  const smsBuilder = TEMPLATE_SMS_BUILDERS[templateKey];
+  const smsContent = smsBuilder ? smsBuilder(vars) : null;
+  const smsFrom = process.env.NCP_SENS_SMS_SENDER ?? null;
   const sourceId =
     opts.source?.id != null ? Number(opts.source.id) : null;
   const sourceTable = opts.source?.table ?? null;
@@ -172,6 +176,8 @@ export async function sendAlimtalk(
     templateCode,
     recipients,
     content,
+    smsContent,
+    smsFrom,
   });
 
   // 3) 결과 update

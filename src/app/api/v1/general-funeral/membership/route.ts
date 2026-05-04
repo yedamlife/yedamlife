@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { sendAlimtalk, productLabel } from '@/lib/alimtalk';
 
+const normalizePhone = (raw: string) => raw.replace(/[^0-9]/g, '');
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -28,6 +30,25 @@ export async function POST(request: Request) {
           message: '개인정보 수집 및 이용에 동의해주세요.',
         },
         { status: 400 },
+      );
+    }
+
+    // 중복 신청 체크 (이름 + 연락처 정확 일치, soft-delete 제외)
+    const phoneNorm = normalizePhone(body.phone);
+    const { data: existing } = await supabase
+      .from('gf_membership_applications')
+      .select('id, phone')
+      .eq('name', body.name)
+      .is('deleted_at', null);
+    const duplicate = existing?.some((r) => normalizePhone(r.phone || '') === phoneNorm);
+    if (duplicate) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'duplicate',
+          message: '이미 신청된 내역이 있습니다.',
+        },
+        { status: 409 },
       );
     }
 

@@ -53,6 +53,7 @@ export async function GET() {
       .select(
         'facility_cd, facility_fees, service_items, funeral_supplies',
       )
+      .is('deleted_at', null)
       .limit(2000)
       .returns<HallRow[]>();
 

@@ -25,6 +25,7 @@ export async function GET(request: Request) {
       .select('*')
       .eq('email', authData.user.email)
       .eq('is_active', true)
+      .is('deleted_at', null)
       .single();
 
     if (adminError || !adminUser) {

@@ -33,6 +33,7 @@ export default async function ReviewDetailPage({
     .select('id, category, author, written_at, title, content, tags')
     .eq('id', id)
     .eq('is_active', true)
+    .is('deleted_at', null)
     .single();
 
   if (!review) notFound();

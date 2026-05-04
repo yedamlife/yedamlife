@@ -2,28 +2,16 @@
 
 import { use } from 'react';
 import { DetailPage } from '@/components/admin/detail-page';
-import { productLabel } from '@/lib/alimtalk/products';
 
 const fields = [
   { key: 'membership_no', label: '회원번호', editable: false },
   { key: 'name', label: '이름' },
   { key: 'phone', label: '연락처' },
-  { key: 'gender', label: '성별' },
   { key: 'company_name', label: '회사명' },
   { key: 'position', label: '직책' },
-  { key: 'address', label: '주소' },
-  { key: 'address_detail', label: '상세 주소' },
-  {
-    key: 'product',
-    label: '상품',
-    editable: false,
-    render: (value: unknown) => (
-      <span className="text-sm text-gray-900">
-        {productLabel(value as string | null | undefined)}
-      </span>
-    ),
-  },
+  { key: 'manager_email', label: '담당자 이메일' },
   { key: 'referrer', label: '추천인' },
+  { key: 'other_requirements', label: '기타 요구사항' },
 ];
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {

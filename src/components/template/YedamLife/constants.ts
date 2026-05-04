@@ -978,8 +978,8 @@ export const corpFuneralProducts = [
     id: 'corp-1',
     name: '예담 기업 1호',
     desc: '빈소없이 간소하게\n예를 다하고자 하시는 분께',
-    originalPrice: '150만원',
-    discountPrice: '130만원',
+    originalPrice: '250만원',
+    discountPrice: '230만원',
     image: `${CORP_IMAGE_BASE}/company-product-01.jpg`,
     summary: [
       '유가족들만 직접 이동을 원해 리무진을 이용하는 경우, 조문객 50명 내외',
@@ -1001,8 +1001,8 @@ export const corpFuneralProducts = [
     id: 'corp-2',
     name: '예담 기업 2호',
     desc: '가족이 어느 정도 있고\n조문객이 100명 내외인 경우',
-    originalPrice: '250만원',
-    discountPrice: '230만원',
+    originalPrice: '350만원',
+    discountPrice: '330만원',
     image: `${CORP_IMAGE_BASE}/company-product-02.jpg`,
     summary: [
       '가족이 어느 정도 있고 조문객이 100명 내외',
