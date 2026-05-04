@@ -14,10 +14,13 @@ interface FeeRow {
 
 interface HallRow {
   facility_cd: string;
+  sido_cd: string | null;
   facility_fees: FeeRow[] | null;
   service_items: FeeRow[] | null;
   funeral_supplies: FeeRow[] | null;
 }
+
+const METRO_SIDO_CODES = new Set(['6110000', '6280000', '6410000']);
 
 function median(arr: number[]): number {
   if (arr.length === 0) return 0;
@@ -51,7 +54,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from('funeral_halls')
       .select(
-        'facility_cd, facility_fees, service_items, funeral_supplies',
+        'facility_cd, sido_cd, facility_fees, service_items, funeral_supplies',
       )
       .is('deleted_at', null)
       .limit(2000)
@@ -97,6 +100,12 @@ export async function GET() {
     const maleByHall = new Map<string, number>();
     const femaleByHall = new Map<string, number>();
 
+    // 청소비: 수도권 / 비수도권 분리, 20만원 미만만 집계
+    const cleaningMetroHalls = new Set<string>();
+    const cleaningMetroAmounts: number[] = [];
+    const cleaningNonMetroHalls = new Set<string>();
+    const cleaningNonMetroAmounts: number[] = [];
+
     for (const hall of data) {
       const combined: FeeRow[] = [
         ...(hall.facility_fees ?? []),
@@ -116,6 +125,19 @@ export async function GET() {
         if (!isFacility && text.includes('메이크업')) {
           makeupHalls.add(hall.facility_cd);
           makeupAmounts.push(amt);
+        }
+
+        // 청소비: 품명 필드만 체크 (20만원 미만, 수도권/비수도권 분리)
+        const itemName = String(fee['품명'] ?? '');
+        if (itemName.includes('청소') && amt > 0 && amt < 200000) {
+          const isMetro = METRO_SIDO_CODES.has(hall.sido_cd ?? '');
+          if (isMetro) {
+            cleaningMetroHalls.add(hall.facility_cd);
+            cleaningMetroAmounts.push(amt);
+          } else {
+            cleaningNonMetroHalls.add(hall.facility_cd);
+            cleaningNonMetroAmounts.push(amt);
+          }
         }
 
         // 차량
@@ -280,6 +302,18 @@ export async function GET() {
           avg_amount: avg(directorAmounts),
           median_amount: median(directorAmounts),
           sample_count: directorAmounts.length,
+        },
+        cleaning: {
+          metro: {
+            hall_count: cleaningMetroHalls.size,
+            avg_amount: avg(cleaningMetroAmounts),
+            median_amount: median(cleaningMetroAmounts),
+          },
+          non_metro: {
+            hall_count: cleaningNonMetroHalls.size,
+            avg_amount: avg(cleaningNonMetroAmounts),
+            median_amount: median(cleaningNonMetroAmounts),
+          },
         },
         mourning: {
           male: {

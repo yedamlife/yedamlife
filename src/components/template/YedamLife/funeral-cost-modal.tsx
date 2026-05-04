@@ -105,15 +105,24 @@ type SizeKey = 'small' | 'medium' | 'large' | 'premium' | 'vip';
 /* ─── 상수 ─── */
 const METRO_SIDO = ['6110000', '6410000', '6280000'];
 
+// 빈소 사용료 — 규모별 중간값 (2일 기준) / docs/비용/빈소사용료.md
+const BINSO_MEDIAN: Record<string, { metro: number; non_metro: number }> = {
+  small: { metro: 720000, non_metro: 600000 },
+  medium: { metro: 1410000, non_metro: 1000000 },
+  large: { metro: 2160000, non_metro: 1440000 },
+  premium: { metro: 2460000, non_metro: 1800000 },
+  vip: { metro: 3150000, non_metro: 2400000 },
+};
+
 const METRO_COSTS = {
   transfer: 300000,
-  mortuary: 100000,
+  mortuary: 96000, // 수도권 안치실 이용료 중간값
   encoffin: 350000,
   food: 24000,
 };
 const NON_METRO_COSTS = {
   transfer: 200000,
-  mortuary: 70000,
+  mortuary: 80000, // 수도권 외 안치실 이용료 중간값
   encoffin: 250000,
   food: 18000,
 };
@@ -338,7 +347,7 @@ const hasLiveStatsLabel = (label: string): boolean =>
   LIVE_STATS_KEYWORDS.some((k) => label.includes(k));
 
 // 라이브 라벨 안에서 강조할 숫자 색상 (파란색 계열).
-const LIVE_LABEL_HIGHLIGHT = '#2563eb';
+const LIVE_LABEL_HIGHLIGHT = BRAND_COLOR;
 
 // 단일 선택(라디오) 부모 라벨. 첫 번째 sub가 기본 선택, 나머지는 기본 비선택.
 const RADIO_PARENT_LABELS: ReadonlySet<string> = new Set(['유골함']);
@@ -552,6 +561,12 @@ export function FuneralCostModal({
     median_amount: number;
   } | null>(null);
 
+  // 청소비 통계 (수도권/비수도권 분리)
+  const [cleaningStats, setCleaningStats] = useState<{
+    metro: { hall_count: number; avg_amount: number };
+    non_metro: { hall_count: number; avg_amount: number };
+  } | null>(null);
+
   // 상복 수량 (key: "i:j" → 수량, 기본 1)
   const [sangjoQuantities, setSangjoQuantities] = useState<
     Record<string, number>
@@ -567,7 +582,8 @@ export function FuneralCostModal({
       directorStats &&
       coffinStats &&
       urnStats &&
-      portraitStats
+      portraitStats &&
+      cleaningStats
     )
       return;
     fetch('/api/v1/funeral-cost/sangjo-stats')
@@ -582,6 +598,7 @@ export function FuneralCostModal({
         if (j.data.coffin) setCoffinStats(j.data.coffin);
         if (j.data.urn) setUrnStats(j.data.urn);
         if (j.data.portrait) setPortraitStats(j.data.portrait);
+        if (j.data.cleaning) setCleaningStats(j.data.cleaning);
       })
       .catch(() => {});
   }, [
@@ -594,6 +611,7 @@ export function FuneralCostModal({
     coffinStats,
     urnStats,
     portraitStats,
+    cleaningStats,
   ]);
 
   // 실시간 통계를 적용한 동적 상조 항목 (메이크업, 수의)
@@ -980,6 +998,33 @@ export function FuneralCostModal({
       )
     : [];
 
+  // 결과 화면 — 선택 규모에 맞는 빈소가 정확히 1개이면 자동 체크
+  const binsoAutoCheckedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selectedHall || !selectedSize) return;
+    if (step !== resultStep) return;
+    const key = `${selectedHall.facility_cd}-${selectedSize}`;
+    if (binsoAutoCheckedRef.current === key) return;
+    binsoAutoCheckedRef.current = key;
+    const allFacilityItems = selectedHall.facility_fees.filter(
+      (f) => f.판매여부 === 'Y' && f.품종 === '시설임대료',
+    );
+    const matched = getFeesForSize(selectedHall, selectedSize);
+    if (matched.length !== 1) return;
+    const targetFee = matched[0];
+    const idx = allFacilityItems.indexOf(targetFee);
+    if (idx >= 0 && checkedFeeIndexes.length === 0) {
+      setCheckedFeeIndexes([idx]);
+    }
+  }, [
+    selectedHall,
+    selectedSize,
+    step,
+    resultStep,
+    getFeesForSize,
+    checkedFeeIndexes.length,
+  ]);
+
   // 결과 화면 진입 시 염습/입관 '일반' 항목 자동 체크
   const encoffinAutoCheckedRef = useRef<string | null>(null);
   useEffect(() => {
@@ -1129,6 +1174,14 @@ export function FuneralCostModal({
       if (!fee) return sum;
       return sum + fee.요금 * getFeeMultiplier(fee).multiplier;
     }, 0);
+    // 빈소 미선택 + 데이터 없는 경우에만 규모·지역 중간값 사용
+    const binsoIsAvg = facilityFee === 0;
+    const hasBinsoData = getBinsoFees(selectedHall).length > 0;
+    const binsoMedianFee =
+      selectedSize && binsoIsAvg && !hasBinsoData
+        ? (BINSO_MEDIAN[selectedSize]?.[isMetro ? 'metro' : 'non_metro'] ?? 0)
+        : 0;
+    const effectiveFacilityFee = facilityFee > 0 ? facilityFee : binsoMedianFee;
 
     // 안치실 사용료 lookup: 1) 체크된 항목, 2) 안치실이용료 카테고리 최저가, 3) facility_fees 안치, 4) 평균
     const checkedMortuaryItem =
@@ -1167,7 +1220,7 @@ export function FuneralCostModal({
     const ritualPrice =
       RITUAL_OPTIONS.find((o) => o.key === ritual)?.price ?? 0;
     const basicTotal =
-      facilityFee +
+      effectiveFacilityFee +
       encoffin +
       transfer +
       mortuary +
@@ -1201,7 +1254,9 @@ export function FuneralCostModal({
       extraMortuaryItems,
       selectedFacilityItems,
       selectedEncoffinItems,
-      facilityFee,
+      facilityFee: effectiveFacilityFee,
+      binsoIsAvg,
+      binsoMedianFee,
       food,
       flowerDecorPrice,
       ritualPrice,
@@ -1798,60 +1853,86 @@ export function FuneralCostModal({
                             장례식장 이용료
                           </p>
                           <p
-                            className="text-base font-bold"
+                            className="text-lg font-bold"
                             style={{ color: BRAND_COLOR }}
                           >
                             {result.basicTotal.toLocaleString()}원
                           </p>
                         </div>
-                        <p className="text-xs text-gray-500 -mt-2 mb-4 mt-2 pl-1">
-                          * <span className="font-semibold">실제비용</span>은
-                          아래{' '}
-                          <span className="font-semibold">‘전부 확인하기’</span>{' '}
-                          버튼을 눌러 세부 항목과 금액을 확인해 주세요.
-                        </p>
                         <div className="border border-gray-200 rounded-xl overflow-hidden text-sm">
                           {funeralType === '3day' && (
                             <div className="px-4 py-2.5 border-b border-gray-100">
-                              <div className="flex justify-between items-center">
-                                <span className="text-gray-600 flex items-center gap-1.5 flex-wrap">
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
-                                    필수
-                                  </span>
+                              <div className="flex items-center gap-3">
+                                <span className="flex-1 min-w-0 text-gray-600 flex items-center gap-1.5 flex-wrap">
                                   빈소 사용료{' '}
                                   <span className="text-xs text-gray-500">
                                     (2일)
                                   </span>
-                                </span>
-                                {hasBinsoSelected ? (
-                                  <span className="font-semibold text-gray-900 flex items-center gap-1.5">
-                                    <span
-                                      className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold text-white"
-                                      style={{ backgroundColor: BRAND_COLOR }}
+                                  {facilityFeeItems.length > 0 && (
+                                    <button
+                                      onClick={() => {
+                                        setFeeListOpen(true);
+                                        setTimeout(() => {
+                                          document
+                                            .getElementById('fc-table-binso')
+                                            ?.scrollIntoView({
+                                              behavior: 'smooth',
+                                              block: 'start',
+                                            });
+                                        }, 0);
+                                      }}
+                                      className="inline-flex items-center gap-0.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 cursor-pointer transition-colors"
                                     >
-                                      실제비용
-                                    </span>
-                                    {checkedTotal.toLocaleString()}원
-                                  </span>
-                                ) : (
-                                  <button
-                                    onClick={() => {
-                                      setFeeListOpen(true);
-                                      setTimeout(() => {
-                                        document
-                                          .getElementById('fc-table-binso')
-                                          ?.scrollIntoView({
-                                            behavior: 'smooth',
-                                            block: 'start',
-                                          });
-                                      }, 0);
-                                    }}
-                                    className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 cursor-pointer transition-colors"
-                                  >
-                                    선택하러 가기
-                                    <ArrowRight className="w-3 h-3" />
-                                  </button>
-                                )}
+                                      비용 확인하기
+                                      <ArrowRight className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </span>
+                                <div className="shrink-0 w-28 flex flex-col items-end gap-0.5">
+                                  {hasBinsoSelected ? (
+                                    <>
+                                      <span
+                                        className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold text-white"
+                                        style={{ backgroundColor: BRAND_COLOR }}
+                                      >
+                                        실제비용
+                                      </span>
+                                      <span className="text-[15px] font-semibold text-gray-900">
+                                        {checkedTotal.toLocaleString()}원
+                                      </span>
+                                    </>
+                                  ) : (result.binsoMedianFee ?? 0) > 0 ? (
+                                    <>
+                                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
+                                        평균비용
+                                      </span>
+                                      <span className="text-[15px] font-semibold text-gray-900">
+                                        {(
+                                          result.binsoMedianFee ?? 0
+                                        ).toLocaleString()}
+                                        원
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <button
+                                      onClick={() => {
+                                        setFeeListOpen(true);
+                                        setTimeout(() => {
+                                          document
+                                            .getElementById('fc-table-binso')
+                                            ?.scrollIntoView({
+                                              behavior: 'smooth',
+                                              block: 'start',
+                                            });
+                                        }, 0);
+                                      }}
+                                      className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 cursor-pointer transition-colors"
+                                    >
+                                      선택하러 가기
+                                      <ArrowRight className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                               {result.selectedFacilityItems?.map((f, i) => (
                                 <p
@@ -1861,36 +1942,36 @@ export function FuneralCostModal({
                                   ㄴ {f.품명}
                                 </p>
                               ))}
-                              <button
-                                onClick={() => {
-                                  setFeeListOpen(true);
-                                  setTimeout(() => {
-                                    document
-                                      .getElementById('fc-table-binso')
-                                      ?.scrollIntoView({
-                                        behavior: 'smooth',
-                                        block: 'start',
-                                      });
-                                  }, 0);
-                                }}
-                                className="mt-2 ml-6 text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer transition-colors"
-                              >
-                                빈소 전부 확인하기
-                              </button>
                             </div>
                           )}
                           <div className="px-4 py-2.5 border-b border-gray-100">
-                            <div className="flex justify-between items-center">
-                              <span className="text-gray-600 flex items-center gap-1.5 flex-wrap">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
-                                  필수
-                                </span>
+                            <div className="flex items-center gap-3">
+                              <span className="flex-1 min-w-0 text-gray-600 flex items-center gap-1.5 flex-wrap">
                                 안치실 이용료{' '}
                                 <span className="text-xs text-gray-500">
                                   (2일)
                                 </span>
+                                {mortuaryCategoryItems.length > 0 && (
+                                  <button
+                                    onClick={() => {
+                                      setMortuaryListOpen(true);
+                                      setTimeout(() => {
+                                        document
+                                          .getElementById('fc-table-mortuary')
+                                          ?.scrollIntoView({
+                                            behavior: 'smooth',
+                                            block: 'start',
+                                          });
+                                      }, 0);
+                                    }}
+                                    className="inline-flex items-center gap-0.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 cursor-pointer transition-colors"
+                                  >
+                                    비용 확인하기
+                                    <ArrowRight className="w-3 h-3" />
+                                  </button>
+                                )}
                               </span>
-                              <span className="font-semibold text-gray-900 flex items-center gap-1.5">
+                              <div className="shrink-0 w-28 flex flex-col items-end gap-0.5">
                                 {result.mortuaryIsAvg ? (
                                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
                                     평균비용
@@ -1903,43 +1984,42 @@ export function FuneralCostModal({
                                     실제비용
                                   </span>
                                 )}
-                                {result.mortuary.toLocaleString()}원
-                              </span>
+                                <span className="text-[15px] font-semibold text-gray-900">
+                                  {result.mortuary.toLocaleString()}원
+                                </span>
+                              </div>
                             </div>
                             {result.mortuarySource && (
                               <p className="text-xs text-gray-400 mt-1 pl-6">
                                 ㄴ {result.mortuarySource.품명}
                               </p>
                             )}
-                            {!result.mortuaryIsAvg &&
-                              mortuaryCategoryItems.length > 0 && (
-                                <button
-                                  onClick={() => {
-                                    setMortuaryListOpen(true);
-                                    setTimeout(() => {
-                                      document
-                                        .getElementById('fc-table-mortuary')
-                                        ?.scrollIntoView({
-                                          behavior: 'smooth',
-                                          block: 'start',
-                                        });
-                                    }, 0);
-                                  }}
-                                  className="mt-2 ml-6 text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer transition-colors"
-                                >
-                                  안치실 전부 확인하기
-                                </button>
-                              )}
                           </div>
                           <div className="px-4 py-2.5 border-b border-gray-100">
-                            <div className="flex justify-between items-center">
-                              <span className="text-gray-600 flex items-center gap-1.5">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
-                                  필수
-                                </span>
+                            <div className="flex items-center gap-3">
+                              <span className="flex-1 min-w-0 text-gray-600 flex items-center gap-1.5 flex-wrap">
                                 염습/입관
+                                {encoffinCategoryItems.length > 0 && (
+                                  <button
+                                    onClick={() => {
+                                      setEncoffinListOpen(true);
+                                      setTimeout(() => {
+                                        document
+                                          .getElementById('fc-table-encoffin')
+                                          ?.scrollIntoView({
+                                            behavior: 'smooth',
+                                            block: 'start',
+                                          });
+                                      }, 0);
+                                    }}
+                                    className="inline-flex items-center gap-0.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 cursor-pointer transition-colors"
+                                  >
+                                    비용 확인하기
+                                    <ArrowRight className="w-3 h-3" />
+                                  </button>
+                                )}
                               </span>
-                              <span className="font-semibold text-gray-900 flex items-center gap-1.5">
+                              <div className="shrink-0 w-28 flex flex-col items-end gap-0.5">
                                 {result.encoffinIsAvg ? (
                                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
                                     평균비용
@@ -1952,15 +2032,17 @@ export function FuneralCostModal({
                                     실제비용
                                   </span>
                                 )}
-                                {(
-                                  result.encoffin +
-                                  (result.extraEncoffinItems?.reduce(
-                                    (s, f) => s + f.요금,
-                                    0,
-                                  ) ?? 0)
-                                ).toLocaleString()}
-                                원
-                              </span>
+                                <span className="text-[15px] font-semibold text-gray-900">
+                                  {(
+                                    result.encoffin +
+                                    (result.extraEncoffinItems?.reduce(
+                                      (s, f) => s + f.요금,
+                                      0,
+                                    ) ?? 0)
+                                  ).toLocaleString()}
+                                  원
+                                </span>
+                              </div>
                             </div>
                             {result.selectedEncoffinItems?.map((f, i) => (
                               <p
@@ -1970,46 +2052,23 @@ export function FuneralCostModal({
                                 ㄴ {f.품명}
                               </p>
                             ))}
-                            {!result.encoffinIsAvg &&
-                              encoffinCategoryItems.length > 0 && (
-                                <button
-                                  onClick={() => {
-                                    setEncoffinListOpen(true);
-                                    setTimeout(() => {
-                                      document
-                                        .getElementById('fc-table-encoffin')
-                                        ?.scrollIntoView({
-                                          behavior: 'smooth',
-                                          block: 'start',
-                                        });
-                                    }, 0);
-                                  }}
-                                  className="mt-2 ml-6 text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer transition-colors"
-                                >
-                                  염습/입관 전부 확인하기
-                                </button>
-                              )}
                           </div>
-                          <div className="px-4 py-2.5 flex justify-between items-center border-b border-gray-100">
-                            <span className="text-gray-600 flex items-center gap-1.5">
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
-                                필수
-                              </span>
+                          <div className="px-4 py-2.5 flex items-center gap-3 border-b border-gray-100">
+                            <span className="flex-1 min-w-0 text-gray-600 flex items-center gap-1.5">
                               고인 이송비
                             </span>
-                            <span className="font-semibold text-gray-900 flex items-center gap-1.5">
+                            <div className="shrink-0 w-28 flex flex-col items-end gap-0.5">
                               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
                                 평균비용
                               </span>
-                              {result.transfer.toLocaleString()}원
-                            </span>
+                              <span className="text-[15px] font-semibold text-gray-900">
+                                {result.transfer.toLocaleString()}원
+                              </span>
+                            </div>
                           </div>
                           {funeralType === '3day' && (
-                            <div className="px-4 py-2.5 flex justify-between items-center border-b border-gray-100">
-                              <span className="text-gray-600 flex items-center gap-1.5">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
-                                  필수
-                                </span>
+                            <div className="px-4 py-2.5 flex items-center gap-3 border-b border-gray-100">
+                              <span className="flex-1 min-w-0 text-gray-600 flex items-center gap-1.5">
                                 음식비 ({guestCount}명 x{' '}
                                 {(result.isMetro
                                   ? METRO_COSTS
@@ -2017,27 +2076,73 @@ export function FuneralCostModal({
                                 ).food.toLocaleString()}
                                 원)
                               </span>
-                              <span className="font-semibold text-gray-900 flex items-center gap-1.5">
+                              <div className="shrink-0 w-28 flex flex-col items-end gap-0.5">
                                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
                                   평균비용
                                 </span>
-                                {result.food.toLocaleString()}원
-                              </span>
+                                <span className="text-[15px] font-semibold text-gray-900">
+                                  {result.food.toLocaleString()}원
+                                </span>
+                              </div>
                             </div>
                           )}
                           {funeralType === '3day' && (
-                            <div className="px-4 py-3 border-b border-gray-100">
-                              <div className="flex justify-between items-center mb-2">
-                                <span className="text-gray-600 flex items-center gap-1.5">
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
-                                    필수
-                                  </span>
+                            <div className="px-4 py-3 border-b border-gray-100 flex items-start gap-3">
+                              {/* 좌: 라벨 + 옵션 */}
+                              <div className="flex-1 min-w-0">
+                                <span className="text-gray-600 flex items-center gap-1.5 mb-2">
                                   제단 꽃 장식
                                 </span>
-                                <span className="font-semibold text-gray-900 flex items-center gap-1.5">
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
-                                    평균비용
-                                  </span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                  {FLOWER_DECOR_OPTIONS.map((opt) => {
+                                    const selected = flowerDecor === opt.key;
+                                    return (
+                                      <button
+                                        key={opt.key}
+                                        type="button"
+                                        onClick={() => setFlowerDecor(opt.key)}
+                                        className="flex items-center gap-2 cursor-pointer text-left text-[13px]"
+                                      >
+                                        <span
+                                          className="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0"
+                                          style={{
+                                            borderColor: selected
+                                              ? BRAND_COLOR
+                                              : '#d1d5db',
+                                            backgroundColor: selected
+                                              ? BRAND_COLOR
+                                              : 'transparent',
+                                          }}
+                                        >
+                                          {selected && (
+                                            <Check className="w-2.5 h-2.5 text-white" />
+                                          )}
+                                        </span>
+                                        <span
+                                          className={
+                                            selected
+                                              ? 'text-gray-700'
+                                              : 'text-gray-400'
+                                          }
+                                        >
+                                          {opt.label}
+                                          <span
+                                            className={`ml-1 font-bold ${selected ? 'text-gray-900' : 'text-gray-400'}`}
+                                          >
+                                            {opt.price.toLocaleString()}원
+                                          </span>
+                                        </span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                              {/* 우: 비용 */}
+                              <div className="shrink-0 w-28 flex flex-col items-end gap-0.5 pt-0.5">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
+                                  평균비용
+                                </span>
+                                <span className="text-[15px] font-semibold text-gray-900">
                                   {(
                                     FLOWER_DECOR_OPTIONS.find(
                                       (o) => o.key === flowerDecor,
@@ -2046,64 +2151,65 @@ export function FuneralCostModal({
                                   원
                                 </span>
                               </div>
-                              <div className="grid grid-cols-2 gap-1.5 pl-1">
-                                {FLOWER_DECOR_OPTIONS.map((opt) => {
-                                  const selected = flowerDecor === opt.key;
-                                  return (
-                                    <button
-                                      key={opt.key}
-                                      type="button"
-                                      onClick={() => setFlowerDecor(opt.key)}
-                                      className="flex items-center gap-2 cursor-pointer text-left text-[13px]"
-                                    >
-                                      <span
-                                        className="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0"
-                                        style={{
-                                          borderColor: selected
-                                            ? BRAND_COLOR
-                                            : '#d1d5db',
-                                          backgroundColor: selected
-                                            ? BRAND_COLOR
-                                            : 'transparent',
-                                        }}
-                                      >
-                                        {selected && (
-                                          <Check className="w-2.5 h-2.5 text-white" />
-                                        )}
-                                      </span>
-                                      <span
-                                        className={
-                                          selected
-                                            ? 'text-gray-700'
-                                            : 'text-gray-400'
-                                        }
-                                      >
-                                        {opt.label}
-                                        <span
-                                          className={`ml-1 font-bold ${selected ? 'text-gray-900' : 'text-gray-400'}`}
-                                        >
-                                          {opt.price.toLocaleString()}원
-                                        </span>
-                                      </span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
                             </div>
                           )}
                           {funeralType === '3day' && (
-                            <div className="px-4 py-3">
-                              <div className="flex justify-between items-center mb-2">
-                                <span className="text-gray-600 flex items-center gap-1.5">
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold">
-                                    필수
-                                  </span>
+                            <div className="px-4 py-3 flex items-start gap-3">
+                              {/* 좌: 라벨 + 옵션 */}
+                              <div className="flex-1 min-w-0">
+                                <span className="text-gray-600 flex items-center gap-1.5 mb-2">
                                   제사 비용
                                 </span>
-                                <span className="font-semibold text-gray-900 flex items-center gap-1.5">
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
-                                    평균비용
-                                  </span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                  {RITUAL_OPTIONS.map((opt) => {
+                                    const selected = ritual === opt.key;
+                                    return (
+                                      <button
+                                        key={opt.key}
+                                        type="button"
+                                        onClick={() => setRitual(opt.key)}
+                                        className="flex items-center gap-2 cursor-pointer text-left text-[13px]"
+                                      >
+                                        <span
+                                          className="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0"
+                                          style={{
+                                            borderColor: selected
+                                              ? BRAND_COLOR
+                                              : '#d1d5db',
+                                            backgroundColor: selected
+                                              ? BRAND_COLOR
+                                              : 'transparent',
+                                          }}
+                                        >
+                                          {selected && (
+                                            <Check className="w-2.5 h-2.5 text-white" />
+                                          )}
+                                        </span>
+                                        <span
+                                          className={
+                                            selected
+                                              ? 'text-gray-700'
+                                              : 'text-gray-400'
+                                          }
+                                        >
+                                          {opt.label}
+                                          <span
+                                            className={`ml-1 font-bold ${selected ? 'text-gray-900' : 'text-gray-400'}`}
+                                          >
+                                            {opt.price.toLocaleString()}원
+                                          </span>
+                                        </span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                              {/* 우: 비용 */}
+                              <div className="shrink-0 w-28 flex flex-col items-end gap-0.5 pt-0.5">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
+                                  평균비용
+                                </span>
+                                <span className="text-[15px] font-semibold text-gray-900">
                                   {(
                                     RITUAL_OPTIONS.find((o) => o.key === ritual)
                                       ?.price ?? 0
@@ -2111,51 +2217,80 @@ export function FuneralCostModal({
                                   원
                                 </span>
                               </div>
-                              <div className="grid grid-cols-2 gap-1.5 pl-1">
-                                {RITUAL_OPTIONS.map((opt) => {
-                                  const selected = ritual === opt.key;
-                                  return (
-                                    <button
-                                      key={opt.key}
-                                      type="button"
-                                      onClick={() => setRitual(opt.key)}
-                                      className="flex items-center gap-2 cursor-pointer text-left text-[13px]"
-                                    >
-                                      <span
-                                        className="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0"
-                                        style={{
-                                          borderColor: selected
-                                            ? BRAND_COLOR
-                                            : '#d1d5db',
-                                          backgroundColor: selected
-                                            ? BRAND_COLOR
-                                            : 'transparent',
-                                        }}
-                                      >
-                                        {selected && (
-                                          <Check className="w-2.5 h-2.5 text-white" />
-                                        )}
-                                      </span>
-                                      <span
-                                        className={
-                                          selected
-                                            ? 'text-gray-700'
-                                            : 'text-gray-400'
-                                        }
-                                      >
-                                        {opt.label}
-                                        <span
-                                          className={`ml-1 font-bold ${selected ? 'text-gray-900' : 'text-gray-400'}`}
-                                        >
-                                          {opt.price.toLocaleString()}원
-                                        </span>
-                                      </span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
                             </div>
                           )}
+                          {/* 청소비 */}
+                          {(() => {
+                            const isMetro = selectedHall
+                              ? METRO_SIDO.includes(selectedHall.sido_cd)
+                              : false;
+                            const stat = cleaningStats
+                              ? isMetro
+                                ? cleaningStats.metro
+                                : cleaningStats.non_metro
+                              : null;
+                            const displayAmt = stat?.avg_amount ?? 0;
+                            return (
+                              <div className="px-4 py-3 border-t border-gray-100 flex items-start gap-3">
+                                {/* 좌: 라벨 + note */}
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-gray-600 flex items-center gap-1.5 mb-2">
+                                    청소비
+                                  </span>
+                                  <div className="ml-[1.4rem]">
+                                    <div className="flex items-start gap-1.5">
+                                      <span className="text-[11px] text-gray-400 leading-relaxed">
+                                        ㄴ
+                                      </span>
+                                      {stat ? (
+                                        <span className="inline-block text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-2xl bg-gray-100 text-gray-600 break-keep">
+                                          {`청소비를 공개하는 ${stat.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`
+                                            .split(
+                                              /(\d{1,3}(?:,\d{3})*(?:건|개|원)|예담라이프)/,
+                                            )
+                                            .map((part, k) =>
+                                              /^\d{1,3}(?:,\d{3})*(?:건|개|원)$/.test(
+                                                part,
+                                              ) || part === '예담라이프' ? (
+                                                <span
+                                                  key={k}
+                                                  className="font-extrabold mx-0.5"
+                                                  style={{
+                                                    color: LIVE_LABEL_HIGHLIGHT,
+                                                  }}
+                                                >
+                                                  {part}
+                                                </span>
+                                              ) : (
+                                                <React.Fragment key={k}>
+                                                  {part}
+                                                </React.Fragment>
+                                              ),
+                                            )}
+                                        </span>
+                                      ) : (
+                                        <span className="inline-block w-48 h-5 bg-gray-200 rounded-2xl animate-pulse" />
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                {/* flex-1 end */}
+                                {/* 우: 비용 */}
+                                <div className="shrink-0 w-28 flex flex-col items-end gap-0.5 pt-0.5">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
+                                    평균비용
+                                  </span>
+                                  {stat ? (
+                                    <span className="text-[15px] font-semibold text-gray-900">
+                                      {displayAmt.toLocaleString()}원
+                                    </span>
+                                  ) : (
+                                    <span className="inline-block w-16 h-4 bg-gray-200 rounded animate-pulse mt-0.5" />
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     );
@@ -2176,7 +2311,7 @@ export function FuneralCostModal({
                             장례식장 상조비용
                           </p>
                           <p
-                            className="text-base font-bold flex items-center gap-1.5"
+                            className="text-lg font-bold flex items-center gap-1.5"
                             style={{ color: BRAND_COLOR }}
                           >
                             {result.sangjoTotal.toLocaleString()}원
@@ -2238,9 +2373,9 @@ export function FuneralCostModal({
                                       toggleSangjoKey(parentKey);
                                     }
                                   }}
-                                  className="w-full flex justify-between items-center cursor-pointer text-left"
+                                  className="w-full flex items-center gap-3 cursor-pointer text-left"
                                 >
-                                  <span className="flex items-center gap-2">
+                                  <span className="flex-1 min-w-0 flex items-center gap-2">
                                     <span
                                       className="w-4 h-4 rounded-sm border-2 flex items-center justify-center shrink-0"
                                       style={{
@@ -2258,7 +2393,7 @@ export function FuneralCostModal({
                                     </span>
                                     {item.label}
                                   </span>
-                                  <span className="font-semibold text-gray-900">
+                                  <span className="shrink-0 w-28 text-[15px] font-bold text-gray-900 text-right">
                                     {parentTotal.toLocaleString()}원
                                   </span>
                                 </button>
@@ -2270,172 +2405,218 @@ export function FuneralCostModal({
                                   const qty = sangjoQuantities[subKey] ?? 1;
                                   return (
                                     <div key={j}>
-                                      <div className="w-full mt-3 pl-4 flex items-center gap-2 text-[13px]">
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            if (
-                                              RADIO_PARENT_LABELS.has(
-                                                item.label,
-                                              )
-                                            ) {
-                                              setUnselectedSangjoKeys(
-                                                (prev) => {
-                                                  const next = new Set(prev);
-                                                  item.items!.forEach((_, k) =>
-                                                    next.add(`${i}:${k}`),
+                                      <div className="mt-3 pl-4 flex items-start gap-2 text-[13px]">
+                                        {/* 좌: [라벨행] + [note] */}
+                                        <div className="flex-1 min-w-0 flex flex-col">
+                                          {/* 라벨행 */}
+                                          <div className="flex items-center gap-2 overflow-hidden">
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                if (
+                                                  RADIO_PARENT_LABELS.has(
+                                                    item.label,
+                                                  )
+                                                ) {
+                                                  setUnselectedSangjoKeys(
+                                                    (prev) => {
+                                                      const next = new Set(
+                                                        prev,
+                                                      );
+                                                      item.items!.forEach(
+                                                        (_, k) =>
+                                                          next.add(`${i}:${k}`),
+                                                      );
+                                                      next.delete(subKey);
+                                                      return next;
+                                                    },
                                                   );
-                                                  next.delete(subKey);
-                                                  return next;
-                                                },
-                                              );
-                                            } else {
-                                              toggleSangjoKey(subKey);
-                                            }
-                                          }}
-                                          className="flex items-center gap-2 cursor-pointer text-left flex-1 min-w-0"
-                                        >
-                                          <span
-                                            className="w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center shrink-0"
-                                            style={{
-                                              borderColor: subSelected
-                                                ? BRAND_COLOR
-                                                : '#d1d5db',
-                                              backgroundColor: subSelected
-                                                ? BRAND_COLOR
-                                                : 'transparent',
-                                            }}
-                                          >
-                                            {subSelected && (
-                                              <Check className="w-2.5 h-2.5 text-white" />
+                                                } else {
+                                                  toggleSangjoKey(subKey);
+                                                }
+                                              }}
+                                              className="shrink-0 w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center cursor-pointer"
+                                              style={{
+                                                borderColor: subSelected
+                                                  ? BRAND_COLOR
+                                                  : '#d1d5db',
+                                                backgroundColor: subSelected
+                                                  ? BRAND_COLOR
+                                                  : 'transparent',
+                                              }}
+                                            >
+                                              {subSelected && (
+                                                <Check className="w-2.5 h-2.5 text-white" />
+                                              )}
+                                            </button>
+                                            <span
+                                              role="button"
+                                              tabIndex={0}
+                                              onClick={() => {
+                                                if (
+                                                  RADIO_PARENT_LABELS.has(
+                                                    item.label,
+                                                  )
+                                                ) {
+                                                  setUnselectedSangjoKeys(
+                                                    (prev) => {
+                                                      const next = new Set(
+                                                        prev,
+                                                      );
+                                                      item.items!.forEach(
+                                                        (_, k) =>
+                                                          next.add(`${i}:${k}`),
+                                                      );
+                                                      next.delete(subKey);
+                                                      return next;
+                                                    },
+                                                  );
+                                                } else {
+                                                  toggleSangjoKey(subKey);
+                                                }
+                                              }}
+                                              onKeyDown={(e) => {
+                                                if (
+                                                  e.key === 'Enter' ||
+                                                  e.key === ' '
+                                                )
+                                                  e.currentTarget.click();
+                                              }}
+                                              className={`truncate cursor-pointer select-none ${subSelected ? 'text-gray-600' : 'text-gray-400'}`}
+                                            >
+                                              {sub.label}
+                                            </span>
+                                            {supportsQty && subSelected && (
+                                              <div className="shrink-0 flex items-center gap-1.5 border border-gray-200 rounded-full px-1 py-0.5">
+                                                <button
+                                                  type="button"
+                                                  onClick={() =>
+                                                    setSangjoQuantities(
+                                                      (prev) => ({
+                                                        ...prev,
+                                                        [subKey]: Math.max(
+                                                          1,
+                                                          (prev[subKey] ?? 1) -
+                                                            1,
+                                                        ),
+                                                      }),
+                                                    )
+                                                  }
+                                                  disabled={qty <= 1}
+                                                  className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed text-sm leading-none"
+                                                >
+                                                  −
+                                                </button>
+                                                <span className="text-xs font-semibold text-gray-900 min-w-[1ch] text-center">
+                                                  {qty}
+                                                </span>
+                                                <button
+                                                  type="button"
+                                                  onClick={() =>
+                                                    setSangjoQuantities(
+                                                      (prev) => ({
+                                                        ...prev,
+                                                        [subKey]:
+                                                          (prev[subKey] ?? 1) +
+                                                          1,
+                                                      }),
+                                                    )
+                                                  }
+                                                  className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-900 cursor-pointer text-sm leading-none"
+                                                >
+                                                  +
+                                                </button>
+                                              </div>
                                             )}
-                                          </span>
-                                          <span
-                                            className={
-                                              subSelected
-                                                ? 'text-gray-600'
-                                                : 'text-gray-400'
-                                            }
-                                          >
-                                            {sub.label}
-                                            {typeof sub.price === 'number' && (
-                                              <span
-                                                className={`ml-1 font-bold ${subSelected ? 'text-gray-900' : 'text-gray-400'}`}
-                                              >
-                                                {sub.price.toLocaleString()}원
-                                                {supportsQty && qty > 1 && (
-                                                  <span className="ml-1 text-gray-500 font-normal">
-                                                    × {qty} ={' '}
-                                                    {(
-                                                      sub.price * qty
-                                                    ).toLocaleString()}
-                                                    원
-                                                  </span>
-                                                )}
+                                          </div>
+                                          {/* note — 왼쪽 열 안에서 렌더링 */}
+                                          {sub.note ? (
+                                            <div className="mt-1.5 ml-[1.4rem]">
+                                              <div className="flex items-start gap-1.5">
+                                                <span className="text-[11px] text-gray-400 leading-relaxed">
+                                                  ㄴ
+                                                </span>
+                                                <span className="inline-block text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-2xl bg-gray-100 text-gray-600 break-keep">
+                                                  {sub.note
+                                                    .split('\n')[0]
+                                                    .split(
+                                                      /(\d{1,3}(?:,\d{3})*(?:건|개|원)|예담라이프)/,
+                                                    )
+                                                    .map((part, k) =>
+                                                      /^\d{1,3}(?:,\d{3})*(?:건|개|원)$/.test(
+                                                        part,
+                                                      ) ||
+                                                      part === '예담라이프' ? (
+                                                        <span
+                                                          key={k}
+                                                          className="font-extrabold mx-0.5"
+                                                          style={{
+                                                            color:
+                                                              LIVE_LABEL_HIGHLIGHT,
+                                                          }}
+                                                        >
+                                                          {part}
+                                                        </span>
+                                                      ) : (
+                                                        <React.Fragment key={k}>
+                                                          {part}
+                                                        </React.Fragment>
+                                                      ),
+                                                    )}
+                                                </span>
+                                              </div>
+                                              {sub.note
+                                                .split('\n')
+                                                .slice(1)
+                                                .map((line, k) => (
+                                                  <p
+                                                    key={k}
+                                                    className="mt-1 ml-3 text-[11px] text-gray-400 leading-relaxed"
+                                                  >
+                                                    {line}
+                                                  </p>
+                                                ))}
+                                            </div>
+                                          ) : hasLiveStatsLabel(sub.label) ? (
+                                            <div
+                                              className="mt-1.5 ml-[1.4rem]"
+                                              aria-busy="true"
+                                              aria-label="실시간 평균 비용 불러오는 중"
+                                            >
+                                              <div className="flex items-start gap-1.5">
+                                                <span className="text-[11px] text-gray-400 leading-relaxed">
+                                                  ㄴ
+                                                </span>
+                                                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-full bg-gray-100">
+                                                  <span className="inline-block h-2.5 w-24 rounded-full bg-gray-200 animate-pulse" />
+                                                  <span className="inline-block h-2.5 w-10 rounded-full bg-gray-200 animate-pulse" />
+                                                </span>
+                                              </div>
+                                            </div>
+                                          ) : null}
+                                        </div>
+                                        {/* 우: 가격 */}
+                                        {typeof sub.price === 'number' && (
+                                          <div className="shrink-0 w-28 flex flex-col items-end gap-0 pt-0.5">
+                                            {supportsQty && qty > 1 && (
+                                              <span className="text-[11px] text-gray-400">
+                                                × {qty}
                                               </span>
                                             )}
-                                          </span>
-                                        </button>
-                                        {supportsQty && subSelected && (
-                                          <div className="shrink-0 flex items-center gap-1.5 border border-gray-200 rounded-full px-1 py-0.5">
-                                            <button
-                                              type="button"
-                                              onClick={() =>
-                                                setSangjoQuantities((prev) => ({
-                                                  ...prev,
-                                                  [subKey]: Math.max(
-                                                    1,
-                                                    (prev[subKey] ?? 1) - 1,
-                                                  ),
-                                                }))
-                                              }
-                                              disabled={qty <= 1}
-                                              className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed text-sm leading-none"
+                                            <span
+                                              className={`text-[13px] font-semibold ${subSelected ? 'text-gray-700' : 'text-gray-400'}`}
                                             >
-                                              −
-                                            </button>
-                                            <span className="text-xs font-semibold text-gray-900 min-w-[1ch] text-center">
-                                              {qty}
+                                              {(
+                                                sub.price *
+                                                (supportsQty && qty > 1
+                                                  ? qty
+                                                  : 1)
+                                              ).toLocaleString()}
+                                              원
                                             </span>
-                                            <button
-                                              type="button"
-                                              onClick={() =>
-                                                setSangjoQuantities((prev) => ({
-                                                  ...prev,
-                                                  [subKey]:
-                                                    (prev[subKey] ?? 1) + 1,
-                                                }))
-                                              }
-                                              className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-900 cursor-pointer text-sm leading-none"
-                                            >
-                                              +
-                                            </button>
                                           </div>
                                         )}
                                       </div>
-                                      {sub.note ? (
-                                        <div className="mt-2 ml-[1.4rem]">
-                                          <div className="flex items-start gap-1.5">
-                                            <span className="text-[11px] text-gray-400 leading-relaxed">
-                                              ㄴ
-                                            </span>
-                                            <span className="inline-block text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-2xl bg-gray-100 text-gray-600 break-keep">
-                                              {sub.note
-                                                .split('\n')[0]
-                                                .split(
-                                                  /(\d{1,3}(?:,\d{3})*(?:건|개|원)|예담라이프)/,
-                                                )
-                                                .map((part, k) =>
-                                                  /^\d{1,3}(?:,\d{3})*(?:건|개|원)$/.test(
-                                                    part,
-                                                  ) || part === '예담라이프' ? (
-                                                    <span
-                                                      key={k}
-                                                      className="font-extrabold mx-0.5"
-                                                      style={{
-                                                        color:
-                                                          LIVE_LABEL_HIGHLIGHT,
-                                                      }}
-                                                    >
-                                                      {part}
-                                                    </span>
-                                                  ) : (
-                                                    <React.Fragment key={k}>
-                                                      {part}
-                                                    </React.Fragment>
-                                                  ),
-                                                )}
-                                            </span>
-                                          </div>
-                                          {sub.note
-                                            .split('\n')
-                                            .slice(1)
-                                            .map((line, k) => (
-                                              <p
-                                                key={k}
-                                                className="mt-1 ml-3 text-[11px] text-gray-400 leading-relaxed"
-                                              >
-                                                {line}
-                                              </p>
-                                            ))}
-                                        </div>
-                                      ) : hasLiveStatsLabel(sub.label) ? (
-                                        <div
-                                          className="mt-2 ml-[1.4rem]"
-                                          aria-busy="true"
-                                          aria-label="실시간 평균 비용 불러오는 중"
-                                        >
-                                          <div className="flex items-start gap-1.5">
-                                            <span className="text-[11px] text-gray-400 leading-relaxed">
-                                              ㄴ
-                                            </span>
-                                            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-full bg-gray-100">
-                                              <span className="inline-block h-2.5 w-24 rounded-full bg-gray-200 animate-pulse" />
-                                              <span className="inline-block h-2.5 w-10 rounded-full bg-gray-200 animate-pulse" />
-                                            </span>
-                                          </div>
-                                        </div>
-                                      ) : null}
                                     </div>
                                   );
                                 })}
@@ -2454,6 +2635,8 @@ export function FuneralCostModal({
                         selectedHall.facility_fees.filter(
                           (f) => f.판매여부 === 'Y' && f.품종 === '시설임대료',
                         );
+                      if (facilityFeeItems.length === 0) return null;
+
                       const checkedTotal = checkedFeeIndexes.reduce(
                         (sum, idx) => {
                           const f = facilityFeeItems[idx];
@@ -3007,6 +3190,7 @@ export function FuneralCostModal({
                             [];
                           if (
                             funeralType === '3day' &&
+                            getBinsoFees(selectedHall).length > 0 &&
                             checkedFeeIndexes.length === 0
                           ) {
                             warnings.push({
@@ -3226,14 +3410,14 @@ export function FuneralCostModal({
                             {bars.map((b, i) => (
                               <div
                                 key={`l-${i}`}
-                                className="pt-2.5 flex items-start justify-center gap-1"
+                                className="pt-2.5 self-center flex items-center justify-center gap-1"
                               >
                                 <span
-                                  className="inline-block w-2 h-2 rounded-full shrink-0 mt-0.5"
+                                  className="inline-block w-2 h-2 rounded-full shrink-0"
                                   style={{ backgroundColor: b.barColor }}
                                 />
                                 <span
-                                  className={`truncate leading-tight max-w-[52px] ${b.isHighlight ? 'text-xs font-bold' : 'text-[10px] sm:text-[11px] font-semibold'}`}
+                                  className={`line-clamp-2 leading-tight max-w-[52px] break-keep ${b.isHighlight ? 'text-xs font-bold' : 'text-[10px] sm:text-[11px] font-semibold'}`}
                                   style={{ color: b.labelColor }}
                                 >
                                   {b.label}
@@ -3304,12 +3488,17 @@ export function FuneralCostModal({
                   <button
                     onClick={() => {
                       const el = document.getElementById('fc-chart-section');
-                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      el?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                      });
                     }}
                     className="shrink-0 flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors"
                   >
                     <BarChart2 className="w-5 h-5" />
-                    <span className="text-[10px] font-semibold whitespace-nowrap">차트로 비교</span>
+                    <span className="text-[10px] font-semibold whitespace-nowrap">
+                      차트로 비교
+                    </span>
                   </button>
                   <a
                     href="#inquiry"

@@ -639,7 +639,7 @@ export function GeneralFuneral({
                     {/* 좌: 전화 상담 (모바일 숨김) */}
                     <a
                       href={CONTACT_TEL_HREF}
-                      className="group/phone hidden sm:flex flex-1 items-center gap-2.5 sm:gap-3 pl-4 sm:pl-5 pr-3 sm:pr-4 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80"
+                      className="group/phone hidden sm:flex flex-1 items-center gap-2.5 sm:gap-3 pl-4 sm:pl-5 pr-3 sm:pr-4 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 bg-white hover:bg-gray-50"
                     >
                       <Phone
                         className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-gray-800 transition-transform duration-300 group-hover/phone:-rotate-12"
@@ -661,7 +661,7 @@ export function GeneralFuneral({
                     {/* 중: 장례비용 계산 */}
                     <button
                       onClick={() => setCostModalOpen(true)}
-                      className="group/calc flex items-center gap-2.5 pl-4 pr-3 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 sm:flex-[1.25]"
+                      className="group/calc flex items-center gap-2.5 pl-4 pr-3 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 bg-white hover:bg-gray-50 sm:flex-[1.25]"
                     >
                       <Calculator
                         className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-blue-800 transition-transform duration-300 group-hover/calc:-rotate-6 group-hover/calc:scale-110"
@@ -687,7 +687,7 @@ export function GeneralFuneral({
                     {/* 우: 장지+ */}
                     <a
                       href="/burial-plus"
-                      className="group/burial flex items-center gap-2.5 sm:gap-3 pl-4 sm:pl-5 pr-3 sm:pr-4 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 hover:bg-gray-50/80 border-l border-gray-200/80 sm:border-l-0 sm:flex-1"
+                      className="group/burial flex items-center gap-2.5 sm:gap-3 pl-4 sm:pl-5 pr-3 sm:pr-4 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 bg-white hover:bg-gray-50 border-l border-gray-200/80 sm:border-l-0 sm:flex-1"
                     >
                       <MapPin
                         className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-amber-900 transition-transform duration-300 group-hover/burial:-translate-y-0.5 group-hover/burial:scale-110"
