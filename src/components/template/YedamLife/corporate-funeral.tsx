@@ -412,6 +412,25 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
   const [corpNoticeOpen, setCorpNoticeOpen] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
+  // 고민 섹션 말풍선 등장 애니메이션
+  const problemsRef = useRef<HTMLDivElement | null>(null);
+  const [problemsVisible, setProblemsVisible] = useState(false);
+  useEffect(() => {
+    const el = problemsRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setProblemsVisible(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   // A/B 뷰 전환: card(신규) / table(기존)
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [tooltipLabel, setTooltipLabel] = useState<string | null>(null);
@@ -557,7 +576,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
       {/* ══════════════ Tab 1: 기업 상조 콘텐츠 (14개 섹션) ══════════════ */}
 
       {/* ── 2. 통계 섹션 ── */}
-      <section className="border-b border-gray-200 overflow-hidden bg-gray-50">
+      <section className="overflow-hidden bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-2 md:gap-y-0">
             {/* 1. 가입건수 */}
@@ -630,59 +649,90 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
       {/* ── 3. 기업 복지 담당자의 고민 ── */}
       <section
         id="sec-corp-intro"
-        className="py-16 sm:py-24 overflow-hidden bg-white"
+        className="py-16 sm:py-24 overflow-hidden"
+        style={{
+          background: 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
+        }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
-            <p className="text-sm sm:text-base font-semibold text-gray-400 mb-3 tracking-wide">
+            <p className="text-sm sm:text-base font-semibold text-gray-700 mb-3 tracking-wide">
               기업 복지 담당자의 고민
             </p>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 leading-tight">
               이런 어려움, 겪고 계시지 않나요?
             </h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+          <div
+            ref={problemsRef}
+            className="max-w-3xl mx-auto flex flex-col gap-7 sm:gap-10"
+          >
             {[
               {
-                title: '급작스러운 상황 대응',
-                desc: '야간·주말에도 즉시 의전팀을\n파견해야 하는 긴급성 부담',
-                image:
-                  'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80',
+                lead: '야간·주말에도 즉시 의전팀을',
+                emphasis: '파견해야 하는 긴급성 부담',
+                image: '/images/problems_profile01.png',
+                align: 'left' as const,
               },
               {
-                title: '상조 서비스 품질 관리',
-                desc: '도착 시간·장례지도사 응대 등\n서비스 퀄리티 유지·관리',
-                image:
-                  'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600&q=80',
+                lead: '도착 시간·장례지도사 응대 등',
+                emphasis: '서비스 퀄리티 유지·관리',
+                image: '/images/problems_profile02.png',
+                align: 'right' as const,
               },
               {
-                title: '비용의 합리성',
-                desc: '고비용·끼워팔기 선불제 상조로\n임직원에게 경제적 손실 우려',
-                image:
-                  'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80',
+                lead: '고비용·끼워팔기 선불제 상조로',
+                emphasis: '임직원에게 경제적 손실 우려',
+                image: '/images/problems_profile03.png',
+                align: 'left' as const,
               },
-            ].map((card) => (
+            ].map((card, i) => (
               <div
-                key={card.title}
-                className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col"
+                key={i}
+                className={`flex items-center gap-4 transition-all duration-700 ease-out ${
+                  card.align === 'right'
+                    ? 'flex-row-reverse self-end'
+                    : 'self-start'
+                } ${
+                  problemsVisible
+                    ? 'opacity-100 translate-y-0'
+                    : 'opacity-0 translate-y-4'
+                }`}
+                style={{
+                  transitionDelay: problemsVisible ? `${i * 350}ms` : '0ms',
+                }}
               >
-                <div className="h-48 sm:aspect-4/3 sm:h-auto overflow-hidden">
+                <div className="w-24 h-24 sm:w-28 sm:h-28 aspect-square rounded-full overflow-hidden bg-white shrink-0">
                   <img
                     src={card.image}
-                    alt={card.title}
-                    className="w-full h-full object-cover"
+                    alt=""
+                    width={112}
+                    height={112}
+                    className="block w-full h-full object-cover object-center"
                   />
                 </div>
-                <div className="px-4 py-4 flex-1">
-                  <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">
-                    {card.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                    {card.desc}
-                  </p>
+                <div
+                  className={`relative bg-[#3a3a3a] text-white rounded-3xl px-7 py-4 sm:px-9 sm:py-5 text-center leading-relaxed shadow-lg ${
+                    card.align === 'right'
+                      ? 'before:absolute before:right-[-10px] before:top-1/2 before:-translate-y-1/2 before:border-y-[10px] before:border-y-transparent before:border-l-[12px] before:border-l-[#3a3a3a]'
+                      : 'before:absolute before:left-[-10px] before:top-1/2 before:-translate-y-1/2 before:border-y-[10px] before:border-y-transparent before:border-r-[12px] before:border-r-[#3a3a3a]'
+                  }`}
+                >
+                  <div className="text-sm sm:text-base text-gray-200">
+                    {card.lead}
+                  </div>
+                  <div className="text-base sm:text-xl font-bold mt-1">
+                    {card.emphasis}
+                  </div>
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* 섹션 연결 세로선 */}
+          <div className="flex justify-center mt-12 sm:mt-16">
+            <div className="w-px h-16 sm:h-24 bg-gray-300" />
           </div>
         </div>
       </section>
@@ -723,7 +773,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
 
           {/* 상품 탭 */}
           <div
-            className="flex items-center sm:justify-center gap-2 mb-10 overflow-x-auto sm:flex-wrap"
+            className="flex items-center justify-center gap-2 mb-10 overflow-x-auto sm:flex-wrap"
             style={{ scrollbarWidth: 'none' } as React.CSSProperties}
           >
             {corpFuneralProducts.map((p, idx) => (
@@ -912,7 +962,8 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                       className="text-[11px] sm:text-xs font-semibold whitespace-nowrap"
                       style={{ color: '#374151' }}
                     >
-                      장례식장 기본 이용료
+                      장례식장
+                      <br /> 기본 이용료
                     </span>
                   </div>
 
@@ -945,7 +996,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                   .getElementById('sec-corp-inquiry')
                   ?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-10 py-4 text-base sm:text-lg font-bold text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 w-auto px-8 sm:px-10 py-4 text-base sm:text-lg font-bold text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
               style={{ backgroundColor: BRAND_COLOR }}
             >
               {corpFuneralProducts[corpChartProductIdx].name}로 장례 준비하기
@@ -977,7 +1028,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
           </div>
 
           {/* 3개 핵심 포인트 */}
-          <div className="flex flex-col sm:flex-row items-stretch justify-center gap-4 sm:gap-2 mb-12">
+          <div className="flex flex-col sm:flex-row items-center sm:items-stretch justify-center gap-4 sm:gap-2 mb-12">
             {[
               {
                 num: '30',
@@ -1003,16 +1054,16 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
             ].map((item, idx, arr) => (
               <Fragment key={item.title}>
                 <div
-                  className="flex-1 rounded-2xl py-10 px-6 text-center flex flex-col items-center justify-center text-white"
+                  className="w-56 aspect-square sm:w-auto sm:aspect-auto sm:flex-1 rounded-2xl py-6 px-5 sm:py-10 sm:px-6 text-center flex flex-col items-center justify-center text-white"
                   style={{ backgroundColor: item.color }}
                 >
-                  <span className="text-5xl sm:text-6xl font-extrabold mb-6">
+                  <span className="text-3xl sm:text-6xl font-extrabold mb-3 sm:mb-6">
                     {item.num}
                   </span>
-                  <p className="text-lg sm:text-xl font-bold mb-3">
+                  <p className="text-base sm:text-xl font-bold mb-2 sm:mb-3">
                     {item.title}
                   </p>
-                  <p className="text-sm opacity-90 leading-relaxed">
+                  <p className="text-xs sm:text-sm opacity-90 leading-relaxed">
                     {item.line1}
                     <br />
                     {item.line2}
@@ -1204,7 +1255,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
       {/* ── 5. 기업상조 상품안내 (카드 리스트) ── */}
       <section
         id="sec-corp-products"
-        className="py-16 sm:py-24 overflow-hidden bg-white"
+        className="py-16 sm:py-24 overflow-hidden bg-gray-50"
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
@@ -1453,7 +1504,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
       </section>
 
       {/* ── 10. 장례 발생 시 진행 절차 ── */}
-      <section className="py-16 sm:py-24 overflow-hidden bg-gray-50">
+      <section className="py-16 sm:py-24 overflow-hidden bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12 sm:mb-16">
             <p className="text-sm sm:text-base font-semibold text-gray-400 mb-3 tracking-[0.25em]">
@@ -1528,7 +1579,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
       {/* ── 365일 24시간 긴급출동서비스 ── */}
       <section
         id="sec-emergency"
-        className="py-12 sm:py-16 overflow-hidden bg-white"
+        className="py-12 sm:py-16 overflow-hidden bg-gray-50"
       >
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
@@ -1580,7 +1631,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
         </div>
       </section>
       {/* ── 12. 주요 고객사 (로고 캐러셀) ── */}
-      <section className="py-16 sm:py-20 overflow-hidden bg-gray-50">
+      <section className="py-16 sm:py-20 overflow-hidden bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
@@ -1670,7 +1721,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
       {reviews.length > 0 && (
         <section
           id="sec-corp-reviews"
-          className="py-16 sm:py-24 bg-white overflow-hidden"
+          className="py-16 sm:py-24 bg-gray-50 overflow-hidden"
         >
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="text-center mb-12">
@@ -1687,7 +1738,7 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
       )}
 
       {/* ── FAQ ── */}
-      <section className="py-16 sm:py-24 bg-gray-50">
+      <section className="py-16 sm:py-24 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <p

@@ -14,9 +14,10 @@ import {
   ScrollText,
   Calculator,
   Phone,
-  MapPin,
   X,
 } from 'lucide-react';
+import Image from 'next/image';
+import { HeadstoneIcon } from '@/components/icons';
 import {
   Select,
   SelectContent,
@@ -422,6 +423,25 @@ export function GeneralFuneral({
 
   // A/B 뷰 전환: card(신규) / table(기존)
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+
+  // 4.5 섹션 말풍선 등장 애니메이션 (A 버전)
+  const featuresRef = useRef<HTMLDivElement | null>(null);
+  const [featuresVisible, setFeaturesVisible] = useState(false);
+  useEffect(() => {
+    const el = featuresRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setFeaturesVisible(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [viewMode]);
   const [tooltipLabel, setTooltipLabel] = useState<string | null>(null);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -663,10 +683,18 @@ export function GeneralFuneral({
                       onClick={() => setCostModalOpen(true)}
                       className="group/calc flex items-center gap-2.5 pl-4 pr-3 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 bg-white hover:bg-gray-50 sm:flex-[1.25]"
                     >
-                      <Calculator
-                        className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-blue-800 transition-transform duration-300 group-hover/calc:-rotate-6 group-hover/calc:scale-110"
-                        strokeWidth={1.9}
-                      />
+                      <span
+                        className="inline-flex shrink-0"
+                        style={{
+                          animation: 'gentleSway 2.6s ease-in-out infinite',
+                          transformOrigin: '50% 60%',
+                        }}
+                      >
+                        <Calculator
+                          className="w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-blue-800 transition-transform duration-300 group-hover/calc:-rotate-6 group-hover/calc:scale-110"
+                          strokeWidth={1.9}
+                        />
+                      </span>
                       <p className="min-w-0 text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
                         <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
                           30초만에
@@ -689,10 +717,14 @@ export function GeneralFuneral({
                       href="/burial-plus"
                       className="group/burial flex items-center gap-2.5 sm:gap-3 pl-4 sm:pl-5 pr-3 sm:pr-4 py-3.5 sm:py-4 min-w-0 cursor-pointer transition-colors duration-300 bg-white hover:bg-gray-50 border-l border-gray-200/80 sm:border-l-0 sm:flex-1"
                     >
-                      <MapPin
-                        className="shrink-0 w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-amber-900 transition-transform duration-300 group-hover/burial:-translate-y-0.5 group-hover/burial:scale-110"
-                        strokeWidth={1.9}
-                      />
+                      <span
+                        className="inline-flex shrink-0"
+                        style={{
+                          animation: 'gentleBob 2.4s ease-in-out infinite',
+                        }}
+                      >
+                        <HeadstoneIcon className="w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] text-amber-900 transition-transform duration-300 group-hover/burial:-translate-y-0.5 group-hover/burial:scale-110" />
+                      </span>
                       <p className="flex-1 text-left leading-tight tracking-[-0.01em] whitespace-nowrap">
                         <span className="block text-[10.5px] sm:text-[11px] font-semibold tracking-[0.06em] text-gray-500 mb-0.5">
                           장지 검색
@@ -716,7 +748,7 @@ export function GeneralFuneral({
 
       {/* ── 1-2. 통계 섹션 ── */}
       <section
-        className="border-b border-gray-200 overflow-hidden"
+        className="overflow-hidden"
         style={{
           background: 'linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%)',
         }}
@@ -790,9 +822,15 @@ export function GeneralFuneral({
       </section>
 
       {/* ── 4.5 후불제 상조 소개 섹션 ── */}
-      <section id="sec-about" className="overflow-hidden">
+      <section
+        id="sec-about"
+        className="overflow-hidden"
+        style={{
+          background: 'linear-gradient(180deg, #ffffff 0%, #eef6fb 100%)',
+        }}
+      >
         {/* 상단: 후불제 상조 소개 */}
-        <div className="relative py-20 sm:py-28 bg-white">
+        <div className="relative py-20 sm:py-28">
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
             {/* 타이틀 */}
             <div className="text-center mb-14">
@@ -806,342 +844,431 @@ export function GeneralFuneral({
               </h2>
             </div>
 
-            {/* 4개 카드 - 아이콘 스타일 */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {[
-                {
-                  title: '빈소 운영 지원',
-                  desc: '장례식장 설의부터 빈소 세팅, 조문객 안내까지\n전 과정을 책임집니다.',
-                  icon: '⛪',
-                },
-                {
-                  title: '전문 장례지도사',
-                  desc: '전문 장례지도사가 입관·발인·화장까지\n세심하게 도움합니다.',
-                  icon: '👤',
-                },
-                {
-                  title: '사전가입 혜택',
-                  desc: '사전 가입 시 20만원 즉시 할인\n및 소개 혜택으로 합리적인 서비스를 제공합니다.',
-                  icon: '📋',
-                },
-                {
-                  title: '사후 행정 지원',
-                  desc: '유품정리·안심상속·법률상담까지\n사후 모든 행정 절차를 안내합니다.',
-                  icon: '✨',
-                },
-              ].map((card) => (
-                <div
-                  key={card.title}
-                  className="bg-white rounded-2xl border border-gray-200 px-4 py-6 flex flex-col"
-                >
-                  <div className="text-4xl mb-3">{card.icon}</div>
-                  <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-3">
-                    {card.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                    {card.desc}
-                  </p>
-                </div>
-              ))}
-            </div>
+            {viewMode === 'card' ? (
+              /* A 버전 - 말풍선 UI */
+              <div
+                ref={featuresRef}
+                className="max-w-3xl mx-auto flex flex-col gap-7 sm:gap-10"
+              >
+                {[
+                  {
+                    title: '빈소 운영 지원',
+                    desc: '장례식장 설의부터 빈소 세팅, 조문객 안내까지\n전 과정을 책임집니다.',
+                    img: '/images/feature_profile01.avif',
+                  },
+                  {
+                    title: '전문 장례지도사',
+                    desc: '전문 장례지도사가 입관·발인·화장까지\n세심하게 도움합니다.',
+                    img: '/images/feature_profile02.avif',
+                  },
+                  {
+                    title: '사전가입 혜택',
+                    desc: '사전 가입 시 20만원 즉시 할인\n및 소개 혜택으로 합리적인 서비스를 제공합니다.',
+                    img: '/images/feature_profile03.avif',
+                  },
+                  {
+                    title: '사후 행정 지원',
+                    desc: '유품정리·안심상속·법률상담까지\n사후 모든 행정 절차를 안내합니다.',
+                    img: '/images/feature_profile04.avif',
+                  },
+                ].map((card, i) => {
+                  const alignRight = i % 2 === 1;
+                  return (
+                    <div
+                      key={card.title}
+                      className={`flex items-center gap-4 transition-all duration-700 ease-out ${
+                        alignRight ? 'flex-row-reverse self-end' : 'self-start'
+                      } ${
+                        featuresVisible
+                          ? 'opacity-100 translate-y-0'
+                          : 'opacity-0 translate-y-4'
+                      }`}
+                      style={{
+                        transitionDelay: featuresVisible
+                          ? `${i * 300}ms`
+                          : '0ms',
+                      }}
+                    >
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 aspect-square rounded-full overflow-hidden bg-white shrink-0">
+                        <img
+                          src={card.img}
+                          alt=""
+                          width={112}
+                          height={112}
+                          className="block w-full h-full object-cover object-center"
+                        />
+                      </div>
+                      <div
+                        className={`relative bg-[#3a3a3a] text-white rounded-3xl px-7 py-4 sm:px-9 sm:py-5 leading-relaxed shadow-lg ${
+                          alignRight
+                            ? 'before:absolute before:right-[-10px] before:top-1/2 before:-translate-y-1/2 before:border-y-[10px] before:border-y-transparent before:border-l-[12px] before:border-l-[#3a3a3a]'
+                            : 'before:absolute before:left-[-10px] before:top-1/2 before:-translate-y-1/2 before:border-y-[10px] before:border-y-transparent before:border-r-[12px] before:border-r-[#3a3a3a]'
+                        }`}
+                      >
+                        <div className="text-base sm:text-lg font-bold mb-1">
+                          {card.title}
+                        </div>
+                        <div className="text-xs sm:text-sm text-gray-200 whitespace-pre-line">
+                          {card.desc}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* B 버전 - 4개 카드 그리드 */
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[
+                  {
+                    title: '빈소 운영 지원',
+                    desc: '장례식장 설의부터 빈소 세팅, 조문객 안내까지\n전 과정을 책임집니다.',
+                    img: 'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/general_funeral/feature01.avif',
+                  },
+                  {
+                    title: '전문 장례지도사',
+                    desc: '전문 장례지도사가 입관·발인·화장까지\n세심하게 도움합니다.',
+                    img: 'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/general_funeral/feature02.avif',
+                  },
+                  {
+                    title: '사전가입 혜택',
+                    desc: '사전 가입 시 20만원 즉시 할인\n및 소개 혜택으로 합리적인 서비스를 제공합니다.',
+                    img: 'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/general_funeral/feature03.avif',
+                  },
+                  {
+                    title: '사후 행정 지원',
+                    desc: '유품정리·안심상속·법률상담까지\n사후 모든 행정 절차를 안내합니다.',
+                    img: 'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/general_funeral/feature04.avif',
+                  },
+                ].map((card) => (
+                  <div
+                    key={card.title}
+                    className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col"
+                  >
+                    <div className="relative w-full aspect-[4/3]">
+                      <Image
+                        src={card.img}
+                        alt={card.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="px-4 py-3 flex flex-col">
+                      <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-3">
+                        {card.title}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                        {card.desc}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 섹션 연결 세로선 */}
+          <div className="flex justify-center mt-12 sm:mt-16">
+            <div className="w-px h-16 sm:h-24 bg-gray-300" />
           </div>
         </div>
+      </section>
 
-        {/* 하단: 차트 + CTA */}
-        <div
-          className="py-20 sm:py-28"
-          style={{
-            background: 'linear-gradient(180deg, #eef6fb 0%, #f7f7f7 100%)',
-          }}
-        >
-          <div className="max-w-4xl mx-auto px-4 sm:px-6">
-            <div className="text-center mb-14">
-              <p className="text-sm sm:text-base font-semibold text-gray-400 mb-3 tracking-wide">
-                장례비용도 매년 오른다고?
-              </p>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 leading-tight">
-                0원으로
-                <br />
-                미래 장례 비용을 절약하세요!
-              </h2>
-              <p className="mt-3 text-base sm:text-lg text-gray-500">
-                사전 가입비, 월회비, 연회비 전혀 없습니다!
-              </p>
-            </div>
+      {/* ── 4.6 장례비용 절약 차트 + CTA ── */}
+      <section
+        id="sec-cost-chart"
+        className="overflow-hidden py-20 sm:py-28"
+        style={{
+          background: 'linear-gradient(180deg, #eef6fb 0%, #f7f7f7 100%)',
+        }}
+      >
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-14">
+            <p className="text-sm sm:text-base font-semibold text-gray-400 mb-3 tracking-wide">
+              장례비용도 매년 오른다고?
+            </p>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 leading-tight">
+              0원으로
+              <br />
+              미래 장례 비용을 절약하세요!
+            </h2>
+            <p className="mt-3 text-base sm:text-lg text-gray-500">
+              사전 가입비, 월회비, 연회비 전혀 없습니다!
+            </p>
+          </div>
 
-            {/* 상품 탭 */}
-            <div
-              className="flex items-center sm:justify-center gap-2 mb-10 overflow-x-auto sm:flex-wrap"
-              style={{ scrollbarWidth: 'none' } as React.CSSProperties}
-            >
-              {funeralProducts.map((p, idx) => (
-                <button
-                  key={p.id}
-                  onClick={() => setChartProductIdx(idx)}
-                  className={`shrink-0 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors cursor-pointer border ${chartProductIdx === idx ? 'bg-gray-800 text-white border-gray-800' : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'}`}
-                >
-                  {p.name}
-                  {p.subtitle ? ` (${p.subtitle})` : ''}
-                </button>
-              ))}
-            </div>
-
-            {/* 차트: 예담라이프 vs 선불제상조 vs 장례식장 비교 (2단 스택 바) */}
-            {(() => {
-              // 장례식장 비용(공통) + 상조 비용(차이) 분리
-              const priceMap = [
-                {
-                  facilityFee: 100,
-                  yedamFee: 30,
-                  prepaidFee: 100,
-                  funeralHomeFee: 250,
-                },
-                {
-                  facilityFee: 150,
-                  yedamFee: 80,
-                  prepaidFee: 180,
-                  funeralHomeFee: 350,
-                },
-                {
-                  facilityFee: 200,
-                  yedamFee: 140,
-                  prepaidFee: 280,
-                  funeralHomeFee: 500,
-                },
-                {
-                  facilityFee: 250,
-                  yedamFee: 210,
-                  prepaidFee: 380,
-                  funeralHomeFee: 650,
-                },
-              ];
-              const p = priceMap[chartProductIdx];
-              const totalYedam = p.facilityFee + p.yedamFee;
-              const totalPrepaid = p.facilityFee + p.prepaidFee;
-              const totalFuneral = p.facilityFee + p.funeralHomeFee;
-              const maxTotal = totalFuneral;
-              const maxBarH = 220;
-              const h = (val: number) => Math.round((val / maxTotal) * maxBarH);
-              const savingPercent = Math.round(
-                ((totalFuneral - totalYedam) / totalFuneral) * 100,
-              );
-
-              const bars = [
-                {
-                  label: '예담라이프',
-                  total: totalYedam,
-                  serviceFee: p.yedamFee,
-                  darkColor: '#4a7fb5',
-                  lightColor: '#e5e7eb',
-                  isHighlight: true,
-                },
-                {
-                  label: '선불제상조',
-                  total: totalPrepaid,
-                  serviceFee: p.prepaidFee,
-                  darkColor: '#9ca3af',
-                  lightColor: '#e5e7eb',
-                  isHighlight: false,
-                },
-                {
-                  label: '장례식장',
-                  total: totalFuneral,
-                  serviceFee: p.funeralHomeFee,
-                  darkColor: '#6b7280',
-                  lightColor: '#e5e7eb',
-                  isHighlight: false,
-                },
-              ];
-
-              const maxServiceFee = Math.max(...bars.map((b) => b.serviceFee));
-
-              return (
-                <div className="max-w-xl mx-auto mb-14">
-                  <div
-                    className="grid justify-center transition-all duration-500"
-                    style={{
-                      gridTemplateColumns:
-                        'repeat(3, minmax(70px, 110px)) auto',
-                      gap: '0 clamp(8px, 3vw, 40px)',
-                    }}
-                  >
-                    {/* Row 1: 상조 비용 (진한색) + 총합 라벨을 막대 바로 위에 */}
-                    {bars.map((bar) => (
-                      <div
-                        key={`s-${bar.label}`}
-                        className="self-end flex flex-col items-center"
-                      >
-                        {/* 총합 라벨 */}
-                        <div className="mb-2">
-                          {bar.isHighlight ? (
-                            <div
-                              className="relative"
-                              style={{
-                                animation: 'heartbeat 2s ease-in-out infinite',
-                              }}
-                            >
-                              <div
-                                className="px-3 py-1.5 rounded-lg text-sm font-bold text-white whitespace-nowrap text-center"
-                                style={{ backgroundColor: bar.darkColor }}
-                              >
-                                <span className="text-[10px] font-semibold text-white/80">
-                                  최대 {savingPercent}% 절약
-                                </span>
-                                <br />
-                                {bar.total}만원
-                              </div>
-                              <div
-                                className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45"
-                                style={{ backgroundColor: bar.darkColor }}
-                              />
-                            </div>
-                          ) : (
-                            <span className="text-sm font-bold text-gray-400 whitespace-nowrap">
-                              {bar.total}만원
-                            </span>
-                          )}
-                        </div>
-                        {/* 상조 비용 바 */}
-                        <div
-                          className="w-full rounded-t-xl flex items-center justify-center transition-all duration-500"
-                          style={{
-                            height: `${h(bar.serviceFee)}px`,
-                            backgroundColor: bar.darkColor,
-                          }}
-                        >
-                          {h(bar.serviceFee) > 24 && (
-                            <span className="text-xs sm:text-sm font-bold text-white/90">
-                              {bar.serviceFee}만
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                    {/* 우측: 상조 비용 라벨 + 점선 브래킷 */}
-                    <div className="self-end flex items-center gap-1.5 -ml-4">
-                      <svg
-                        width={32}
-                        height={h(bars[2].serviceFee)}
-                        viewBox={`0 0 32 ${h(bars[2].serviceFee)}`}
-                        style={{
-                          display: 'block',
-                          minWidth: 32,
-                          flexShrink: 0,
-                        }}
-                        aria-hidden="true"
-                      >
-                        <path
-                          d={`M 2 4 C 16 4, 16 ${h(bars[2].serviceFee) / 2}, 16 ${h(bars[2].serviceFee) / 2} C 16 ${h(bars[2].serviceFee) / 2}, 16 ${h(bars[2].serviceFee) - 4}, 2 ${h(bars[2].serviceFee) - 4}`}
-                          stroke="#374151"
-                          strokeWidth="2.5"
-                          strokeDasharray="6 4"
-                          strokeLinecap="round"
-                          fill="none"
-                        />
-                      </svg>
-                      <span
-                        className="text-[11px] sm:text-xs font-semibold whitespace-nowrap"
-                        style={{ color: '#374151' }}
-                      >
-                        &apos;상조&apos;
-                        <br />
-                        평균 비용
-                      </span>
-                    </div>
-
-                    {/* Row 4: 장례식장 비용 (연한색, 높이 동일) */}
-                    {bars.map((bar) => (
-                      <div key={`f-${bar.label}`}>
-                        <div
-                          className="w-full flex items-center justify-center transition-all duration-500"
-                          style={{
-                            height: `${h(p.facilityFee)}px`,
-                            backgroundColor: bar.lightColor,
-                          }}
-                        >
-                          {h(p.facilityFee) > 24 && (
-                            <span
-                              className="text-[10px] sm:text-xs font-bold"
-                              style={{ color: '#9ca3af' }}
-                            >
-                              {p.facilityFee}만
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                    {/* 우측: 장례식장 비용 라벨 + 점선 브래킷 */}
-                    <div className="self-center flex items-center gap-1.5 -ml-4">
-                      <svg
-                        width={32}
-                        height={h(p.facilityFee)}
-                        viewBox={`0 0 32 ${h(p.facilityFee)}`}
-                        style={{
-                          display: 'block',
-                          minWidth: 32,
-                          flexShrink: 0,
-                        }}
-                        aria-hidden="true"
-                      >
-                        <path
-                          d={`M 2 4 C 16 4, 16 ${h(p.facilityFee) / 2}, 16 ${h(p.facilityFee) / 2} C 16 ${h(p.facilityFee) / 2}, 16 ${h(p.facilityFee) - 4}, 2 ${h(p.facilityFee) - 4}`}
-                          stroke="#374151"
-                          strokeWidth="2.5"
-                          strokeDasharray="6 4"
-                          strokeLinecap="round"
-                          fill="none"
-                        />
-                      </svg>
-                      <span
-                        className="text-[11px] sm:text-xs font-semibold whitespace-nowrap"
-                        style={{ color: '#374151' }}
-                      >
-                        장례식장 기본 이용료
-                      </span>
-                    </div>
-
-                    {/* Row 4: 하단 라벨 */}
-                    {bars.map((bar) => (
-                      <div key={`l-${bar.label}`} className="text-center pt-2">
-                        <span
-                          className="text-xs sm:text-sm font-bold"
-                          style={{
-                            color: bar.isHighlight ? '#111827' : '#9ca3af',
-                          }}
-                        >
-                          {bar.label}
-                        </span>
-                      </div>
-                    ))}
-                    <div />
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* CTA 버튼 */}
-            <div className="text-center">
+          {/* 상품 탭 */}
+          <div
+            className="flex items-center justify-center flex-wrap gap-2 mb-10"
+            style={{ scrollbarWidth: 'none' } as React.CSSProperties}
+          >
+            {funeralProducts.map((p, idx) => (
               <button
-                onClick={() => {
-                  const product = funeralProducts[chartProductIdx];
-                  setProductInquiryTab(product.id);
-                  setTimeout(() => {
-                    document
-                      .getElementById('inquiry')
-                      ?.scrollIntoView({ behavior: 'smooth' });
-                  }, 50);
-                }}
-                className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-10 py-4 text-base sm:text-lg font-bold text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
-                style={{ backgroundColor: BRAND_COLOR }}
+                key={p.id}
+                onClick={() => setChartProductIdx(idx)}
+                className={`shrink-0 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors cursor-pointer border ${chartProductIdx === idx ? 'bg-gray-800 text-white border-gray-800' : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'}`}
               >
-                {funeralProducts[chartProductIdx].name}
-                {funeralProducts[chartProductIdx].subtitle
-                  ? `(${funeralProducts[chartProductIdx].subtitle})`
-                  : ''}
-                로 장례 준비하기
-                <ArrowRight className="w-5 h-5" />
+                {p.name}
+                {p.subtitle ? ` (${p.subtitle})` : ''}
               </button>
-            </div>
+            ))}
+          </div>
+
+          {/* 차트: 예담라이프 vs 선불제상조 vs 장례식장 비교 (2단 스택 바) */}
+          {(() => {
+            // 장례식장 비용(공통) + 상조 비용(차이) 분리
+            const priceMap = [
+              {
+                facilityFee: 100,
+                yedamFee: 30,
+                prepaidFee: 100,
+                funeralHomeFee: 250,
+              },
+              {
+                facilityFee: 150,
+                yedamFee: 80,
+                prepaidFee: 180,
+                funeralHomeFee: 350,
+              },
+              {
+                facilityFee: 200,
+                yedamFee: 140,
+                prepaidFee: 280,
+                funeralHomeFee: 500,
+              },
+              {
+                facilityFee: 250,
+                yedamFee: 210,
+                prepaidFee: 380,
+                funeralHomeFee: 650,
+              },
+            ];
+            const p = priceMap[chartProductIdx];
+            const totalYedam = p.facilityFee + p.yedamFee;
+            const totalPrepaid = p.facilityFee + p.prepaidFee;
+            const totalFuneral = p.facilityFee + p.funeralHomeFee;
+            const maxTotal = totalFuneral;
+            const maxBarH = 220;
+            const h = (val: number) => Math.round((val / maxTotal) * maxBarH);
+            const savingPercent = Math.round(
+              ((totalFuneral - totalYedam) / totalFuneral) * 100,
+            );
+
+            const bars = [
+              {
+                label: '예담라이프',
+                total: totalYedam,
+                serviceFee: p.yedamFee,
+                darkColor: '#4a7fb5',
+                lightColor: '#e5e7eb',
+                isHighlight: true,
+              },
+              {
+                label: '선불제상조',
+                total: totalPrepaid,
+                serviceFee: p.prepaidFee,
+                darkColor: '#9ca3af',
+                lightColor: '#e5e7eb',
+                isHighlight: false,
+              },
+              {
+                label: '장례식장',
+                total: totalFuneral,
+                serviceFee: p.funeralHomeFee,
+                darkColor: '#6b7280',
+                lightColor: '#e5e7eb',
+                isHighlight: false,
+              },
+            ];
+
+            const maxServiceFee = Math.max(...bars.map((b) => b.serviceFee));
+
+            return (
+              <div className="max-w-xl mx-auto mb-14 px-3 sm:px-0">
+                <div
+                  className="grid justify-center transition-all duration-500"
+                  style={{
+                    gridTemplateColumns: 'repeat(3, minmax(56px, 110px)) auto',
+                    gap: '0 clamp(14px, 5vw, 40px)',
+                  }}
+                >
+                  {/* Row 1: 상조 비용 (진한색) + 총합 라벨을 막대 바로 위에 */}
+                  {bars.map((bar) => (
+                    <div
+                      key={`s-${bar.label}`}
+                      className="self-end flex flex-col items-center"
+                    >
+                      {/* 총합 라벨 */}
+                      <div className="mb-2">
+                        {bar.isHighlight ? (
+                          <div
+                            className="relative"
+                            style={{
+                              animation: 'heartbeat 2s ease-in-out infinite',
+                            }}
+                          >
+                            <div
+                              className="px-3 py-1.5 rounded-lg text-sm font-bold text-white whitespace-nowrap text-center"
+                              style={{ backgroundColor: bar.darkColor }}
+                            >
+                              <span className="text-[10px] font-semibold text-white/80">
+                                최대 {savingPercent}% 절약
+                              </span>
+                              <br />
+                              {bar.total}만원
+                            </div>
+                            <div
+                              className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45"
+                              style={{ backgroundColor: bar.darkColor }}
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-sm font-bold text-gray-400 whitespace-nowrap">
+                            {bar.total}만원
+                          </span>
+                        )}
+                      </div>
+                      {/* 상조 비용 바 */}
+                      <div
+                        className="w-full rounded-t-xl flex items-center justify-center transition-all duration-500"
+                        style={{
+                          height: `${h(bar.serviceFee)}px`,
+                          backgroundColor: bar.darkColor,
+                        }}
+                      >
+                        {h(bar.serviceFee) > 24 && (
+                          <span className="text-xs sm:text-sm font-bold text-white/90">
+                            {bar.serviceFee}만
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {/* 우측: 상조 비용 라벨 + 점선 브래킷 */}
+                  <div className="self-end flex items-center gap-1.5 -ml-4">
+                    <svg
+                      width={32}
+                      height={h(bars[2].serviceFee)}
+                      viewBox={`0 0 32 ${h(bars[2].serviceFee)}`}
+                      style={{
+                        display: 'block',
+                        minWidth: 32,
+                        flexShrink: 0,
+                      }}
+                      aria-hidden="true"
+                    >
+                      <path
+                        d={`M 2 4 C 16 4, 16 ${h(bars[2].serviceFee) / 2}, 16 ${h(bars[2].serviceFee) / 2} C 16 ${h(bars[2].serviceFee) / 2}, 16 ${h(bars[2].serviceFee) - 4}, 2 ${h(bars[2].serviceFee) - 4}`}
+                        stroke="#374151"
+                        strokeWidth="2.5"
+                        strokeDasharray="6 4"
+                        strokeLinecap="round"
+                        fill="none"
+                      />
+                    </svg>
+                    <span
+                      className="text-[11px] sm:text-xs font-semibold whitespace-nowrap"
+                      style={{ color: '#374151' }}
+                    >
+                      &apos;상조&apos;
+                      <br />
+                      평균 비용
+                    </span>
+                  </div>
+
+                  {/* Row 4: 장례식장 비용 (연한색, 높이 동일) */}
+                  {bars.map((bar) => (
+                    <div key={`f-${bar.label}`}>
+                      <div
+                        className="w-full flex items-center justify-center transition-all duration-500"
+                        style={{
+                          height: `${h(p.facilityFee)}px`,
+                          backgroundColor: bar.lightColor,
+                        }}
+                      >
+                        {h(p.facilityFee) > 24 && (
+                          <span
+                            className="text-[10px] sm:text-xs font-bold"
+                            style={{ color: '#9ca3af' }}
+                          >
+                            {p.facilityFee}만
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {/* 우측: 장례식장 비용 라벨 + 점선 브래킷 */}
+                  <div className="self-center flex items-center gap-1.5 -ml-4">
+                    <svg
+                      width={32}
+                      height={h(p.facilityFee)}
+                      viewBox={`0 0 32 ${h(p.facilityFee)}`}
+                      style={{
+                        display: 'block',
+                        minWidth: 32,
+                        flexShrink: 0,
+                      }}
+                      aria-hidden="true"
+                    >
+                      <path
+                        d={`M 2 4 C 16 4, 16 ${h(p.facilityFee) / 2}, 16 ${h(p.facilityFee) / 2} C 16 ${h(p.facilityFee) / 2}, 16 ${h(p.facilityFee) - 4}, 2 ${h(p.facilityFee) - 4}`}
+                        stroke="#374151"
+                        strokeWidth="2.5"
+                        strokeDasharray="6 4"
+                        strokeLinecap="round"
+                        fill="none"
+                      />
+                    </svg>
+                    <span
+                      className="text-[11px] sm:text-xs font-semibold whitespace-nowrap"
+                      style={{ color: '#374151' }}
+                    >
+                      장례식장 <br />
+                      기본 이용료
+                    </span>
+                  </div>
+
+                  {/* Row 4: 하단 라벨 */}
+                  {bars.map((bar) => (
+                    <div key={`l-${bar.label}`} className="text-center pt-2">
+                      <span
+                        className="text-xs sm:text-sm font-bold"
+                        style={{
+                          color: bar.isHighlight ? '#111827' : '#9ca3af',
+                        }}
+                      >
+                        {bar.label}
+                      </span>
+                    </div>
+                  ))}
+                  <div />
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* CTA 버튼 */}
+          <div className="text-center">
+            <button
+              onClick={() => {
+                const product = funeralProducts[chartProductIdx];
+                setProductInquiryTab(product.id);
+                setTimeout(() => {
+                  document
+                    .getElementById('inquiry')
+                    ?.scrollIntoView({ behavior: 'smooth' });
+                }, 50);
+              }}
+              className="inline-flex items-center justify-center gap-2 w-auto px-8 sm:px-10 py-4 text-base sm:text-lg font-bold text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
+              style={{ backgroundColor: BRAND_COLOR }}
+            >
+              {funeralProducts[chartProductIdx].name}
+              {funeralProducts[chartProductIdx].subtitle
+                ? `(${funeralProducts[chartProductIdx].subtitle})`
+                : ''}
+              로 장례 준비하기
+              <ArrowRight className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </section>
@@ -2121,7 +2248,11 @@ export function GeneralFuneral({
                       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden h-full flex flex-col">
                         <div className="h-44 overflow-hidden">
                           <img
-                            src={`https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/before-service-${String(originalIdx + 1).padStart(2, '0')}.png`}
+                            src={
+                              originalIdx === 0
+                                ? 'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/general_funeral/feature03.avif'
+                                : `https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/before-service-${String(originalIdx + 1).padStart(2, '0')}.png`
+                            }
                             alt={item.title}
                             className="w-full h-full object-cover"
                           />
@@ -2221,7 +2352,11 @@ export function GeneralFuneral({
               >
                 <div className="h-44 overflow-hidden">
                   <img
-                    src={`https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/before-service-${String(idx + 1).padStart(2, '0')}.png`}
+                    src={
+                      idx === 0
+                        ? 'https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/general_funeral/feature03.avif'
+                        : `https://aipfebcrgjythjywzgqp.supabase.co/storage/v1/object/public/yedamlife/before-service-${String(idx + 1).padStart(2, '0')}.png`
+                    }
                     alt={item.title}
                     className="w-full h-full object-cover"
                   />

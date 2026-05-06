@@ -147,7 +147,7 @@ function AboutPageContent() {
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <span>Home</span>
                 <span>›</span>
-                <span>회사소개</span>
+                <span>회사 소개</span>
                 <span>›</span>
                 <span className="text-gray-700">인사말</span>
               </div>
@@ -174,13 +174,13 @@ function AboutPageContent() {
                   그 마음, 저희가 압니다.
                 </p>
                 <p className="mt-4 md:text-justify">
-                  가입 절차도, 선불 납입도, 복잡한 서류도 필요 없습니다.
-                  전화 한 통이면 전문 장례지도사가 365일 24시간 달려가고,
-                  비용은 장례 후 이용하신 만큼만 정산합니다.
+                  가입 절차도, 선불 납입도, 복잡한 서류도 필요 없습니다. 전화 한
+                  통이면 전문 장례지도사가 365일 24시간 달려가고, 비용은 장례 후
+                  이용하신 만큼만 정산합니다.
                 </p>
                 <p className="mt-4 md:text-justify">
-                  남은 가족의 짐은 저희가 덜겠습니다. 고인과의 마지막
-                  시간에만 온전히 집중하세요.
+                  남은 가족의 짐은 저희가 덜겠습니다. 고인과의 마지막 시간에만
+                  온전히 집중하세요.
                 </p>
               </div>
 
@@ -192,8 +192,7 @@ function AboutPageContent() {
                   아무것도 준비되어 있지 않아도 괜찮습니다.{'  '}
                   예담라이프는 사전 가입이 필요 없는 후불제 상조입니다.
                   {'  '}장례가 필요한 바로 그 시점에 연락 주시면,
-                  {'  '}365일 24시간, 전국 어디든 전문장례지도사가
-                  출동합니다.
+                  {'  '}365일 24시간, 전국 어디든 전문장례지도사가 출동합니다.
                 </p>
               </div>
 
@@ -203,8 +202,7 @@ function AboutPageContent() {
                 </p>
                 <p>
                   장례 후 정산합니다.
-                  {'  '}
-                  월 납입금 0원. 가입비 0원.
+                  {'  '}월 납입금 0원. 가입비 0원.
                   {'  '}
                   수년간 매달 돈을 넣어두실 필요 없습니다.
                   {'  '}
@@ -271,8 +269,7 @@ function AboutPageContent() {
                   {'  '}
                   고인의 마지막 가시는 길에 예를 담고,
                   {'  '}
-                  남은 가족에게는 위로를 전하는 것
-                  {'  '}
+                  남은 가족에게는 위로를 전하는 것{'  '}
                   그것이 예담라이프의 시작이자, 존재의 이유입니다.
                 </p>
               </div>
@@ -292,7 +289,7 @@ function AboutPageContent() {
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <span>Home</span>
                 <span>›</span>
-                <span>회사소개</span>
+                <span>회사 소개</span>
                 <span>›</span>
                 <span className="text-gray-700">ISO 9001</span>
               </div>
@@ -378,7 +375,7 @@ function AboutPageContent() {
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <span>Home</span>
                 <span>›</span>
-                <span>회사소개</span>
+                <span>회사 소개</span>
                 <span>›</span>
                 <span className="text-gray-700">사회적기업</span>
               </div>
@@ -442,7 +439,7 @@ function AboutPageContent() {
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <span>Home</span>
                 <span>›</span>
-                <span>회사소개</span>
+                <span>회사 소개</span>
                 <span>›</span>
                 <span className="text-gray-700">상표등록증</span>
               </div>
@@ -509,7 +506,7 @@ function AboutPageContent() {
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <span>Home</span>
                 <span>›</span>
-                <span>회사소개</span>
+                <span>회사 소개</span>
                 <span>›</span>
                 <span className="text-gray-700">전국본부현황</span>
               </div>
@@ -556,7 +553,7 @@ function AboutPageContent() {
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <span>Home</span>
                 <span>›</span>
-                <span>회사소개</span>
+                <span>회사 소개</span>
                 <span>›</span>
                 <span className="text-gray-700">오시는길</span>
               </div>

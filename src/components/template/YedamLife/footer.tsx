@@ -58,7 +58,7 @@ export function YedamFooter() {
             onClick={() => setShowProposalModal(true)}
             className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-full cursor-pointer hover:bg-gray-200 transition-colors mb-4 bg-white text-gray-700 border border-gray-300"
           >
-            예담라이프 회사소개서 / 기업상조 제안서
+            예담라이프 회사 소개서 / 기업상조 제안서
             <Download className="w-4 h-4" />
           </button>
 

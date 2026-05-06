@@ -142,7 +142,7 @@ export const topNavItems: {
   }[];
 }[] = [
   {
-    label: '회사소개',
+    label: '회사 소개',
     href: '/about',
     subItems: [
       { label: '인사말', href: '/about#greeting' },
@@ -180,17 +180,27 @@ export const topNavItems: {
     subItems: [
       { label: '장례정보', href: '/funeral-guide/info' },
       { label: '장례절차', href: '/funeral-guide/procedure' },
-      { label: '손 없는 날', href: '#modal-son-eopneun-nal', modal: 'son-eopneun-nal' },
+      {
+        label: '손 없는 날',
+        href: '#modal-son-eopneun-nal',
+        modal: 'son-eopneun-nal',
+      },
       { label: '49재 계산', href: '#modal-49je', modal: '49je' },
     ],
   },
   {
-    label: '고객센터',
+    label: '예담 소식',
     href: '',
-    subItems: [{ label: '공지사항', href: '/notices' }],
+    subItems: [
+      { label: '공지사항', href: '/notices' },
+      {
+        label: '네이버 블로그',
+        href: 'https://blog.naver.com/yedamlife2023',
+        external: true,
+      },
+    ],
   },
 ];
-
 
 // ── Google Form URL ──
 export const GOOGLE_FORM_URL = 'https://forms.gle/yp4FxcD7yUNERkzp7';

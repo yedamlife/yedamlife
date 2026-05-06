@@ -8,13 +8,13 @@ import {
   X,
   Plus,
   Phone,
-  MapPin,
   ChevronDown,
   FileText,
   PenLine,
   ScrollText,
   Bell,
 } from 'lucide-react';
+import { HeadstoneIcon } from '@/components/icons';
 import {
   BRAND_COLOR,
   BRAND_COLOR_LIGHT,
@@ -241,6 +241,14 @@ export function YedamLife({
         @keyframes slideInLeft {
           from { opacity: 0; transform: translateX(-40px); }
           to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes gentleSway {
+          0%, 100% { transform: rotate(-4deg); }
+          50% { transform: rotate(4deg); }
+        }
+        @keyframes gentleBob {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-2px); }
         }
       `}</style>
 
@@ -649,9 +657,7 @@ export function YedamLife({
                   className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
                   style={{ backgroundColor: '#b8964e' }}
                 />
-                <MapPin
-                  className="w-5 h-5 text-gray-700 animate-bounce transition-transform duration-300 group-hover:-translate-y-0.5"
-                />
+                <HeadstoneIcon className="w-5 h-5 text-gray-700 animate-bounce transition-transform duration-300 group-hover:-translate-y-0.5" />
                 <span className="text-[10px] font-bold text-gray-700 mt-1">
                   장지+
                 </span>

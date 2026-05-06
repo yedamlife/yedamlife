@@ -3,13 +3,7 @@ import { CONTACT_PHONE, CONTACT_TEL_HREF } from '@/constants/contact';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Menu, X, Phone, ChevronDown, Plus, Bell } from 'lucide-react';
-import {
-  BRAND_COLOR,
-  BRAND_COLOR_LIGHT,
-  GOOGLE_FORM_URL,
-  categoryTabs,
-  topNavItems,
-} from './constants';
+import { BRAND_COLOR, categoryTabs, topNavItems } from './constants';
 
 interface YedamHeaderProps {
   /** 카테고리 탭 숨김 (about 페이지 등) */
@@ -28,7 +22,6 @@ export function YedamHeader({
   onCategoryChange,
   fromUrl,
 }: YedamHeaderProps) {
-  const googleFormUrl = GOOGLE_FORM_URL;
   const homeUrl = fromUrl || '/';
   const buildHref = useMemo(() => {
     if (!fromUrl) return (href: string) => href;
@@ -55,7 +48,7 @@ export function YedamHeader({
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openMenuIdx, setOpenMenuIdx] = useState<number | null>(null);
-  const [isServiceOpen, setIsServiceOpen] = useState(false);
+  const [isServiceOpen, setIsServiceOpen] = useState(true);
   const [currentBannerIdx, setCurrentBannerIdx] = useState(0);
   const [notices, setNotices] = useState<{ id: number; title: string }[]>([]);
   const headerRef = useRef<HTMLElement>(null);
@@ -120,42 +113,44 @@ export function YedamHeader({
   return (
     <div className="sticky top-0 z-50">
       {/* ── 1단: 상단 로테이션 배너 ── */}
-      {allBanners.length > 0 && <div
-        className="relative text-center py-2.5 text-sm font-medium overflow-hidden"
-        style={{
-          backgroundColor: allBanners[currentBannerIdx]?.bgColor ?? '#f3f4f6',
-          transition: 'background-color 0.5s ease',
-        }}
-      >
-        {allBanners.map((banner, idx) => {
-          const Icon = banner.icon;
-          const isNotice = banner.noticeId !== null;
-          return (
-            <span
-              key={`banner-${idx}`}
-              className={`inline-flex items-center gap-1.5 transition-all duration-500 ease-in-out ${isNotice ? 'cursor-pointer' : ''}`}
-              style={{
-                color: banner.textColor,
-                opacity: currentBannerIdx === idx ? 1 : 0,
-                transform:
-                  currentBannerIdx === idx
-                    ? 'translateY(0)'
-                    : 'translateY(8px)',
-                position: currentBannerIdx === idx ? 'relative' : 'absolute',
-                pointerEvents: currentBannerIdx === idx ? 'auto' : 'none',
-              }}
-              onClick={() => {
-                if (isNotice) {
-                  window.location.href = `/notices/${banner.noticeId}`;
-                }
-              }}
-            >
-              <Icon className="w-4 h-4" />
-              {banner.text}
-            </span>
-          );
-        })}
-      </div>}
+      {allBanners.length > 0 && (
+        <div
+          className="relative text-center py-2.5 text-sm font-medium overflow-hidden"
+          style={{
+            backgroundColor: allBanners[currentBannerIdx]?.bgColor ?? '#f3f4f6',
+            transition: 'background-color 0.5s ease',
+          }}
+        >
+          {allBanners.map((banner, idx) => {
+            const Icon = banner.icon;
+            const isNotice = banner.noticeId !== null;
+            return (
+              <span
+                key={`banner-${idx}`}
+                className={`inline-flex items-center gap-1.5 transition-all duration-500 ease-in-out ${isNotice ? 'cursor-pointer' : ''}`}
+                style={{
+                  color: banner.textColor,
+                  opacity: currentBannerIdx === idx ? 1 : 0,
+                  transform:
+                    currentBannerIdx === idx
+                      ? 'translateY(0)'
+                      : 'translateY(8px)',
+                  position: currentBannerIdx === idx ? 'relative' : 'absolute',
+                  pointerEvents: currentBannerIdx === idx ? 'auto' : 'none',
+                }}
+                onClick={() => {
+                  if (isNotice) {
+                    window.location.href = `/notices/${banner.noticeId}`;
+                  }
+                }}
+              >
+                <Icon className="w-4 h-4" />
+                {banner.text}
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       {/* ── 2단: 헤더 (메인헤더 + 카테고리탭) ── */}
       <header ref={headerRef} className="bg-white border-b border-gray-200">
@@ -217,9 +212,12 @@ export function YedamHeader({
                                 if (sub.modal) {
                                   e.preventDefault();
                                   window.dispatchEvent(
-                                    new CustomEvent('open-funeral-guide-modal', {
-                                      detail: sub.modal,
-                                    }),
+                                    new CustomEvent(
+                                      'open-funeral-guide-modal',
+                                      {
+                                        detail: sub.modal,
+                                      },
+                                    ),
                                   );
                                   return;
                                 }
@@ -266,12 +264,12 @@ export function YedamHeader({
             <div className="flex md:hidden items-center gap-1.5 shrink-0">
               <a
                 href={CONTACT_TEL_HREF}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 whitespace-nowrap"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 whitespace-nowrap"
               >
-                <Phone className="w-3 h-3 text-gray-500 shrink-0" />
+                <Phone className="w-4 h-4 text-gray-500 shrink-0" />
                 <div className="flex flex-col leading-tight">
-                  <span className="text-[9px] text-gray-400">빠른상담</span>
-                  <span className="text-[11px] font-bold text-gray-900">
+                  <span className="text-[10px] text-gray-400">빠른상담</span>
+                  <span className="text-sm font-bold text-gray-900">
                     {CONTACT_PHONE}
                   </span>
                 </div>
@@ -507,15 +505,11 @@ export function YedamHeader({
                             setIsMobileMenuOpen(false);
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                           }}
-                          className={`py-2.5 px-4 text-sm text-left rounded-lg transition-colors cursor-pointer ${activeCategoryIdx === idx ? 'font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
-                          style={
+                          className={`py-2.5 px-4 text-sm text-left rounded-lg transition-colors cursor-pointer ${
                             activeCategoryIdx === idx
-                              ? {
-                                  color: BRAND_COLOR,
-                                  backgroundColor: BRAND_COLOR_LIGHT,
-                                }
-                              : undefined
-                          }
+                              ? 'font-semibold text-gray-900 bg-gray-100'
+                              : 'text-gray-600 hover:bg-gray-50'
+                          }`}
                         >
                           {tab.label}
                         </button>
@@ -525,16 +519,6 @@ export function YedamHeader({
                 </div>
               </div>
             )}
-            <a
-              href={googleFormUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 flex items-center justify-center gap-2 py-3 text-white rounded-lg font-semibold cursor-pointer"
-              style={{ backgroundColor: BRAND_COLOR }}
-            >
-              <Phone className="w-4 h-4" />
-              무료 상담 신청
-            </a>
           </nav>
         </div>
       </header>
