@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
 import {
   X,
   ChevronLeft,
@@ -52,6 +53,7 @@ interface FacilityFee {
   요금: number;
   요금_표시: string;
   판매여부: string;
+  요금단위?: '시간당' | '24시간' | '48시간';
   [key: string]: unknown;
 }
 
@@ -62,14 +64,15 @@ function getAreaSqm(fee: FacilityFee): number | null {
 }
 
 // 사용료 단위 판별
-//  - 시간당 (예: '시간당', '1시간', '/h') → 24시간 x 2일 = 48 적용
-//  - 일/24시간 단위 (예: '1일', '24시간 기준', '1실/24시간 기준') → 2일 적용
-//  - 1회/회 명시 → 1회성 비용으로 그대로 사용
-//  - 단위 미기재 → 24시간 기준으로 판단, 2일 적용
+// 1) DB의 명시 필드 fee.요금단위가 있으면 우선 사용
+// 2) 없으면 임대내용/품명/서비스내용 키워드로 추정
 function getFeeMultiplier(fee: FacilityFee): {
   multiplier: number;
   unitLabel: string;
 } {
+  if (fee.요금단위 === '시간당') return { multiplier: 48, unitLabel: '24시간 x 2일' };
+  if (fee.요금단위 === '24시간') return { multiplier: 2, unitLabel: '2일' };
+  if (fee.요금단위 === '48시간') return { multiplier: 1, unitLabel: '' };
   const raw = `${fee.임대내용 ?? ''} ${fee.품명 ?? ''} ${
     typeof fee['서비스내용'] === 'string' ? (fee['서비스내용'] as string) : ''
   }`;
@@ -564,16 +567,21 @@ interface FuneralCostModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectProduct?: (productId: string) => void;
+  // 결과 URL 진입 시 기존 견적 UUID — 상담 요청 시 저장된 name/phone 회수에 사용
+  initialEstimateUuid?: string;
 }
 
 export function FuneralCostModal({
   isOpen,
   onClose,
   onSelectProduct,
+  initialEstimateUuid,
 }: FuneralCostModalProps): React.ReactNode {
   const router = useRouter();
   const searchParams = useSearchParams();
   const restoredRef = useRef(false);
+  // initialEstimateUuid 가 있으면 결과 URL 진입으로 간주, 첫 렌더부터 step 1 대신 스켈레톤 노출
+  const [enteredViaResultUrl, setEnteredViaResultUrl] = useState(!!initialEstimateUuid);
 
   // Steps
   const [step, setStep] = useState(1);
@@ -871,6 +879,13 @@ export function FuneralCostModal({
   const [phone, setPhone] = useState('');
   const [ageGroup, setAgeGroup] = useState('');
 
+  // 5단계 [알림톡으로 전송 받기] 시 fc_estimate_requests 에 저장된 견적 uuid.
+  // 6단계 상담받기 시 estimateUuid 로 전달해 fc_consultation_requests 와 매칭.
+  // 결과 URL 진입 시 props 의 initialEstimateUuid 로 미리 채워짐.
+  const [estimateUuid, setEstimateUuid] = useState<string | null>(initialEstimateUuid ?? null);
+  const [estimateSubmitting, setEstimateSubmitting] = useState(false);
+  const [consultSubmitting, setConsultSubmitting] = useState(false);
+
   // ── URL 쿼리 파라미터에서 상태 복원 ──
   useEffect(() => {
     if (restoredRef.current) return;
@@ -893,6 +908,9 @@ export function FuneralCostModal({
     if (pSize) setSelectedSize(pSize);
     if (pChecked) setCheckedFeeIndexes(pChecked.split(',').map(Number));
     setShowFeeTooltip(false);
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/funeral-cost/result/')) {
+      setEnteredViaResultUrl(true);
+    }
 
     // 장례식장 데이터 로드 후 결과 화면으로 이동
     if (pGungu && pHall) {
@@ -1009,6 +1027,12 @@ export function FuneralCostModal({
       onClose();
       return;
     }
+    // 결과 URL로 직접 진입한 경우 결과 화면에서 이전 단계로 못 가게 함
+    const resultStep = funeralType === '3day' ? 6 : 5;
+    if (enteredViaResultUrl && step === resultStep) {
+      onClose();
+      return;
+    }
     // 무빈소: contact step(4)에서 뒤로가면 step 3
     if (funeralType === 'nobinso' && step === contactStep) {
       setStep(3);
@@ -1037,6 +1061,7 @@ export function FuneralCostModal({
     setName('');
     setPhone('');
     setAgeGroup('');
+    setEstimateUuid(null);
     setShowFeeTooltip(true);
     // URL 파라미터 정리
     const params = new URLSearchParams(window.location.search);
@@ -1427,6 +1452,173 @@ export function FuneralCostModal({
     );
   }, []);
 
+  // ── 견적 요청 input_json 빌더 (Step 5 시점) ──
+  const buildInputJson = useCallback(() => {
+    return {
+      funeralType,
+      currentSituation,
+      sido,
+      gungu,
+      facilityCd: selectedHall?.facility_cd ?? null,
+      selectedSize,
+      guestCount,
+      checkedFeeIndexes,
+      checkedEncoffinIndexes,
+      checkedMortuaryIndexes,
+      unselectedSangjoKeys: Array.from(unselectedSangjoKeys),
+      sangjoQuantities,
+      flowerDecor,
+      ritual,
+    };
+  }, [
+    funeralType,
+    currentSituation,
+    sido,
+    gungu,
+    selectedHall,
+    selectedSize,
+    guestCount,
+    checkedFeeIndexes,
+    checkedEncoffinIndexes,
+    checkedMortuaryIndexes,
+    unselectedSangjoKeys,
+    sangjoQuantities,
+    flowerDecor,
+    ritual,
+  ]);
+
+  // ── 결과 result_json 빌더 (Step 6 시점) ──
+  const buildResultJson = useCallback(() => {
+    const res = calcResult();
+    if (!res || !selectedHall || !funeralType) return null;
+    const recommended = getRecommendedProduct(res.total);
+    const sizeLabel = selectedSize
+      ? (SIZE_CATEGORIES.find((c) => c.key === selectedSize)?.label ?? null)
+      : null;
+
+    return {
+      funeralType,
+      isMetro: res.isMetro,
+      hall: {
+        facilityCd: selectedHall.facility_cd,
+        companyName: selectedHall.company_name,
+        fullAddress: selectedHall.full_address,
+      },
+      selections: {
+        selectedSize,
+        selectedSizeLabel: sizeLabel,
+        guestCount: res.guestCount,
+      },
+      computed: {
+        total: res.total,
+        basicTotal: res.basicTotal,
+        sangjoTotal: res.sangjoTotal,
+      },
+      recommendation: {
+        id: recommended.id,
+        name: recommended.name,
+        price: recommended.price,
+        savings: Math.max(0, res.total - recommended.price),
+      },
+      uiSnapshot: {
+        ...buildInputJson(),
+      },
+    };
+  }, [
+    calcResult,
+    selectedHall,
+    funeralType,
+    selectedSize,
+    getRecommendedProduct,
+    buildInputJson,
+  ]);
+
+  // ── 5단계 [알림톡으로 전송 받기] ──
+  // 기존 동작(setStep(resultStep))은 유지하면서 사이드 이펙트로 견적 저장 + 알림톡 발송.
+  const submitEstimate = useCallback(async () => {
+    if (estimateSubmitting) return;
+    if (!funeralType || !selectedHall) return;
+    setEstimateSubmitting(true);
+    try {
+      const res = await fetch('/api/v1/funeral-cost/estimate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          phone,
+          ageGroup: ageGroup || undefined,
+          funeralType,
+          currentSituation,
+          sido,
+          gungu,
+          facilityCd: selectedHall.facility_cd,
+          selectedSize: selectedSize ?? undefined,
+          guestCount,
+          inputJson: buildInputJson(),
+        }),
+      });
+      const json = await res.json();
+      if (res.ok && json?.success && json?.data?.uuid) {
+        setEstimateUuid(json.data.uuid);
+      }
+    } catch (e) {
+      console.error('[submitEstimate] failed', e);
+    } finally {
+      setEstimateSubmitting(false);
+    }
+  }, [
+    estimateSubmitting,
+    funeralType,
+    selectedHall,
+    name,
+    phone,
+    ageGroup,
+    currentSituation,
+    sido,
+    gungu,
+    selectedSize,
+    guestCount,
+    buildInputJson,
+  ]);
+
+  // ── 6단계 [예담 ○○으로 상담받기] ──
+  // 기존 동작(handleClose + onSelectProduct + 스크롤)은 유지하고 사이드 이펙트로 상담 저장.
+  const submitConsultation = useCallback(
+    async (productId: string, productName: string) => {
+      if (consultSubmitting) return;
+      const resultJson = buildResultJson();
+      if (!resultJson) return;
+      setConsultSubmitting(true);
+      try {
+        const res = await fetch('/api/v1/funeral-cost/consultation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            estimateUuid: estimateUuid ?? undefined,
+            selectedProductId: productId,
+            selectedProductName: productName,
+            resultJson,
+            // estimateUuid 가 없는 경우(모달 직진입) name/phone 함께 전송
+            name: estimateUuid ? undefined : name || undefined,
+            phone: estimateUuid ? undefined : phone || undefined,
+          }),
+        });
+        const json = await res.json();
+        if (res.ok && json?.success) {
+          toast.success('상담이 접수되었습니다');
+        } else {
+          toast.error(json?.message ?? '접수에 실패했습니다');
+        }
+      } catch (e) {
+        console.error('[submitConsultation] failed', e);
+        toast.error('접수에 실패했습니다');
+      } finally {
+        setConsultSubmitting(false);
+      }
+    },
+    [consultSubmitting, buildResultJson, estimateUuid, name, phone],
+  );
+
   if (!isOpen) return null;
 
   // 검색 필터
@@ -1446,16 +1638,20 @@ export function FuneralCostModal({
       <div className="relative w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:rounded-2xl bg-white overflow-hidden flex flex-col">
         {/* 헤더 */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100 shrink-0">
-          <button
-            onClick={goBack}
-            className="p-1 text-gray-500 hover:text-gray-900 cursor-pointer"
-          >
-            {step === 1 ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <ChevronLeft className="w-5 h-5" />
-            )}
-          </button>
+          {step === resultStep ? (
+            <span className="w-7 h-7" />
+          ) : (
+            <button
+              onClick={goBack}
+              className="p-1 text-gray-500 hover:text-gray-900 cursor-pointer"
+            >
+              {step === 1 ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <ChevronLeft className="w-5 h-5" />
+              )}
+            </button>
+          )}
           <h2 className="text-base font-bold text-gray-900">
             장례비용 알아보기
           </h2>
@@ -1468,21 +1664,33 @@ export function FuneralCostModal({
           <div className="w-7 sm:hidden" />
         </div>
 
-        {/* 스텝 인디케이터 */}
-        <div className="flex items-center gap-1 px-4 sm:px-6 py-3 shrink-0">
-          {Array.from({ length: totalSteps }, (_, i) => (
-            <div
-              key={i}
-              className="h-1 flex-1 rounded-full transition-colors"
-              style={{ backgroundColor: i < step ? BRAND_COLOR : '#e5e7eb' }}
-            />
-          ))}
-        </div>
+        {/* 스텝 인디케이터 — 결과 URL 복원 중엔 숨김 */}
+        {!(enteredViaResultUrl && step !== resultStep) && (
+          <div className="flex items-center gap-1 px-4 sm:px-6 py-3 shrink-0">
+            {Array.from({ length: totalSteps }, (_, i) => (
+              <div
+                key={i}
+                className="h-1 flex-1 rounded-full transition-colors"
+                style={{ backgroundColor: i < step ? BRAND_COLOR : '#e5e7eb' }}
+              />
+            ))}
+          </div>
+        )}
 
         {/* 컨텐츠 */}
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-6">
+          {/* 결과 URL 진입 시 복원 완료 전까지 스켈레톤 */}
+          {enteredViaResultUrl && step !== resultStep && (
+            <div className="animate-pulse pt-6 space-y-4">
+              <div className="h-6 w-1/3 bg-gray-200 rounded" />
+              <div className="h-24 bg-gray-100 rounded-2xl" />
+              <div className="h-40 bg-gray-100 rounded-2xl" />
+              <div className="h-40 bg-gray-100 rounded-2xl" />
+              <div className="h-32 bg-gray-100 rounded-2xl" />
+            </div>
+          )}
           {/* ── Step 1: 장례형태 선택 ── */}
-          {step === 1 && (
+          {!(enteredViaResultUrl && step !== resultStep) && step === 1 && (
             <div>
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
                 장례 형태를 선택해주세요
@@ -3024,7 +3232,9 @@ export function FuneralCostModal({
                                     <span
                                       className={`shrink-0 ml-3 ${isChecked ? 'font-bold text-gray-900' : 'text-gray-500'}`}
                                     >
-                                      {fee.요금_표시}원
+                                      {fee.요금단위 === '시간당'
+                                        ? `${(fee.요금 * 48).toLocaleString()}원`
+                                        : `${fee.요금_표시}원`}
                                     </span>
                                   </button>
                                 );
@@ -3517,8 +3727,21 @@ export function FuneralCostModal({
         {/* 하단 고정 버튼 — Contact step */}
         {step === contactStep && selectedHall && (
           <button
-            onClick={() => setStep(resultStep)}
-            disabled={!name.trim() || phone.replace(/\D/g, '').length < 9}
+            onClick={() => {
+              // 토스트 즉시 노출 (NCP 자동 SMS 폴백이 실패를 흡수)
+              toast.success(
+                '알림톡으로 전송되었습니다 (실패 시 SMS 전송됩니다)',
+              );
+              // 견적 저장 + 알림톡 발송 (백그라운드)
+              void submitEstimate();
+              // 모달 닫기
+              handleClose();
+            }}
+            disabled={
+              !name.trim() ||
+              phone.replace(/\D/g, '').length < 9 ||
+              estimateSubmitting
+            }
             className="shrink-0 w-full py-4 rounded-t-none sm:rounded-b-2xl text-white font-bold text-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ backgroundColor: BRAND_COLOR }}
           >
@@ -3567,6 +3790,9 @@ export function FuneralCostModal({
                     onClick={(e) => {
                       e.preventDefault();
                       const productId = recommended.id;
+                      // 추가: 상담 신청 저장 + 알림톡 발송 (사이드 이펙트, await 안 함)
+                      void submitConsultation(productId, recommended.name);
+                      // 기존 동작 유지
                       handleClose();
                       onSelectProduct?.(productId);
                       setTimeout(() => {
