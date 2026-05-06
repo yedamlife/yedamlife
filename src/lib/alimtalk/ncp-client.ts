@@ -5,6 +5,22 @@ import crypto from 'crypto';
 
 const NCP_HOST = 'https://sens.apigw.ntruss.com';
 
+/** NCP SENS 알림톡 버튼. type 코드:
+ * - WL: 웹링크
+ * - AL: 앱링크
+ * - DS: 배송조회
+ * - BK: 봇키워드
+ * - MD: 메시지전달
+ */
+export interface AlimtalkButton {
+  type: 'WL' | 'AL' | 'DS' | 'BK' | 'MD';
+  name: string;
+  linkMobile?: string;
+  linkPc?: string;
+  schemeIos?: string;
+  schemeAndroid?: string;
+}
+
 export interface SendArgs {
   serviceId: string;
   accessKey: string;
@@ -13,16 +29,26 @@ export interface SendArgs {
   templateCode: string;
   recipients: string[];
   content: string;
+  /** 템플릿에 등록된 버튼들 (변수 치환된 최종 형태). 없으면 미전송. */
+  buttons?: AlimtalkButton[];
   /** 알림톡 발송 실패 시 NCP 가 자동 폴백할 SMS/LMS 본문. 없으면 폴백 안 함. */
   smsContent?: string | null;
   /** SMS 발신번호 (NCP 콘솔에 사전 등록된 번호) */
   smsFrom?: string | null;
 }
 
+export interface SendLogEntry {
+  id: number;
+  role: 'customer' | 'admin';
+  phone: string;
+}
+
 export interface SendResult {
   ok: boolean;
   status?: number;
   error?: string;
+  /** alimtalk_logs 에 기록된 항목들 (수신자 수만큼). 발송 시도가 기록된 경우에만 채워짐. */
+  logEntries?: SendLogEntry[];
 }
 
 export async function sendNcpAlimtalk(args: SendArgs): Promise<SendResult> {
@@ -34,6 +60,7 @@ export async function sendNcpAlimtalk(args: SendArgs): Promise<SendResult> {
     templateCode,
     recipients,
     content,
+    buttons,
     smsContent,
     smsFrom,
   } = args;
@@ -62,6 +89,7 @@ export async function sendNcpAlimtalk(args: SendArgs): Promise<SendResult> {
       to,
       content,
       countryCode: '82',
+      ...(buttons && buttons.length > 0 && { buttons }),
       ...(useFailover && {
         useSmsFailover: true,
         failoverConfig: {

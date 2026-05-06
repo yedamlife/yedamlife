@@ -193,7 +193,7 @@ export function DetailPage({ title, apiPath, id, fields, backHref }: DetailPageP
         </CardContent>
       </Card>
 
-      {data.created_at && (
+      {data.created_at != null && (
         <p className="text-sm text-gray-400">
           접수일: {new Date(data.created_at as string).toLocaleDateString('ko-KR')}
         </p>

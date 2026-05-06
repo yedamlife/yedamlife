@@ -96,13 +96,13 @@ export async function GET(request: Request) {
     );
   }
 
-  const rows = data ?? [];
+  const rows = (data ?? []) as unknown as Record<string, unknown>[];
   const hasMore = rows.length > limit;
   const page = hasMore ? rows.slice(0, limit) : rows;
   const last = page[page.length - 1];
   const nextCursor =
     hasMore && last
-      ? encodeCursor({ sort: (last as Record<string, unknown>)[sortCol] as number, id: last.id })
+      ? encodeCursor({ sort: last[sortCol] as number, id: last.id as number })
       : null;
 
   return NextResponse.json({

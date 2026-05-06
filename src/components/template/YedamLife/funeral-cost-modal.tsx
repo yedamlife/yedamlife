@@ -70,7 +70,8 @@ function getFeeMultiplier(fee: FacilityFee): {
   multiplier: number;
   unitLabel: string;
 } {
-  if (fee.요금단위 === '시간당') return { multiplier: 48, unitLabel: '24시간 x 2일' };
+  if (fee.요금단위 === '시간당')
+    return { multiplier: 48, unitLabel: '24시간 x 2일' };
   if (fee.요금단위 === '24시간') return { multiplier: 2, unitLabel: '2일' };
   if (fee.요금단위 === '48시간') return { multiplier: 1, unitLabel: '' };
   const raw = `${fee.임대내용 ?? ''} ${fee.품명 ?? ''} ${
@@ -563,25 +564,108 @@ function formatPrice(n: number): string {
 }
 
 /* ─── 모달 ─── */
+interface SnapshotUi {
+  funeralType?: FuneralType;
+  sido?: string;
+  gungu?: string;
+  facilityCd?: string;
+  selectedSize?: SizeKey;
+  guestCount?: number;
+  checkedFeeIndexes?: number[];
+  checkedEncoffinIndexes?: number[];
+  checkedMortuaryIndexes?: number[];
+  unselectedSangjoKeys?: string[];
+  sangjoQuantities?: Record<string, number>;
+  flowerDecor?: FlowerDecorKey;
+  ritual?: RitualKey;
+}
+
+interface SnapshotSangjoStats {
+  makeup?: {
+    hall_count: number;
+    avg_amount: number;
+    median_amount: number;
+  } | null;
+  shroud?: {
+    hall_count: number;
+    avg_amount: number;
+    median_amount: number;
+  } | null;
+  mourning?: {
+    male: { hall_count: number; avg_amount: number; median_amount: number };
+    female: { hall_count: number; avg_amount: number; median_amount: number };
+  } | null;
+  vehicle?: {
+    hall_count: number;
+    bus: { avg_amount: number; median_amount: number; sample_count: number };
+    limo: { avg_amount: number; median_amount: number; sample_count: number };
+  } | null;
+  director?: {
+    hall_count: number;
+    hall_count_exact: number;
+    avg_amount: number;
+    median_amount: number;
+  } | null;
+  coffin?: {
+    hall_count: number;
+    avg_amount: number;
+    median_amount: number;
+  } | null;
+  urn?: {
+    hall_count: number;
+    wood: { hall_count: number; avg_amount: number; median_amount: number };
+    ceramic: { hall_count: number; avg_amount: number; median_amount: number };
+  } | null;
+  portrait?: {
+    hall_count: number;
+    avg_amount: number;
+    median_amount: number;
+  } | null;
+  cleaning?: {
+    metro: { hall_count: number; avg_amount: number };
+    non_metro: { hall_count: number; avg_amount: number };
+  } | null;
+}
+
+interface SnapshotResult {
+  funeralType?: FuneralType;
+  hall?: { facilityCd?: string; companyName?: string; fullAddress?: string };
+  snapshot?: {
+    facilityFeeTable?: FacilityFee[];
+    mortuaryFeeTable?: FacilityFee[];
+    serviceItems?: FacilityFee[];
+    sangjoStats?: SnapshotSangjoStats;
+  };
+  uiSnapshot?: SnapshotUi;
+}
+
 interface FuneralCostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectProduct?: (productId: string) => void;
   // 결과 URL 진입 시 기존 견적 UUID — 상담 요청 시 저장된 name/phone 회수에 사용
   initialEstimateUuid?: string;
+  // 어드민에서 결과 화면을 그대로 열람할 때 사용 — 모든 인터랙션/CTA 비활성화
+  viewOnly?: boolean;
+  // 어드민 스냅샷 모드 — 저장된 result_json 으로 결과 화면을 그대로 재현
+  snapshotResult?: SnapshotResult;
+  // 이미 상담 신청이 완료된 결과 URL — 상담받기 CTA 만 비활성화 (다른 인터랙션은 가능)
+  consultLocked?: boolean;
 }
 
 export function FuneralCostModal({
   isOpen,
   onClose,
-  onSelectProduct,
   initialEstimateUuid,
+  viewOnly = false,
+  snapshotResult,
+  consultLocked = false,
 }: FuneralCostModalProps): React.ReactNode {
   const router = useRouter();
   const searchParams = useSearchParams();
   const restoredRef = useRef(false);
   // initialEstimateUuid 가 있으면 결과 URL 진입으로 간주, 첫 렌더부터 step 1 대신 스켈레톤 노출
-  const [enteredViaResultUrl, setEnteredViaResultUrl] = useState(!!initialEstimateUuid);
+  const [enteredViaResultUrl, setEnteredViaResultUrl] =
+    useState(!!initialEstimateUuid);
 
   // Steps
   const [step, setStep] = useState(1);
@@ -707,12 +791,15 @@ export function FuneralCostModal({
   >({ ...DEFAULT_SANGJO_QUANTITIES });
 
   // 빈소 규모가 바뀌면 수의·관·유골함 기본 선택을 규모에 맞게 리셋
+  // viewOnly·snapshotResult 모드에서는 저장된 unselectedSangjoKeys 를 보존해야 하므로 스킵.
   useEffect(() => {
+    if (viewOnly || snapshotResult) return;
     setUnselectedSangjoKeys(createInitialUnselectedSangjoKeys(selectedSize));
-  }, [selectedSize]);
+  }, [selectedSize, viewOnly, snapshotResult]);
 
   // 빈소 규모가 바뀌면 전문도우미 기본 인원도 규모에 맞게 리셋
   useEffect(() => {
+    if (viewOnly || snapshotResult) return;
     const helperCount =
       selectedSize === 'large' || selectedSize === 'premium'
         ? 4
@@ -720,10 +807,12 @@ export function FuneralCostModal({
           ? 5
           : 2; // 소형·중형·무빈소
     setSangjoQuantities((prev) => ({ ...prev, '0:0': helperCount }));
-  }, [selectedSize]);
+  }, [selectedSize, viewOnly, snapshotResult]);
 
   useEffect(() => {
     if (!isOpen) return;
+    // 어드민 스냅샷 모드 — 상담 시점 통계가 result_json 에 박혀 있으면 실시간 호출 금지
+    if (snapshotResult?.snapshot?.sangjoStats) return;
     if (
       makeupStats &&
       shroudStats &&
@@ -753,6 +842,7 @@ export function FuneralCostModal({
       .catch(() => {});
   }, [
     isOpen,
+    snapshotResult,
     makeupStats,
     shroudStats,
     mourningStats,
@@ -777,12 +867,13 @@ export function FuneralCostModal({
               note: `메이크업 비용을 공개하는 ${makeupStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
-          if (sub.label === '기본수의' && shroudStats) {
-            return {
-              ...sub,
-              price: shroudStats.avg_amount,
-              note: `수의 비용을 공개하는 ${shroudStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
-            };
+          // 수의 — 모든 옵션에 통계 라벨 부여 (선택 옵션 무관)
+          if (item.label === '수의' && shroudStats) {
+            const note = `수의 비용을 공개하는 ${shroudStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`;
+            if (sub.label === '기본수의') {
+              return { ...sub, price: shroudStats.avg_amount, note };
+            }
+            return { ...sub, note };
           }
           if (sub.label.includes('남자상복') && mourningStats?.male) {
             return {
@@ -826,19 +917,21 @@ export function FuneralCostModal({
               note: `입관지도사 비용을 공개하는 ${directorStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
-          if (sub.label === '오동나무 기본' && coffinStats) {
-            return {
-              ...sub,
-              price: 290000,
-              note: `오동나무 관 비용을 공개하는 ${coffinStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
-            };
+          // 관 — 모든 옵션에 통계 라벨 부여 ('오동나무' 키워드 제거)
+          if (item.label === '관' && coffinStats) {
+            const note = `관 비용을 공개하는 ${coffinStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`;
+            if (sub.label === '오동나무 기본') {
+              return { ...sub, price: 290000, note };
+            }
+            return { ...sub, note };
           }
-          if (sub.label === '도자기 유골함' && urnStats?.ceramic) {
-            return {
-              ...sub,
-              price: 350000,
-              note: `도자기 유골함 비용을 공개하는 ${urnStats.ceramic.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
-            };
+          // 유골함 — 모든 옵션에 통계 라벨 부여 ('도자기' 키워드 제거)
+          if (item.label === '유골함' && urnStats?.ceramic) {
+            const note = `유골함 비용을 공개하는 ${urnStats.ceramic.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`;
+            if (sub.label === '도자기 유골함') {
+              return { ...sub, price: 350000, note };
+            }
+            return { ...sub, note };
           }
           if (sub.label.includes('영정사진') && portraitStats) {
             return {
@@ -871,6 +964,15 @@ export function FuneralCostModal({
       else next.add(key);
       return next;
     });
+    // 재선택 시 0이면 1로 복구 (장의버스/리무진처럼 0 허용 항목 대응)
+    setSangjoQuantities((prev) => {
+      if (unselectedSangjoKeys.has(key)) {
+        // 방금 선택으로 전환됨 — 수량 0이면 1로 보정
+        const cur = prev[key] ?? 1;
+        if (cur <= 0) return { ...prev, [key]: 1 };
+      }
+      return prev;
+    });
   };
   const [guestCount, setGuestCount] = useState(120);
 
@@ -882,13 +984,113 @@ export function FuneralCostModal({
   // 5단계 [알림톡으로 전송 받기] 시 fc_estimate_requests 에 저장된 견적 uuid.
   // 6단계 상담받기 시 estimateUuid 로 전달해 fc_consultation_requests 와 매칭.
   // 결과 URL 진입 시 props 의 initialEstimateUuid 로 미리 채워짐.
-  const [estimateUuid, setEstimateUuid] = useState<string | null>(initialEstimateUuid ?? null);
+  const [estimateUuid, setEstimateUuid] = useState<string | null>(
+    initialEstimateUuid ?? null,
+  );
   const [estimateSubmitting, setEstimateSubmitting] = useState(false);
   const [consultSubmitting, setConsultSubmitting] = useState(false);
+
+  // 어드민 스냅샷 진입 시, 저장된 테이블이 없어 라이브 데이터로 폴백한 경우 true
+  const [snapshotStale, setSnapshotStale] = useState(false);
+
+  // ── 스냅샷(result_json) 으로부터 결과 화면 복원 — 어드민 view-only 전용 ──
+  useEffect(() => {
+    if (restoredRef.current) return;
+    if (!snapshotResult) return;
+    const ft =
+      snapshotResult.funeralType ?? snapshotResult.uiSnapshot?.funeralType;
+    if (!ft) return;
+
+    restoredRef.current = true;
+
+    const ui = snapshotResult.uiSnapshot ?? {};
+    const snap = snapshotResult.snapshot ?? {};
+
+    setFuneralType(ft);
+    setSido(ui.sido ?? '');
+    setGungu(ui.gungu ?? '');
+    if (ui.selectedSize) setSelectedSize(ui.selectedSize);
+    if (typeof ui.guestCount === 'number') setGuestCount(ui.guestCount);
+    if (ui.checkedFeeIndexes) setCheckedFeeIndexes(ui.checkedFeeIndexes);
+    if (ui.checkedEncoffinIndexes)
+      setCheckedEncoffinIndexes(ui.checkedEncoffinIndexes);
+    if (ui.checkedMortuaryIndexes)
+      setCheckedMortuaryIndexes(ui.checkedMortuaryIndexes);
+    if (ui.unselectedSangjoKeys)
+      setUnselectedSangjoKeys(new Set(ui.unselectedSangjoKeys));
+    if (ui.sangjoQuantities) setSangjoQuantities(ui.sangjoQuantities);
+    if (ui.flowerDecor) setFlowerDecor(ui.flowerDecor);
+    if (ui.ritual) setRitual(ui.ritual);
+    setShowFeeTooltip(false);
+    setEnteredViaResultUrl(true);
+
+    // 시설/안치실 테이블이 있는지 — 구버전 데이터에는 없을 수 있음
+    const hasSnapshotTables =
+      Array.isArray(snap.facilityFeeTable) && snap.facilityFeeTable.length > 0;
+    const targetFacilityCd =
+      ui.facilityCd ?? snapshotResult.hall?.facilityCd ?? '';
+
+    if (hasSnapshotTables) {
+      // 합성 hall — 저장된 시설/안치실/염습입관 테이블만으로 selectedHall 구성
+      const facilityFees: FacilityFee[] = [
+        ...(snap.facilityFeeTable ?? []),
+        ...(snap.mortuaryFeeTable ?? []),
+      ];
+      const syntheticHall: FuneralHall = {
+        facility_cd: snapshotResult.hall?.facilityCd ?? '',
+        company_name: snapshotResult.hall?.companyName ?? '',
+        funeral_type: '',
+        public_label: '',
+        manage_class: '',
+        mortuary_count: 0,
+        parking_count: 0,
+        full_address: snapshotResult.hall?.fullAddress ?? '',
+        facility_fees: facilityFees,
+        service_items: snap.serviceItems ?? [],
+        sido_cd: ui.sido ?? '',
+      };
+      setSelectedHall(syntheticHall);
+      setHalls([syntheticHall]);
+    } else if (ui.gungu && targetFacilityCd) {
+      // 구버전 데이터 — 라이브 halls API 폴백 (현재 시점 시설/안치실 테이블)
+      setSnapshotStale(true);
+      fetch(`/api/v1/funeral-cost/halls?gungu=${ui.gungu}`)
+        .then((r) => r.json())
+        .then((j) => {
+          if (!j.success || !Array.isArray(j.data)) return;
+          setHalls(j.data);
+          const hall = j.data.find(
+            (h: FuneralHall) => h.facility_cd === targetFacilityCd,
+          );
+          if (hall) setSelectedHall(hall);
+        })
+        .catch(() => {});
+    } else {
+      setSnapshotStale(true);
+    }
+
+    // 라벨 카운트·평균/중앙값 — 상담 시점 통계를 그대로 주입 (있을 때만)
+    const stats = snap.sangjoStats;
+    if (stats) {
+      if (stats.makeup) setMakeupStats(stats.makeup);
+      if (stats.shroud) setShroudStats(stats.shroud);
+      if (stats.mourning) setMourningStats(stats.mourning);
+      if (stats.vehicle) setVehicleStats(stats.vehicle);
+      if (stats.director) setDirectorStats(stats.director);
+      if (stats.coffin) setCoffinStats(stats.coffin);
+      if (stats.urn) setUrnStats(stats.urn);
+      if (stats.portrait) setPortraitStats(stats.portrait);
+      if (stats.cleaning) setCleaningStats(stats.cleaning);
+    }
+
+    const resultStep = ft === '3day' ? 6 : 5;
+    setStep(resultStep);
+  }, [snapshotResult]);
 
   // ── URL 쿼리 파라미터에서 상태 복원 ──
   useEffect(() => {
     if (restoredRef.current) return;
+    if (snapshotResult) return; // 스냅샷 모드 우선
     const fc = searchParams.get('fc_type');
     if (!fc) return;
 
@@ -908,7 +1110,10 @@ export function FuneralCostModal({
     if (pSize) setSelectedSize(pSize);
     if (pChecked) setCheckedFeeIndexes(pChecked.split(',').map(Number));
     setShowFeeTooltip(false);
-    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/funeral-cost/result/')) {
+    if (
+      typeof window !== 'undefined' &&
+      window.location.pathname.startsWith('/funeral-cost/result/')
+    ) {
       setEnteredViaResultUrl(true);
     }
 
@@ -1275,12 +1480,21 @@ export function FuneralCostModal({
       items.reduce((sum, item, i) => {
         if (item.items && item.items.length > 0) {
           const isRadio = RADIO_PARENT_LABELS.has(item.label);
+          // 라디오 부모(수의/관/유골함) — 항상 단일 선택: 첫 비-unselected sub만 합산
+          if (isRadio) {
+            const selJ = item.items.findIndex(
+              (_, j) => !unselectedSangjoKeys.has(`${i}:${j}`),
+            );
+            if (selJ < 0) return sum;
+            const sub = item.items[selJ];
+            const qty = sangjoQuantities[`${i}:${selJ}`] ?? 1;
+            return sum + (sub.price ?? 0) * qty;
+          }
           return (
             sum +
             item.items.reduce((s, sub, j) => {
               const key = `${i}:${j}`;
-              const canToggle = isRadio || !!sub.optional;
-              if (canToggle && unselectedSangjoKeys.has(key)) return s;
+              if (sub.optional && unselectedSangjoKeys.has(key)) return s;
               const qty = sangjoQuantities[key] ?? 1;
               return s + (sub.price ?? 0) * qty;
             }, 0)
@@ -1496,6 +1710,16 @@ export function FuneralCostModal({
       ? (SIZE_CATEGORIES.find((c) => c.key === selectedSize)?.label ?? null)
       : null;
 
+    const facilityFeeTable = selectedHall.facility_fees.filter(
+      (f) => f.판매여부 === 'Y' && f.품종 === '시설임대료',
+    );
+    const mortuaryFeeTable = selectedHall.facility_fees.filter(
+      (f) => f.판매여부 === 'Y' && f.품종 === '안치실이용료',
+    );
+    const serviceItemsSnapshot = (selectedHall.service_items ?? []).filter(
+      (f) => f.판매여부 === 'Y' && f.품종 === '염습/입관',
+    );
+
     return {
       funeralType,
       isMetro: res.isMetro,
@@ -1513,6 +1737,43 @@ export function FuneralCostModal({
         total: res.total,
         basicTotal: res.basicTotal,
         sangjoTotal: res.sangjoTotal,
+        transfer: res.transfer,
+        mortuary: res.mortuary,
+        mortuaryUnit: res.mortuaryUnit,
+        mortuaryIsAvg: res.mortuaryIsAvg,
+        encoffin: res.encoffin,
+        encoffinIsAvg: res.encoffinIsAvg,
+        facilityFee: res.facilityFee,
+        binsoIsAvg: res.binsoIsAvg,
+        binsoMedianFee: res.binsoMedianFee,
+        food: res.food,
+        flowerDecorPrice: res.flowerDecorPrice,
+        ritualPrice: res.ritualPrice,
+      },
+      // 상담신청 시점의 요금 테이블 스냅샷 — 원본 테이블이 추후 변경되어도
+      // 그 시점의 견적을 그대로 재현할 수 있도록 함께 저장한다.
+      snapshot: {
+        capturedAt: new Date().toISOString(),
+        facilityFeeTable,
+        mortuaryFeeTable,
+        serviceItems: serviceItemsSnapshot,
+        selectedFacilityItems: res.selectedFacilityItems,
+        selectedEncoffinItems: res.selectedEncoffinItems,
+        selectedMortuaryItem: res.mortuarySource ?? null,
+        extraMortuaryItems: res.extraMortuaryItems,
+        // 라벨 카운트·평균/중앙값 — 상담 시점의 실시간 통계 응답을 그대로 박아둔다.
+        // 어드민 view-only 에서 이 값을 그대로 복원하면 라벨/단가가 시점에 고정된다.
+        sangjoStats: {
+          makeup: makeupStats,
+          shroud: shroudStats,
+          mourning: mourningStats,
+          vehicle: vehicleStats,
+          director: directorStats,
+          coffin: coffinStats,
+          urn: urnStats,
+          portrait: portraitStats,
+          cleaning: cleaningStats,
+        },
       },
       recommendation: {
         id: recommended.id,
@@ -1531,6 +1792,15 @@ export function FuneralCostModal({
     selectedSize,
     getRecommendedProduct,
     buildInputJson,
+    makeupStats,
+    shroudStats,
+    mourningStats,
+    vehicleStats,
+    directorStats,
+    coffinStats,
+    urnStats,
+    portraitStats,
+    cleaningStats,
   ]);
 
   // ── 5단계 [알림톡으로 전송 받기] ──
@@ -1605,7 +1875,7 @@ export function FuneralCostModal({
         });
         const json = await res.json();
         if (res.ok && json?.success) {
-          toast.success('상담이 접수되었습니다');
+          toast.success('상담 신청이 완료되었습니다');
         } else {
           toast.error(json?.message ?? '접수에 실패했습니다');
         }
@@ -1652,8 +1922,21 @@ export function FuneralCostModal({
               )}
             </button>
           )}
-          <h2 className="text-base font-bold text-gray-900">
+          <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
             장례비용 알아보기
+            {viewOnly && (
+              <span className="inline-flex items-center rounded-full border border-gray-300 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
+                보기 전용
+              </span>
+            )}
+            {viewOnly && snapshotStale && (
+              <span
+                className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700"
+                title="상담 시점 스냅샷이 저장되지 않아 현재 시점 데이터를 표시합니다."
+              >
+                ⚠ 스냅샷 미저장 — 현재 시점 데이터
+              </span>
+            )}
           </h2>
           <button
             onClick={handleClose}
@@ -1678,7 +1961,13 @@ export function FuneralCostModal({
         )}
 
         {/* 컨텐츠 */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-6">
+        <div
+          className={`flex-1 overflow-y-auto px-4 sm:px-6 pb-6 ${
+            viewOnly
+              ? '[&_button]:pointer-events-none [&_a]:pointer-events-none [&_input]:pointer-events-none [&_label]:pointer-events-none [&_select]:pointer-events-none [&_textarea]:pointer-events-none select-text'
+              : ''
+          }`}
+        >
           {/* 결과 URL 진입 시 복원 완료 전까지 스켈레톤 */}
           {enteredViaResultUrl && step !== resultStep && (
             <div className="animate-pulse pt-6 space-y-4">
@@ -2582,13 +2871,23 @@ export function FuneralCostModal({
                             const parentKey = String(i);
                             const isRadioParentForCalc =
                               RADIO_PARENT_LABELS.has(item.label);
+                            // 라디오 부모는 첫 비-unselected sub 만 선택된 것으로 취급
+                            const radioSelectedJ =
+                              isRadioParentForCalc && item.items
+                                ? item.items.findIndex(
+                                    (_, j) =>
+                                      !unselectedSangjoKeys.has(`${i}:${j}`),
+                                  )
+                                : -1;
                             const isSubSelected = (j: number) => {
                               const sub = item.items![j];
-                              const canToggle =
-                                isRadioParentForCalc || !!sub.optional;
-                              return canToggle
-                                ? !unselectedSangjoKeys.has(`${i}:${j}`)
-                                : true;
+                              if (isRadioParentForCalc) {
+                                return j === radioSelectedJ;
+                              }
+                              if (sub.optional) {
+                                return !unselectedSangjoKeys.has(`${i}:${j}`);
+                              }
+                              return true;
                             };
                             const parentSelected = hasSubs
                               ? item.items!.some((_, j) => isSubSelected(j))
@@ -2787,9 +3086,12 @@ export function FuneralCostModal({
                                     item.label,
                                   );
                                   const canToggle = isRadio || !!sub.optional;
-                                  const subSelected = canToggle
-                                    ? !unselectedSangjoKeys.has(subKey)
-                                    : true;
+                                  // 라디오 부모는 외부에서 계산된 radioSelectedJ 가 일치할 때만 체크
+                                  const subSelected = isRadio
+                                    ? j === radioSelectedJ
+                                    : canToggle
+                                      ? !unselectedSangjoKeys.has(subKey)
+                                      : true;
                                   return (
                                     <div key={j}>
                                       <div className="mt-3 pl-4 flex items-start gap-2 text-[13px]">
@@ -2878,55 +3180,84 @@ export function FuneralCostModal({
                                                 </span>
                                               )}
                                             </span>
-                                            {supportsQty && subSelected && (
-                                              <div className="shrink-0 flex items-center gap-1.5 border border-gray-200 rounded-full px-1 py-0.5">
-                                                <button
-                                                  type="button"
-                                                  onClick={() =>
-                                                    setSangjoQuantities(
-                                                      (prev) => ({
-                                                        ...prev,
-                                                        [subKey]: Math.max(
-                                                          MIN_SANGJO_QUANTITIES[
-                                                            subKey
-                                                          ] ?? 1,
-                                                          (prev[subKey] ?? 1) -
-                                                            1,
-                                                        ),
-                                                      }),
-                                                    )
-                                                  }
-                                                  disabled={
-                                                    qty <=
-                                                    (MIN_SANGJO_QUANTITIES[
+                                            {supportsQty &&
+                                              subSelected &&
+                                              (() => {
+                                                // 장의버스/리무진은 수량 0까지 허용 — 0이 되면 자동 체크해제
+                                                const allowZero =
+                                                  sub.label.includes(
+                                                    '장의버스',
+                                                  ) ||
+                                                  sub.label.includes('리무진');
+                                                const minQty = allowZero
+                                                  ? 0
+                                                  : (MIN_SANGJO_QUANTITIES[
                                                       subKey
-                                                    ] ?? 1)
-                                                  }
-                                                  className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed text-sm leading-none"
-                                                >
-                                                  −
-                                                </button>
-                                                <span className="text-xs font-semibold text-gray-900 min-w-[1ch] text-center">
-                                                  {qty}
-                                                </span>
-                                                <button
-                                                  type="button"
-                                                  onClick={() =>
-                                                    setSangjoQuantities(
-                                                      (prev) => ({
-                                                        ...prev,
-                                                        [subKey]:
-                                                          (prev[subKey] ?? 1) +
-                                                          1,
-                                                      }),
-                                                    )
-                                                  }
-                                                  className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-900 cursor-pointer text-sm leading-none"
-                                                >
-                                                  +
-                                                </button>
-                                              </div>
-                                            )}
+                                                    ] ?? 1);
+                                                return (
+                                                  <div className="shrink-0 flex items-center gap-1.5 border border-gray-200 rounded-full px-1 py-0.5">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                        const nextQty =
+                                                          Math.max(
+                                                            minQty,
+                                                            (sangjoQuantities[
+                                                              subKey
+                                                            ] ?? 1) - 1,
+                                                          );
+                                                        setSangjoQuantities(
+                                                          (prev) => ({
+                                                            ...prev,
+                                                            [subKey]: nextQty,
+                                                          }),
+                                                        );
+                                                        // 0이 되면 체크 해제
+                                                        if (
+                                                          allowZero &&
+                                                          nextQty === 0
+                                                        ) {
+                                                          setUnselectedSangjoKeys(
+                                                            (prev) => {
+                                                              if (
+                                                                prev.has(subKey)
+                                                              )
+                                                                return prev;
+                                                              const next =
+                                                                new Set(prev);
+                                                              next.add(subKey);
+                                                              return next;
+                                                            },
+                                                          );
+                                                        }
+                                                      }}
+                                                      disabled={qty <= minQty}
+                                                      className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed text-sm leading-none"
+                                                    >
+                                                      −
+                                                    </button>
+                                                    <span className="text-xs font-semibold text-gray-900 min-w-[1ch] text-center">
+                                                      {qty}
+                                                    </span>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() =>
+                                                        setSangjoQuantities(
+                                                          (prev) => ({
+                                                            ...prev,
+                                                            [subKey]:
+                                                              (prev[subKey] ??
+                                                                1) + 1,
+                                                          }),
+                                                        )
+                                                      }
+                                                      className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-900 cursor-pointer text-sm leading-none"
+                                                    >
+                                                      +
+                                                    </button>
+                                                  </div>
+                                                );
+                                              })()}
                                           </div>
                                           {/* note — 라디오 부모는 부모 행에 표시하므로 sub에서는 숨김 */}
                                           {!isRadio &&
@@ -3707,13 +4038,17 @@ export function FuneralCostModal({
                     ※ 본 금액은 평균 데이터 기반 추정치이며, 실제 비용과 차이가
                     있을 수 있습니다.
                   </p>
+                  <p className="mt-1 text-xs text-gray-400 text-center">
+                    ※ 위 장례식장 추가된 품목에 따라서 예담 상조 비용도 추가 될
+                    수 있음을 알려드립니다.
+                  </p>
                 </div>
               );
             })()}
         </div>
 
         {/* 하단 고정 버튼 — Step 4 (빈소 규모) */}
-        {step === 4 && funeralType === '3day' && (
+        {step === 4 && funeralType === '3day' && !viewOnly && (
           <button
             onClick={() => setStep(contactStep)}
             disabled={!selectedSize}
@@ -3725,7 +4060,7 @@ export function FuneralCostModal({
         )}
 
         {/* 하단 고정 버튼 — Contact step */}
-        {step === contactStep && selectedHall && (
+        {step === contactStep && selectedHall && !viewOnly && (
           <button
             onClick={() => {
               // 토스트 즉시 노출 (NCP 자동 SMS 폴백이 실패를 흡수)
@@ -3785,28 +4120,33 @@ export function FuneralCostModal({
                       차트로 비교
                     </span>
                   </button>
-                  <a
-                    href="#inquiry"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const productId = recommended.id;
-                      // 추가: 상담 신청 저장 + 알림톡 발송 (사이드 이펙트, await 안 함)
-                      void submitConsultation(productId, recommended.name);
-                      // 기존 동작 유지
-                      handleClose();
-                      onSelectProduct?.(productId);
-                      setTimeout(() => {
-                        document
-                          .getElementById('inquiry')
-                          ?.scrollIntoView({ behavior: 'smooth' });
-                      }, 100);
-                    }}
-                    className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-white text-sm font-bold cursor-pointer"
-                    style={{ backgroundColor: BRAND_COLOR }}
-                  >
-                    {recommended.name}로 상담 받기
-                    <ArrowRight className="w-4 h-4" />
-                  </a>
+                  {consultLocked || viewOnly ? (
+                    <button
+                      type="button"
+                      disabled
+                      className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-white text-sm font-bold bg-gray-300 cursor-not-allowed"
+                    >
+                      {consultLocked
+                        ? '이미 상담 신청 완료'
+                        : `${recommended.name}로 상담 받기`}
+                    </button>
+                  ) : (
+                    <a
+                      href="#inquiry"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const productId = recommended.id;
+                        // 상담 신청 저장 + 알림톡 발송 (사이드 이펙트, await 안 함)
+                        void submitConsultation(productId, recommended.name);
+                        handleClose();
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-white text-sm font-bold cursor-pointer"
+                      style={{ backgroundColor: BRAND_COLOR }}
+                    >
+                      {recommended.name}로 상담 받기
+                      <ArrowRight className="w-4 h-4" />
+                    </a>
+                  )}
                 </div>
               </div>
             );

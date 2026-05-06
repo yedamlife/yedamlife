@@ -6,12 +6,17 @@ import {
   TEMPLATES,
   TEMPLATE_BUILDERS,
   TEMPLATE_SMS_BUILDERS,
+  TEMPLATE_BUTTON_BUILDERS,
   TEMPLATE_NAMES,
   parseTemplateKey,
   type TemplateKey,
 } from './templates';
 import { isDevEnv, resolveRecipients } from './recipients';
-import { sendNcpAlimtalk, type SendResult } from './ncp-client';
+import {
+  sendNcpAlimtalk,
+  type SendLogEntry,
+  type SendResult,
+} from './ncp-client';
 
 export interface SendOpts {
   /** 신청자 본인 휴대폰. TEL_CALL 처럼 관리자 전용 템플릿이면 생략 */
@@ -30,7 +35,7 @@ interface LogInsertRow {
   domain: string;
   purpose: string;
   recipient_phone: string;
-  recipient_role: 'customer' | 'admin' | 'dev_override';
+  recipient_role: 'customer' | 'admin';
   variables: Vars;
   rendered_body: string;
   status: 'pending' | 'success' | 'failed' | 'skipped';
@@ -44,16 +49,6 @@ interface LogInsertRow {
   is_dev: boolean;
   requested_at: string;
   sent_at?: string | null;
-}
-
-function recipientRole(
-  phone: string,
-  customerPhone: string | null | undefined,
-  isDev: boolean,
-): LogInsertRow['recipient_role'] {
-  if (isDev) return 'dev_override';
-  const normCustomer = (customerPhone ?? '').replace(/\D/g, '');
-  return normCustomer && phone === normCustomer ? 'customer' : 'admin';
 }
 
 async function logRows(rows: LogInsertRow[]): Promise<number[]> {
@@ -96,6 +91,8 @@ export async function sendAlimtalk(
   const smsBuilder = TEMPLATE_SMS_BUILDERS[templateKey];
   const smsContent = smsBuilder ? smsBuilder(vars) : null;
   const smsFrom = process.env.NCP_SENS_SMS_SENDER ?? null;
+  const buttonBuilder = TEMPLATE_BUTTON_BUILDERS[templateKey];
+  const buttons = buttonBuilder ? buttonBuilder(vars) : undefined;
   const sourceId =
     opts.source?.id != null ? Number(opts.source.id) : null;
   const sourceTable = opts.source?.table ?? null;
@@ -126,16 +123,21 @@ export async function sendAlimtalk(
       '[alimtalk] NCP env vars not set, skipping send',
       templateKey,
     );
-    await logRows([
+    const role: SendLogEntry['role'] = 'admin';
+    const skippedIds = await logRows([
       {
         ...baseRow,
         recipient_phone: '',
-        recipient_role: isDev ? 'dev_override' : 'admin',
+        recipient_role: role,
         status: 'skipped',
         error_message: 'env_not_set',
       },
     ]);
-    return { ok: false, error: 'env_not_set' };
+    return {
+      ok: false,
+      error: 'env_not_set',
+      logEntries: skippedIds.map((id) => ({ id, role, phone: '' })),
+    };
   }
 
   const recipients = resolveRecipients({
@@ -146,23 +148,28 @@ export async function sendAlimtalk(
 
   // 수신자 없음 → skipped 기록
   if (recipients.length === 0) {
-    await logRows([
+    const role: SendLogEntry['role'] = 'admin';
+    const skippedIds = await logRows([
       {
         ...baseRow,
         recipient_phone: '',
-        recipient_role: isDev ? 'dev_override' : 'admin',
+        recipient_role: role,
         status: 'skipped',
         error_message: 'no_recipients',
       },
     ]);
-    return { ok: false, error: 'no_recipients' };
+    return {
+      ok: false,
+      error: 'no_recipients',
+      logEntries: skippedIds.map((id) => ({ id, role, phone: '' })),
+    };
   }
 
-  // 1) pending 로그 선기록
-  const pendingRows: LogInsertRow[] = recipients.map((phone) => ({
+  // 1) pending 로그 선기록 — recipients 는 이미 (phone, role) 결정된 상태
+  const pendingRows: LogInsertRow[] = recipients.map((r) => ({
     ...baseRow,
-    recipient_phone: phone,
-    recipient_role: recipientRole(phone, opts.customerPhone, isDev),
+    recipient_phone: r.phone,
+    recipient_role: r.role,
     status: 'pending',
   }));
   const insertedIds = await logRows(pendingRows);
@@ -174,8 +181,9 @@ export async function sendAlimtalk(
     secretKey,
     plusFriendId,
     templateCode,
-    recipients,
+    recipients: recipients.map((r) => r.phone),
     content,
+    buttons,
     smsContent,
     smsFrom,
   });
@@ -212,12 +220,21 @@ export async function sendAlimtalk(
   if (!result.ok) {
     console.error('[alimtalk] send failed', {
       template: templateKey,
-      recipients,
+      recipients: recipients.map((r) => r.phone),
       error: result.error,
       status: result.status,
     });
   } else {
-    console.log('[alimtalk] sent', { template: templateKey, recipients });
+    console.log('[alimtalk] sent', {
+      template: templateKey,
+      recipients: recipients.map((r) => r.phone),
+    });
   }
-  return result;
+  // pendingRows 와 insertedIds 는 같은 순서로 정렬되어 있음
+  const logEntries: SendLogEntry[] = insertedIds.map((id, i) => ({
+    id,
+    role: pendingRows[i].recipient_role,
+    phone: pendingRows[i].recipient_phone,
+  }));
+  return { ...result, logEntries };
 }

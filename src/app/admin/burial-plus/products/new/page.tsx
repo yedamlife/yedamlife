@@ -37,6 +37,7 @@ const INITIAL: BpProductFormValue = {
   },
   price: { hallRent: [], commission: [], funeralItem: [] },
   photos: [],
+  thumbnail_url: null,
   related_facilities: [],
   min_price: null,
   is_recommended: false,

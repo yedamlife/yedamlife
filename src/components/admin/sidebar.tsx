@@ -38,6 +38,14 @@ const menuItems: MenuItem[] = [
       { label: '상담 신청', href: '/admin/general-funeral/consultations' },
       { label: '가입 신청', href: '/admin/general-funeral/memberships' },
       { label: '장례 설계 예약', href: '/admin/general-funeral/reservations' },
+      {
+        label: '장례비용 전송 내역',
+        href: '/admin/general-funeral/estimate-requests',
+      },
+      {
+        label: '장례비용 상담 신청 내역',
+        href: '/admin/general-funeral/consultation-requests',
+      },
     ],
   },
   {

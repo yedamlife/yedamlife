@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useTransition } from 'react';
+import { Suspense, useEffect, useState, useCallback, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { StatsCards } from './stats-cards';
 import { DataTable, type Column } from './data-table';
@@ -12,7 +12,18 @@ interface ServiceListPageProps<T extends { id: number | string; status?: string 
   columns: Column<T>[];
 }
 
-export function ServiceListPage<T extends { id: number | string; status?: string }>({
+export function ServiceListPage<T extends { id: number | string; status?: string }>(
+  props: ServiceListPageProps<T>,
+) {
+  // useSearchParams() 가 정적 prerender 를 깨뜨리므로 Suspense 로 감싸 csr-bailout 처리
+  return (
+    <Suspense fallback={null}>
+      <ServiceListPageInner {...props} />
+    </Suspense>
+  );
+}
+
+function ServiceListPageInner<T extends { id: number | string; status?: string }>({
   title,
   apiPath,
   columns,

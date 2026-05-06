@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     const resultUrl = `${origin}/funeral-cost/result/${data.uuid}`;
 
     try {
-      await sendAlimtalk(
+      const sendResult = await sendAlimtalk(
         'FC_RESULT',
         {
           이름: body.name,
@@ -85,6 +85,21 @@ export async function POST(request: Request) {
           source: { table: 'fc_estimate_requests', id: data.id },
         },
       );
+
+      // 알림톡 발송 매핑(id + role + phone)을 fc_estimate_requests 에 저장
+      const logEntries = sendResult.logEntries ?? [];
+      if (logEntries.length > 0) {
+        const { error: updateError } = await supabase
+          .from('fc_estimate_requests')
+          .update({ alimtalk_logs: logEntries })
+          .eq('id', data.id);
+        if (updateError) {
+          console.error(
+            '[fc_estimate_requests] alimtalk_logs update failed',
+            updateError,
+          );
+        }
+      }
     } catch (e) {
       console.error('[FC_RESULT] sendAlimtalk threw', e);
     }

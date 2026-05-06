@@ -3312,7 +3312,6 @@ export function GeneralFuneral({
       <FuneralCostModal
         isOpen={costModalOpen}
         onClose={() => setCostModalOpen(false)}
-        onSelectProduct={(productId) => setProductInquiryTab(productId)}
       />
     </>
   );

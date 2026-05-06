@@ -75,11 +75,22 @@ export function FuneralCostResultClient({ data }: Props) {
 
   if (!paramsReady) return null;
 
+  const isConsulted = data.mode === 'snapshot' && !!data.resultJson;
+
   return (
     <FuneralCostModal
       isOpen
       onClose={() => router.push('/')}
       initialEstimateUuid={data.uuid}
+      snapshotResult={
+        isConsulted
+          ? // result_json 은 buildResultJson() 결과로 SnapshotResult 형태와 호환
+            (data.resultJson as Parameters<typeof FuneralCostModal>[0]['snapshotResult'])
+          : undefined
+      }
+      // 이미 상담 신청 완료 → 보기 전용 + CTA 잠금
+      viewOnly={isConsulted}
+      consultLocked={isConsulted}
     />
   );
 }
