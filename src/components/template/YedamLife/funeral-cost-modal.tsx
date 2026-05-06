@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { toast } from 'sonner';
 import {
   X,
   ChevronLeft,
@@ -297,9 +296,7 @@ const SANGJO_ITEMS_3DAY: SangjoItem[] = [
   {
     label: '전문도우미',
     price: 240000,
-    items: [
-      { label: '전문도우미 1명 (1일당 120,000원)', price: 240000 },
-    ],
+    items: [{ label: '전문도우미 1명 (1일당 120,000원)', price: 240000 }],
   },
   // index 1
   {
@@ -411,7 +408,11 @@ const hasLiveStatsLabel = (label: string): boolean =>
 const LIVE_LABEL_HIGHLIGHT = BRAND_COLOR;
 
 // 단일 선택(라디오) 부모 라벨. 첫 번째 sub가 기본 선택, 나머지는 기본 비선택.
-const RADIO_PARENT_LABELS: ReadonlySet<string> = new Set(['수의', '관', '유골함']);
+const RADIO_PARENT_LABELS: ReadonlySet<string> = new Set([
+  '수의',
+  '관',
+  '유골함',
+]);
 
 // 부모 행 체크박스/토글 숨김 라벨. 하위 항목은 그대로 동작.
 const HIDE_PARENT_CHECKBOX_LABELS: ReadonlySet<string> = new Set([
@@ -423,20 +424,29 @@ const HIDE_PARENT_CHECKBOX_LABELS: ReadonlySet<string> = new Set([
 ]);
 
 // 빈소 규모별 수의·관·유골함 기본 sub 인덱스
-function getSangjoRadioDefaultSubIdx(parentLabel: string, size: SizeKey | null): number {
+function getSangjoRadioDefaultSubIdx(
+  parentLabel: string,
+  size: SizeKey | null,
+): number {
   if (parentLabel === '수의') {
     if (size === 'medium' || size === 'large') return 1; // 면수의
-    if (size === 'premium') return 2;                    // 저마수의
-    if (size === 'vip') return 3;                        // 대마수의
-    return 0;                                            // 기본수의 (소형/무빈소)
+    if (size === 'premium') return 2; // 저마수의
+    if (size === 'vip') return 3; // 대마수의
+    return 0; // 기본수의 (소형/무빈소)
   }
   if (parentLabel === '관') {
-    if (size === 'medium' || size === 'large' || size === 'premium' || size === 'vip') return 1; // 오동나무 맞춤 특관
+    if (
+      size === 'medium' ||
+      size === 'large' ||
+      size === 'premium' ||
+      size === 'vip'
+    )
+      return 1; // 오동나무 맞춤 특관
     return 0; // 오동나무 기본
   }
   if (parentLabel === '유골함') {
     if (size === 'medium' || size === 'large') return 1; // 도자기 2중 진공함
-    if (size === 'premium' || size === 'vip') return 2;  // 도자기 3중 진공함
+    if (size === 'premium' || size === 'vip') return 2; // 도자기 3중 진공함
     return 0; // 도자기 유골함
   }
   return 0;
@@ -696,9 +706,11 @@ export function FuneralCostModal({
   // 빈소 규모가 바뀌면 전문도우미 기본 인원도 규모에 맞게 리셋
   useEffect(() => {
     const helperCount =
-      selectedSize === 'large' || selectedSize === 'premium' ? 4
-      : selectedSize === 'vip' ? 5
-      : 2; // 소형·중형·무빈소
+      selectedSize === 'large' || selectedSize === 'premium'
+        ? 4
+        : selectedSize === 'vip'
+          ? 5
+          : 2; // 소형·중형·무빈소
     setSangjoQuantities((prev) => ({ ...prev, '0:0': helperCount }));
   }, [selectedSize]);
 
@@ -1823,7 +1835,10 @@ export function FuneralCostModal({
                 <br />
                 알림톡으로 전송해드립니다.
               </h3>
-              <p className="text-sm text-gray-500 mb-6">
+              <p className="text-xs text-gray-400 mb-6">
+                알림톡 전송 실패 시 SMS로 전송됩니다.
+              </p>
+              <p className="text-sm text-gray-500 mb-2">
                 {selectedHall.company_name}
               </p>
 
@@ -2386,8 +2401,9 @@ export function FuneralCostModal({
                                 className={`px-4 py-4 text-gray-600 ${i < sangjoItems.length - 1 ? 'border-b border-gray-100' : ''}`}
                               >
                                 {(() => {
-                                  const isRadioParent =
-                                    RADIO_PARENT_LABELS.has(item.label);
+                                  const isRadioParent = RADIO_PARENT_LABELS.has(
+                                    item.label,
+                                  );
                                   const optionalSubIdx = hasSubs
                                     ? item
                                         .items!.map((s, j) =>
@@ -2400,7 +2416,8 @@ export function FuneralCostModal({
                                   const parentToggleable =
                                     !hideParentCheckbox &&
                                     hasSubs &&
-                                    (isRadioParent || optionalSubIdx.length > 0);
+                                    (isRadioParent ||
+                                      optionalSubIdx.length > 0);
                                   return (
                                     <button
                                       type="button"
@@ -2445,85 +2462,118 @@ export function FuneralCostModal({
                                       }}
                                       className={`w-full flex items-center gap-3 text-left ${parentToggleable ? 'cursor-pointer' : 'cursor-default'}`}
                                     >
-                                  <span className="flex-1 min-w-0 flex items-center gap-2">
-                                    {parentToggleable && (
-                                      <span
-                                        className="w-4 h-4 rounded-sm border-2 flex items-center justify-center shrink-0"
-                                        style={{
-                                          borderColor: parentSelected
-                                            ? BRAND_COLOR
-                                            : '#d1d5db',
-                                          backgroundColor: parentSelected
-                                            ? BRAND_COLOR
-                                            : 'transparent',
-                                        }}
-                                      >
-                                        {parentSelected && (
-                                          <Check className="w-3 h-3 text-white" />
+                                      <span className="flex-1 min-w-0 flex items-center gap-2">
+                                        {parentToggleable && (
+                                          <span
+                                            className="w-4 h-4 rounded-sm border-2 flex items-center justify-center shrink-0"
+                                            style={{
+                                              borderColor: parentSelected
+                                                ? BRAND_COLOR
+                                                : '#d1d5db',
+                                              backgroundColor: parentSelected
+                                                ? BRAND_COLOR
+                                                : 'transparent',
+                                            }}
+                                          >
+                                            {parentSelected && (
+                                              <Check className="w-3 h-3 text-white" />
+                                            )}
+                                          </span>
                                         )}
+                                        {(item.label === '인력지원' ||
+                                          item.label === '전문도우미') &&
+                                        hasSubs
+                                          ? (() => {
+                                              const totalMan =
+                                                item.items!.reduce(
+                                                  (s, _sub, j) => {
+                                                    const key = `${i}:${j}`;
+                                                    if (
+                                                      unselectedSangjoKeys.has(
+                                                        key,
+                                                      )
+                                                    )
+                                                      return s;
+                                                    return (
+                                                      s +
+                                                      (sangjoQuantities[key] ??
+                                                        1)
+                                                    );
+                                                  },
+                                                  0,
+                                                );
+                                              return `${item.label} (${totalMan}명 * 2일)`;
+                                            })()
+                                          : item.label}
                                       </span>
-                                    )}
-                                    {(item.label === '인력지원' ||
-                                      item.label === '전문도우미') &&
-                                    hasSubs
-                                      ? (() => {
-                                          const totalMan = item.items!.reduce(
-                                            (s, _sub, j) => {
-                                              const key = `${i}:${j}`;
-                                              if (
-                                                unselectedSangjoKeys.has(key)
-                                              )
-                                                return s;
-                                              return (
-                                                s + (sangjoQuantities[key] ?? 1)
-                                              );
-                                            },
-                                            0,
-                                          );
-                                          return `${item.label} (${totalMan}명 * 2일)`;
-                                        })()
-                                      : item.label}
-                                  </span>
-                                  <span className="shrink-0 w-28 text-[15px] font-bold text-gray-900 text-right">
-                                    {parentTotal.toLocaleString()}원
-                                  </span>
+                                      <span className="shrink-0 w-28 text-[15px] font-bold text-gray-900 text-right">
+                                        {parentTotal.toLocaleString()}원
+                                      </span>
                                     </button>
                                   );
                                 })()}
                                 {/* 라디오 부모: 선택된 sub의 통계 라벨을 부모 아래 표시 */}
-                                {RADIO_PARENT_LABELS.has(item.label) && item.items && (() => {
-                                  const selectedSub = item.items.find((_, j) => !unselectedSangjoKeys.has(`${i}:${j}`));
-                                  if (!selectedSub) return null;
-                                  if (selectedSub.note) {
-                                    return (
-                                      <div className="mt-1.5 pl-4 pr-28">
-                                        <span className="inline-block text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-2xl bg-gray-100 text-gray-600 break-keep">
-                                          {selectedSub.note.split('\n')[0].split(/(\d{1,3}(?:,\d{3})*(?:건|개|원)|예담라이프)/).map((part, k) =>
-                                            /^\d{1,3}(?:,\d{3})*(?:건|개|원)$/.test(part) || part === '예담라이프' ? (
-                                              <span key={k} className="font-extrabold mx-0.5" style={{ color: LIVE_LABEL_HIGHLIGHT }}>{part}</span>
-                                            ) : (
-                                              <React.Fragment key={k}>{part}</React.Fragment>
-                                            )
-                                          )}
-                                        </span>
-                                      </div>
+                                {RADIO_PARENT_LABELS.has(item.label) &&
+                                  item.items &&
+                                  (() => {
+                                    const selectedSub = item.items.find(
+                                      (_, j) =>
+                                        !unselectedSangjoKeys.has(`${i}:${j}`),
                                     );
-                                  }
-                                  if (hasLiveStatsLabel(selectedSub.label)) {
-                                    return (
-                                      <div className="mt-1.5 pl-4 pr-28" aria-busy="true">
-                                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-full bg-gray-100">
-                                          <span className="inline-block h-2.5 w-24 rounded-full bg-gray-200 animate-pulse" />
-                                          <span className="inline-block h-2.5 w-10 rounded-full bg-gray-200 animate-pulse" />
-                                        </span>
-                                      </div>
-                                    );
-                                  }
-                                  return null;
-                                })()}
+                                    if (!selectedSub) return null;
+                                    if (selectedSub.note) {
+                                      return (
+                                        <div className="mt-1.5 pl-4 pr-28">
+                                          <span className="inline-block text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-2xl bg-gray-100 text-gray-600 break-keep">
+                                            {selectedSub.note
+                                              .split('\n')[0]
+                                              .split(
+                                                /(\d{1,3}(?:,\d{3})*(?:건|개|원)|예담라이프)/,
+                                              )
+                                              .map((part, k) =>
+                                                /^\d{1,3}(?:,\d{3})*(?:건|개|원)$/.test(
+                                                  part,
+                                                ) || part === '예담라이프' ? (
+                                                  <span
+                                                    key={k}
+                                                    className="font-extrabold mx-0.5"
+                                                    style={{
+                                                      color:
+                                                        LIVE_LABEL_HIGHLIGHT,
+                                                    }}
+                                                  >
+                                                    {part}
+                                                  </span>
+                                                ) : (
+                                                  <React.Fragment key={k}>
+                                                    {part}
+                                                  </React.Fragment>
+                                                ),
+                                              )}
+                                          </span>
+                                        </div>
+                                      );
+                                    }
+                                    if (hasLiveStatsLabel(selectedSub.label)) {
+                                      return (
+                                        <div
+                                          className="mt-1.5 pl-4 pr-28"
+                                          aria-busy="true"
+                                        >
+                                          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-full bg-gray-100">
+                                            <span className="inline-block h-2.5 w-24 rounded-full bg-gray-200 animate-pulse" />
+                                            <span className="inline-block h-2.5 w-10 rounded-full bg-gray-200 animate-pulse" />
+                                          </span>
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
                                 {item.items?.map((sub, j) => {
                                   const subKey = `${i}:${j}`;
-                                  const supportsQty = /1벌|1대|1명/.test(sub.label);
+                                  const supportsQty = /1벌|1대|1명/.test(
+                                    sub.label,
+                                  );
                                   const qty = sangjoQuantities[subKey] ?? 1;
                                   const isRadio = RADIO_PARENT_LABELS.has(
                                     item.label,
@@ -2579,7 +2629,9 @@ export function FuneralCostModal({
                                               </button>
                                             )}
                                             <span
-                                              role={canToggle ? 'button' : undefined}
+                                              role={
+                                                canToggle ? 'button' : undefined
+                                              }
                                               tabIndex={canToggle ? 0 : -1}
                                               onClick={() => {
                                                 if (!canToggle) return;
@@ -2627,14 +2679,21 @@ export function FuneralCostModal({
                                                       (prev) => ({
                                                         ...prev,
                                                         [subKey]: Math.max(
-                                                          MIN_SANGJO_QUANTITIES[subKey] ?? 1,
+                                                          MIN_SANGJO_QUANTITIES[
+                                                            subKey
+                                                          ] ?? 1,
                                                           (prev[subKey] ?? 1) -
                                                             1,
                                                         ),
                                                       }),
                                                     )
                                                   }
-                                                  disabled={qty <= (MIN_SANGJO_QUANTITIES[subKey] ?? 1)}
+                                                  disabled={
+                                                    qty <=
+                                                    (MIN_SANGJO_QUANTITIES[
+                                                      subKey
+                                                    ] ?? 1)
+                                                  }
                                                   className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed text-sm leading-none"
                                                 >
                                                   −
@@ -2662,60 +2721,61 @@ export function FuneralCostModal({
                                             )}
                                           </div>
                                           {/* note — 라디오 부모는 부모 행에 표시하므로 sub에서는 숨김 */}
-                                          {!isRadio && (sub.note ? (
-                                            <div className="mt-1.5 ml-[1.4rem]">
-                                              <span className="inline-block text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-2xl bg-gray-100 text-gray-600 break-keep">
+                                          {!isRadio &&
+                                            (sub.note ? (
+                                              <div className="mt-1.5 ml-[1.4rem]">
+                                                <span className="inline-block text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-2xl bg-gray-100 text-gray-600 break-keep">
+                                                  {sub.note
+                                                    .split('\n')[0]
+                                                    .split(
+                                                      /(\d{1,3}(?:,\d{3})*(?:건|개|원)|예담라이프)/,
+                                                    )
+                                                    .map((part, k) =>
+                                                      /^\d{1,3}(?:,\d{3})*(?:건|개|원)$/.test(
+                                                        part,
+                                                      ) ||
+                                                      part === '예담라이프' ? (
+                                                        <span
+                                                          key={k}
+                                                          className="font-extrabold mx-0.5"
+                                                          style={{
+                                                            color:
+                                                              LIVE_LABEL_HIGHLIGHT,
+                                                          }}
+                                                        >
+                                                          {part}
+                                                        </span>
+                                                      ) : (
+                                                        <React.Fragment key={k}>
+                                                          {part}
+                                                        </React.Fragment>
+                                                      ),
+                                                    )}
+                                                </span>
                                                 {sub.note
-                                                  .split('\n')[0]
-                                                  .split(
-                                                    /(\d{1,3}(?:,\d{3})*(?:건|개|원)|예담라이프)/,
-                                                  )
-                                                  .map((part, k) =>
-                                                    /^\d{1,3}(?:,\d{3})*(?:건|개|원)$/.test(
-                                                      part,
-                                                    ) ||
-                                                    part === '예담라이프' ? (
-                                                      <span
-                                                        key={k}
-                                                        className="font-extrabold mx-0.5"
-                                                        style={{
-                                                          color:
-                                                            LIVE_LABEL_HIGHLIGHT,
-                                                        }}
-                                                      >
-                                                        {part}
-                                                      </span>
-                                                    ) : (
-                                                      <React.Fragment key={k}>
-                                                        {part}
-                                                      </React.Fragment>
-                                                    ),
-                                                  )}
-                                              </span>
-                                              {sub.note
-                                                .split('\n')
-                                                .slice(1)
-                                                .map((line, k) => (
-                                                  <p
-                                                    key={k}
-                                                    className="mt-1 text-[11px] text-gray-400 leading-relaxed"
-                                                  >
-                                                    {line}
-                                                  </p>
-                                                ))}
-                                            </div>
-                                          ) : hasLiveStatsLabel(sub.label) ? (
-                                            <div
-                                              className="mt-1.5 ml-[1.4rem]"
-                                              aria-busy="true"
-                                              aria-label="실시간 평균 비용 불러오는 중"
-                                            >
-                                              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-full bg-gray-100">
-                                                <span className="inline-block h-2.5 w-24 rounded-full bg-gray-200 animate-pulse" />
-                                                <span className="inline-block h-2.5 w-10 rounded-full bg-gray-200 animate-pulse" />
-                                              </span>
-                                            </div>
-                                          ) : null)}
+                                                  .split('\n')
+                                                  .slice(1)
+                                                  .map((line, k) => (
+                                                    <p
+                                                      key={k}
+                                                      className="mt-1 text-[11px] text-gray-400 leading-relaxed"
+                                                    >
+                                                      {line}
+                                                    </p>
+                                                  ))}
+                                              </div>
+                                            ) : hasLiveStatsLabel(sub.label) ? (
+                                              <div
+                                                className="mt-1.5 ml-[1.4rem]"
+                                                aria-busy="true"
+                                                aria-label="실시간 평균 비용 불러오는 중"
+                                              >
+                                                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-full bg-gray-100">
+                                                  <span className="inline-block h-2.5 w-24 rounded-full bg-gray-200 animate-pulse" />
+                                                  <span className="inline-block h-2.5 w-10 rounded-full bg-gray-200 animate-pulse" />
+                                                </span>
+                                              </div>
+                                            ) : null)}
                                         </div>
                                         {/* 우: 가격 */}
                                         {typeof sub.price === 'number' && (
@@ -3462,7 +3522,7 @@ export function FuneralCostModal({
             className="shrink-0 w-full py-4 rounded-t-none sm:rounded-b-2xl text-white font-bold text-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ backgroundColor: BRAND_COLOR }}
           >
-            예상 비용 확인하기
+            알림톡으로 전송 받기
           </button>
         )}
 
