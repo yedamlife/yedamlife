@@ -227,89 +227,141 @@ const RITUAL_OPTIONS: { key: RitualKey; label: string; price: number }[] = [
 type SangjoItem = {
   label: string;
   price: number;
-  items?: { label: string; price?: number; note?: string }[];
+  items?: {
+    label: string;
+    price?: number;
+    note?: string;
+    optional?: boolean;
+  }[];
 };
 
 const SANGJO_ITEMS_NOBINSO: SangjoItem[] = [
   {
-    label: '인력지원 (2명 * 2일)',
+    label: '인력지원',
     price: 480000,
     items: [
-      { label: '장례지도사', price: 240000 },
-      { label: '입관지도사', price: 240000 },
+      { label: '장례지도사 1명', price: 240000 },
+      { label: '입관지도사 1명', price: 240000 },
     ],
   },
   {
     label: '장의차량',
     price: 900000,
     items: [
-      { label: '장의버스 1대', price: 450000 },
-      { label: '리무진 1대', price: 450000 },
+      { label: '장의버스 1대', price: 450000, optional: true },
+      { label: '리무진 1대', price: 450000, optional: true },
     ],
   },
   {
-    label: '고인용품',
-    price: 850000,
+    label: '수의',
+    price: 250000,
     items: [
-      { label: '기본수의 평균', price: 250000 },
-      { label: '관(오동나무 기본) 평균', price: 290000 },
-      { label: '입관 꽃장식 평균', price: 150000 },
-      {
-        label: '고인메이크업 평균',
-        price: 10000,
-      },
-      { label: '영정사진 평균', price: 150000 },
+      { label: '기본수의', price: 250000 },
+      { label: '면수의', price: 350000 },
+      { label: '저마수의', price: 700000 },
+      { label: '대마수의', price: 1000000 },
+    ],
+  },
+  {
+    label: '관',
+    price: 290000,
+    items: [
+      { label: '오동나무 기본', price: 290000 },
+      { label: '오동나무 맞춤 특관', price: 450000 },
+      { label: '솔송나무(매장)', price: 1100000 },
+      { label: '향나무(매장)', price: 1600000 },
+    ],
+  },
+  {
+    label: '고인 추가용품',
+    price: 400000,
+    items: [
+      { label: '입관 꽃장식 평균', price: 150000, optional: true },
+      { label: '고인메이크업 평균', price: 100000, optional: true },
+      { label: '영정사진 평균', price: 150000, optional: true },
     ],
   },
   {
     label: '유골함',
-    price: 250000,
+    price: 350000,
     items: [
-      { label: '도자기 유골함 평균', price: 230000 },
-      { label: '목함 평균', price: 50000 },
+      { label: '도자기 유골함', price: 350000 },
+      { label: '도자기 2중 진공함', price: 600000 },
+      { label: '도자기 3중 진공함', price: 1200000 },
     ],
   },
 ];
 
 const SANGJO_ITEMS_3DAY: SangjoItem[] = [
+  // index 0
   {
-    label: '인력지원 (2명 * 2일)',
-    price: 480000,
+    label: '전문도우미',
+    price: 240000,
     items: [
-      { label: '장례지도사', price: 240000 },
-      { label: '입관지도사', price: 240000 },
+      { label: '전문도우미 1명 (1일당 120,000원)', price: 240000 },
     ],
   },
+  // index 1
+  {
+    label: '인력지원',
+    price: 480000,
+    items: [
+      { label: '장례지도사 1명', price: 240000 },
+      { label: '입관지도사 1명', price: 240000 },
+    ],
+  },
+  // index 2
   {
     label: '장의차량',
     price: 900000,
     items: [
-      { label: '장의버스 1대', price: 450000 },
-      { label: '리무진 1대', price: 450000 },
+      { label: '장의버스 1대', price: 450000, optional: true },
+      { label: '리무진 1대', price: 450000, optional: true },
     ],
   },
+  // index 3
   {
-    label: '고인용품',
-    price: 940000,
-    items: [
-      { label: '기본수의 평균', price: 250000 },
-      { label: '관(오동나무 기본) 평균', price: 290000 },
-      { label: '입관 꽃장식 평균', price: 150000 },
-      {
-        label: '고인메이크업 평균',
-        price: 100000,
-      },
-      { label: '영정사진 평균', price: 150000 },
-    ],
-  },
-  {
-    label: '유골함',
+    label: '수의',
     price: 250000,
     items: [
-      { label: '도자기 유골함 평균', price: 230000 },
-      { label: '목함 평균', price: 50000 },
+      { label: '기본수의', price: 250000 },
+      { label: '면수의', price: 350000 },
+      { label: '저마수의', price: 700000 },
+      { label: '대마수의', price: 1000000 },
     ],
   },
+  // index 4
+  {
+    label: '관',
+    price: 290000,
+    items: [
+      { label: '오동나무 기본', price: 290000 },
+      { label: '오동나무 맞춤 특관', price: 450000 },
+      { label: '솔송나무(매장)', price: 1100000 },
+      { label: '향나무(매장)', price: 1600000 },
+    ],
+  },
+  // index 5
+  {
+    label: '고인 추가용품',
+    price: 400000,
+    items: [
+      { label: '입관 꽃장식 평균', price: 150000, optional: true },
+      { label: '고인메이크업 평균', price: 100000, optional: true },
+      { label: '영정사진 평균', price: 150000, optional: true },
+    ],
+  },
+  // index 6
+  {
+    label: '유골함',
+    price: 350000,
+    items: [
+      { label: '도자기 유골함', price: 350000 },
+      { label: '도자기 2중 진공함', price: 600000 },
+      { label: '도자기 3중 진공함', price: 1200000 },
+    ],
+  },
+  // index 7
   {
     label: '상복',
     price: 80000,
@@ -317,6 +369,16 @@ const SANGJO_ITEMS_3DAY: SangjoItem[] = [
       { label: '남자상복 1벌', price: 50000 },
       { label: '여자상복 1벌', price: 30000 },
     ],
+  },
+  // index 8
+  {
+    label: '수시비',
+    price: 250000,
+  },
+  // index 9
+  {
+    label: '염습',
+    price: 400000,
   },
 ];
 
@@ -330,15 +392,14 @@ const SANGJO_TOTAL_3DAY = SANGJO_ITEMS_3DAY.reduce((s, i) => s + i.price, 0);
 // sub.label에 아래 키워드가 포함되면 stats 로딩 동안 스켈레톤 표시 / 응답 후 ㄴ 라벨 표시.
 const LIVE_STATS_KEYWORDS = [
   '메이크업',
-  '수의',
+  '기본수의',
   '남자상복',
   '여자상복',
   '장의버스',
   '리무진',
   '장례지도사',
   '입관지도사',
-  '오동나무',
-  '목함',
+  '오동나무 기본',
   '도자기 유골함',
   '영정사진',
 ] as const;
@@ -350,30 +411,61 @@ const hasLiveStatsLabel = (label: string): boolean =>
 const LIVE_LABEL_HIGHLIGHT = BRAND_COLOR;
 
 // 단일 선택(라디오) 부모 라벨. 첫 번째 sub가 기본 선택, 나머지는 기본 비선택.
-const RADIO_PARENT_LABELS: ReadonlySet<string> = new Set(['유골함']);
+const RADIO_PARENT_LABELS: ReadonlySet<string> = new Set(['수의', '관', '유골함']);
 
-// 기본 선택 해제 키: '유골함'은 첫 번째(도자기 유골함)만 선택, '목함'은 비선택.
-// 두 데이터 구조 모두에서 동일 인덱스를 보장하기 위해 양쪽을 스캔해 합집합으로 처리.
-const createInitialUnselectedSangjoKeys = (): Set<string> => {
+// 부모 행 체크박스/토글 숨김 라벨. 하위 항목은 그대로 동작.
+const HIDE_PARENT_CHECKBOX_LABELS: ReadonlySet<string> = new Set([
+  '수의',
+  '관',
+  '고인 추가용품',
+  '유골함',
+  '장의차량',
+]);
+
+// 빈소 규모별 수의·관·유골함 기본 sub 인덱스
+function getSangjoRadioDefaultSubIdx(parentLabel: string, size: SizeKey | null): number {
+  if (parentLabel === '수의') {
+    if (size === 'medium' || size === 'large') return 1; // 면수의
+    if (size === 'premium') return 2;                    // 저마수의
+    if (size === 'vip') return 3;                        // 대마수의
+    return 0;                                            // 기본수의 (소형/무빈소)
+  }
+  if (parentLabel === '관') {
+    if (size === 'medium' || size === 'large' || size === 'premium' || size === 'vip') return 1; // 오동나무 맞춤 특관
+    return 0; // 오동나무 기본
+  }
+  if (parentLabel === '유골함') {
+    if (size === 'medium' || size === 'large') return 1; // 도자기 2중 진공함
+    if (size === 'premium' || size === 'vip') return 2;  // 도자기 3중 진공함
+    return 0; // 도자기 유골함
+  }
+  return 0;
+}
+
+// 기본 선택 해제 키: size·funeralType에 따라 수의·관·유골함 기본 선택이 달라짐.
+// funeralType에 맞는 항목 배열만 스캔해 인덱스 충돌을 방지한다.
+const createInitialUnselectedSangjoKeys = (
+  size: SizeKey | null = null,
+  funeralType: FuneralType | null = null,
+): Set<string> => {
   const set = new Set<string>();
-  const collect = (items: SangjoItem[]) => {
-    items.forEach((item, i) => {
-      if (RADIO_PARENT_LABELS.has(item.label) && item.items) {
-        item.items.forEach((_, j) => {
-          if (j !== 0) set.add(`${i}:${j}`);
-        });
-      }
-    });
-  };
-  collect(SANGJO_ITEMS_3DAY);
-  collect(SANGJO_ITEMS_NOBINSO);
+  const items =
+    funeralType === 'nobinso' ? SANGJO_ITEMS_NOBINSO : SANGJO_ITEMS_3DAY;
+  items.forEach((item, i) => {
+    if (RADIO_PARENT_LABELS.has(item.label) && item.items) {
+      const defaultJ = getSangjoRadioDefaultSubIdx(item.label, size);
+      item.items.forEach((_, j) => {
+        if (j !== defaultJ) set.add(`${i}:${j}`);
+      });
+    }
+  });
   return set;
 };
 
 const YEDAM_PRODUCTS = [
   {
     id: 'yedam-1',
-    name: '예담 1호',
+    name: '예담 무빈소',
     subtitle: '무빈소',
     price: 1300000,
     maxCost: 3000000,
@@ -408,13 +500,26 @@ const YEDAM_PRODUCTS = [
     id: 'yedam-4',
     name: '예담 4호',
     price: 4600000,
-    maxCost: Infinity,
+    maxCost: 9000000,
     features: [
       '장례지도사 1명 x 3일',
       '접객 도우미 6명',
       '장의버스/리무진 300km',
       '수의·관·유골함·빈소용품 포함',
       '운구 4인 지원',
+    ],
+  },
+  {
+    id: 'yedam-vip',
+    name: '예담 VIP',
+    price: 5800000,
+    maxCost: Infinity,
+    features: [
+      '장례지도사 1명 x 3일',
+      '접객 도우미 8명',
+      '장의버스/리무진 400km',
+      '수의·관·유골함·빈소용품 포함',
+      '운구 6인 지원',
     ],
   },
 ];
@@ -496,7 +601,7 @@ export function FuneralCostModal({
   const [encoffinListOpen, setEncoffinListOpen] = useState(true);
   const [mortuaryListOpen, setMortuaryListOpen] = useState(true);
   // 상조비용 항목별 선택 해제 키 (예: "0:1" = 인력지원의 입관지도사). 비어있으면 전체 선택.
-  // 단, '목함'은 기본 비선택 (도자기 유골함이 기본).
+  // 수의·관·유골함은 첫 번째 sub만 선택, 나머지는 기본 비선택.
   const [unselectedSangjoKeys, setUnselectedSangjoKeys] = useState<Set<string>>(
     () => createInitialUnselectedSangjoKeys(),
   );
@@ -567,10 +672,35 @@ export function FuneralCostModal({
     non_metro: { hall_count: number; avg_amount: number };
   } | null>(null);
 
-  // 상복 수량 (key: "i:j" → 수량, 기본 1)
+  // 상조 항목 수량 (key: "i:j" → 수량, 기본 1)
+  // 3일장 전문도우미(index 0): 1명(0:0)=2 기본 셋팅
+  // 3일장 상복(index 7): 남자상복(7:0)=4, 여자상복(7:1)=4 기본 셋팅
+  const DEFAULT_SANGJO_QUANTITIES: Record<string, number> = {
+    '0:0': 2,
+    '7:0': 4,
+    '7:1': 4,
+  };
+  // 항목별 최소 수량 (key: "i:j"). 미지정 시 1.
+  const MIN_SANGJO_QUANTITIES: Record<string, number> = {
+    '0:0': 2, // 전문도우미 최소 2명
+  };
   const [sangjoQuantities, setSangjoQuantities] = useState<
     Record<string, number>
-  >({});
+  >({ ...DEFAULT_SANGJO_QUANTITIES });
+
+  // 빈소 규모가 바뀌면 수의·관·유골함 기본 선택을 규모에 맞게 리셋
+  useEffect(() => {
+    setUnselectedSangjoKeys(createInitialUnselectedSangjoKeys(selectedSize));
+  }, [selectedSize]);
+
+  // 빈소 규모가 바뀌면 전문도우미 기본 인원도 규모에 맞게 리셋
+  useEffect(() => {
+    const helperCount =
+      selectedSize === 'large' || selectedSize === 'premium' ? 4
+      : selectedSize === 'vip' ? 5
+      : 2; // 소형·중형·무빈소
+    setSangjoQuantities((prev) => ({ ...prev, '0:0': helperCount }));
+  }, [selectedSize]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -627,7 +757,7 @@ export function FuneralCostModal({
               note: `메이크업 비용을 공개하는 ${makeupStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
-          if (sub.label.includes('수의') && shroudStats) {
+          if (sub.label === '기본수의' && shroudStats) {
             return {
               ...sub,
               price: shroudStats.avg_amount,
@@ -676,31 +806,24 @@ export function FuneralCostModal({
               note: `입관지도사 비용을 공개하는 ${directorStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
-          if (sub.label.includes('오동나무') && coffinStats) {
+          if (sub.label === '오동나무 기본' && coffinStats) {
             return {
               ...sub,
-              price: coffinStats.median_amount,
+              price: 290000,
               note: `오동나무 관 비용을 공개하는 ${coffinStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
-          if (sub.label.includes('목함') && urnStats?.wood) {
+          if (sub.label === '도자기 유골함' && urnStats?.ceramic) {
             return {
               ...sub,
-              price: 50000,
-              note: `목함 비용을 공개하는 ${urnStats.wood.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
-            };
-          }
-          if (sub.label.includes('도자기 유골함') && urnStats?.ceramic) {
-            return {
-              ...sub,
-              price: urnStats.ceramic.median_amount,
+              price: 350000,
               note: `도자기 유골함 비용을 공개하는 ${urnStats.ceramic.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
           if (sub.label.includes('영정사진') && portraitStats) {
             return {
               ...sub,
-              price: portraitStats.median_amount,
+              price: 150000,
               note: `영정사진 비용을 공개하는 ${portraitStats.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`,
             };
           }
@@ -897,7 +1020,7 @@ export function FuneralCostModal({
     setCheckedEncoffinIndexes([]);
     setCheckedMortuaryIndexes([]);
     setUnselectedSangjoKeys(createInitialUnselectedSangjoKeys());
-    setSangjoQuantities({});
+    setSangjoQuantities({ ...DEFAULT_SANGJO_QUANTITIES });
     setGuestCount(120);
     setName('');
     setPhone('');
@@ -1110,19 +1233,17 @@ export function FuneralCostModal({
       .filter((i) => i !== defaultEncoffinIdx)
       .map((i) => encoffinCategoryItems[i])
       .filter((f): f is FacilityFee => Boolean(f));
-    const extraEncoffinTotal = extraEncoffinItems.reduce(
-      (s, f) => s + f.요금,
-      0,
-    );
 
     const computeSangjoTotal = (items: SangjoItem[]) =>
       items.reduce((sum, item, i) => {
         if (item.items && item.items.length > 0) {
+          const isRadio = RADIO_PARENT_LABELS.has(item.label);
           return (
             sum +
             item.items.reduce((s, sub, j) => {
               const key = `${i}:${j}`;
-              if (unselectedSangjoKeys.has(key)) return s;
+              const canToggle = isRadio || !!sub.optional;
+              if (canToggle && unselectedSangjoKeys.has(key)) return s;
               const qty = sangjoQuantities[key] ?? 1;
               return s + (sub.price ?? 0) * qty;
             }, 0)
@@ -1135,10 +1256,12 @@ export function FuneralCostModal({
     if (funeralType === 'nobinso') {
       const transfer = costs.transfer;
       const mortuary = costs.mortuary;
-      const basicTotal = transfer + mortuary + encoffin + extraEncoffinTotal;
-      const sangjoTotal = computeSangjoTotal(
-        applyMakeupStats(SANGJO_ITEMS_NOBINSO),
-      );
+      const susiFee = 250000;
+      const basicTotal = transfer + mortuary;
+      const sangjoTotal =
+        computeSangjoTotal(applyMakeupStats(SANGJO_ITEMS_NOBINSO)) +
+        encoffin +
+        susiFee;
       const total = basicTotal + sangjoTotal;
       return {
         funeralType: 'nobinso' as const,
@@ -1221,13 +1344,11 @@ export function FuneralCostModal({
       RITUAL_OPTIONS.find((o) => o.key === ritual)?.price ?? 0;
     const basicTotal =
       effectiveFacilityFee +
-      encoffin +
       transfer +
       mortuary +
       food +
       flowerDecorPrice +
       ritualPrice +
-      extraEncoffinTotal +
       extraMortuaryTotal;
     const sangjoTotal = computeSangjoTotal(applyMakeupStats(SANGJO_ITEMS_3DAY));
     const total = basicTotal + sangjoTotal;
@@ -1779,9 +1900,9 @@ export function FuneralCostModal({
 
               return (
                 <div>
-                  {/* 총 예상비용 */}
-                  <div className="text-center mb-4 mt-4">
-                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
+                  {/* 총 예상비용 — sticky */}
+                  <div className="sticky top-0 z-10 bg-white -mx-4 sm:-mx-6 px-4 sm:px-6 pt-4 pb-3 mb-2 border-b border-gray-100 text-center">
+                    <h3 className="text-sm font-semibold text-gray-500 mb-0.5">
                       총 장례 예상비용
                     </h3>
                     <p
@@ -1902,17 +2023,12 @@ export function FuneralCostModal({
                                       </span>
                                     </>
                                   ) : (result.binsoMedianFee ?? 0) > 0 ? (
-                                    <>
-                                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
-                                        평균비용
-                                      </span>
-                                      <span className="text-[15px] font-semibold text-gray-900">
-                                        {(
-                                          result.binsoMedianFee ?? 0
-                                        ).toLocaleString()}
-                                        원
-                                      </span>
-                                    </>
+                                    <span className="text-[15px] font-semibold text-gray-900">
+                                      {(
+                                        result.binsoMedianFee ?? 0
+                                      ).toLocaleString()}
+                                      원
+                                    </span>
                                   ) : (
                                     <button
                                       onClick={() => {
@@ -1972,11 +2088,7 @@ export function FuneralCostModal({
                                 )}
                               </span>
                               <div className="shrink-0 w-28 flex flex-col items-end gap-0.5">
-                                {result.mortuaryIsAvg ? (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
-                                    평균비용
-                                  </span>
-                                ) : (
+                                {!result.mortuaryIsAvg && (
                                   <span
                                     className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold text-white"
                                     style={{ backgroundColor: BRAND_COLOR }}
@@ -1995,72 +2107,11 @@ export function FuneralCostModal({
                               </p>
                             )}
                           </div>
-                          <div className="px-4 py-2.5 border-b border-gray-100">
-                            <div className="flex items-center gap-3">
-                              <span className="flex-1 min-w-0 text-gray-600 flex items-center gap-1.5 flex-wrap">
-                                염습/입관
-                                {encoffinCategoryItems.length > 0 && (
-                                  <button
-                                    onClick={() => {
-                                      setEncoffinListOpen(true);
-                                      setTimeout(() => {
-                                        document
-                                          .getElementById('fc-table-encoffin')
-                                          ?.scrollIntoView({
-                                            behavior: 'smooth',
-                                            block: 'start',
-                                          });
-                                      }, 0);
-                                    }}
-                                    className="inline-flex items-center gap-0.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 cursor-pointer transition-colors"
-                                  >
-                                    비용 확인하기
-                                    <ArrowRight className="w-3 h-3" />
-                                  </button>
-                                )}
-                              </span>
-                              <div className="shrink-0 w-28 flex flex-col items-end gap-0.5">
-                                {result.encoffinIsAvg ? (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
-                                    평균비용
-                                  </span>
-                                ) : (
-                                  <span
-                                    className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold text-white"
-                                    style={{ backgroundColor: BRAND_COLOR }}
-                                  >
-                                    실제비용
-                                  </span>
-                                )}
-                                <span className="text-[15px] font-semibold text-gray-900">
-                                  {(
-                                    result.encoffin +
-                                    (result.extraEncoffinItems?.reduce(
-                                      (s, f) => s + f.요금,
-                                      0,
-                                    ) ?? 0)
-                                  ).toLocaleString()}
-                                  원
-                                </span>
-                              </div>
-                            </div>
-                            {result.selectedEncoffinItems?.map((f, i) => (
-                              <p
-                                key={`en-${i}`}
-                                className="text-xs text-gray-400 mt-1 pl-6"
-                              >
-                                ㄴ {f.품명}
-                              </p>
-                            ))}
-                          </div>
                           <div className="px-4 py-2.5 flex items-center gap-3 border-b border-gray-100">
                             <span className="flex-1 min-w-0 text-gray-600 flex items-center gap-1.5">
                               고인 이송비
                             </span>
                             <div className="shrink-0 w-28 flex flex-col items-end gap-0.5">
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
-                                평균비용
-                              </span>
                               <span className="text-[15px] font-semibold text-gray-900">
                                 {result.transfer.toLocaleString()}원
                               </span>
@@ -2077,9 +2128,6 @@ export function FuneralCostModal({
                                 원)
                               </span>
                               <div className="shrink-0 w-28 flex flex-col items-end gap-0.5">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
-                                  평균비용
-                                </span>
                                 <span className="text-[15px] font-semibold text-gray-900">
                                   {result.food.toLocaleString()}원
                                 </span>
@@ -2139,9 +2187,6 @@ export function FuneralCostModal({
                               </div>
                               {/* 우: 비용 */}
                               <div className="shrink-0 w-28 flex flex-col items-end gap-0.5 pt-0.5">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
-                                  평균비용
-                                </span>
                                 <span className="text-[15px] font-semibold text-gray-900">
                                   {(
                                     FLOWER_DECOR_OPTIONS.find(
@@ -2206,9 +2251,6 @@ export function FuneralCostModal({
                               </div>
                               {/* 우: 비용 */}
                               <div className="shrink-0 w-28 flex flex-col items-end gap-0.5 pt-0.5">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
-                                  평균비용
-                                </span>
                                 <span className="text-[15px] font-semibold text-gray-900">
                                   {(
                                     RITUAL_OPTIONS.find((o) => o.key === ritual)
@@ -2239,9 +2281,6 @@ export function FuneralCostModal({
                                   </span>
                                   <div className="ml-[1.4rem]">
                                     <div className="flex items-start gap-1.5">
-                                      <span className="text-[11px] text-gray-400 leading-relaxed">
-                                        ㄴ
-                                      </span>
                                       {stat ? (
                                         <span className="inline-block text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-2xl bg-gray-100 text-gray-600 break-keep">
                                           {`청소비를 공개하는 ${stat.hall_count}개 장례식장의 정보를 예담라이프가 실시간 분석해 제공합니다.`
@@ -2277,9 +2316,6 @@ export function FuneralCostModal({
                                 {/* flex-1 end */}
                                 {/* 우: 비용 */}
                                 <div className="shrink-0 w-28 flex flex-col items-end gap-0.5 pt-0.5">
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-semibold">
-                                    평균비용
-                                  </span>
                                   {stat ? (
                                     <span className="text-[15px] font-semibold text-gray-900">
                                       {displayAmt.toLocaleString()}원
@@ -2321,16 +2357,23 @@ export function FuneralCostModal({
                           {sangjoItems.map((item, i) => {
                             const hasSubs = !!item.items?.length;
                             const parentKey = String(i);
+                            const isRadioParentForCalc =
+                              RADIO_PARENT_LABELS.has(item.label);
+                            const isSubSelected = (j: number) => {
+                              const sub = item.items![j];
+                              const canToggle =
+                                isRadioParentForCalc || !!sub.optional;
+                              return canToggle
+                                ? !unselectedSangjoKeys.has(`${i}:${j}`)
+                                : true;
+                            };
                             const parentSelected = hasSubs
-                              ? item.items!.some(
-                                  (_, j) =>
-                                    !unselectedSangjoKeys.has(`${i}:${j}`),
-                                )
+                              ? item.items!.some((_, j) => isSubSelected(j))
                               : !unselectedSangjoKeys.has(parentKey);
                             const parentTotal = hasSubs
                               ? item.items!.reduce((s, sub, j) => {
+                                  if (!isSubSelected(j)) return s;
                                   const key = `${i}:${j}`;
-                                  if (unselectedSangjoKeys.has(key)) return s;
                                   const qty = sangjoQuantities[key] ?? 1;
                                   return s + (sub.price ?? 0) * qty;
                                 }, 0)
@@ -2342,67 +2385,153 @@ export function FuneralCostModal({
                                 key={i}
                                 className={`px-4 py-4 text-gray-600 ${i < sangjoItems.length - 1 ? 'border-b border-gray-100' : ''}`}
                               >
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (hasSubs) {
-                                      const isRadio = RADIO_PARENT_LABELS.has(
-                                        item.label,
-                                      );
-                                      setUnselectedSangjoKeys((prev) => {
-                                        const next = new Set(prev);
-                                        if (parentSelected) {
-                                          item.items!.forEach((_, j) =>
-                                            next.add(`${i}:${j}`),
-                                          );
-                                        } else if (isRadio) {
-                                          // 라디오: 첫 번째만 선택
-                                          item.items!.forEach((_, j) => {
-                                            if (j === 0)
-                                              next.delete(`${i}:${j}`);
-                                            else next.add(`${i}:${j}`);
+                                {(() => {
+                                  const isRadioParent =
+                                    RADIO_PARENT_LABELS.has(item.label);
+                                  const optionalSubIdx = hasSubs
+                                    ? item
+                                        .items!.map((s, j) =>
+                                          s.optional ? j : -1,
+                                        )
+                                        .filter((j) => j >= 0)
+                                    : [];
+                                  const hideParentCheckbox =
+                                    HIDE_PARENT_CHECKBOX_LABELS.has(item.label);
+                                  const parentToggleable =
+                                    !hideParentCheckbox &&
+                                    hasSubs &&
+                                    (isRadioParent || optionalSubIdx.length > 0);
+                                  return (
+                                    <button
+                                      type="button"
+                                      disabled={!parentToggleable}
+                                      onClick={() => {
+                                        if (!parentToggleable) return;
+                                        if (isRadioParent) {
+                                          setUnselectedSangjoKeys((prev) => {
+                                            const next = new Set(prev);
+                                            if (parentSelected) {
+                                              item.items!.forEach((_, j) =>
+                                                next.add(`${i}:${j}`),
+                                              );
+                                            } else {
+                                              item.items!.forEach((_, j) => {
+                                                if (j === 0)
+                                                  next.delete(`${i}:${j}`);
+                                                else next.add(`${i}:${j}`);
+                                              });
+                                            }
+                                            return next;
                                           });
                                         } else {
-                                          item.items!.forEach((_, j) =>
-                                            next.delete(`${i}:${j}`),
-                                          );
+                                          // 비-라디오: 옵션 sub만 일괄 토글
+                                          const allOptionalSelected =
+                                            optionalSubIdx.every(
+                                              (j) =>
+                                                !unselectedSangjoKeys.has(
+                                                  `${i}:${j}`,
+                                                ),
+                                            );
+                                          setUnselectedSangjoKeys((prev) => {
+                                            const next = new Set(prev);
+                                            optionalSubIdx.forEach((j) => {
+                                              if (allOptionalSelected)
+                                                next.add(`${i}:${j}`);
+                                              else next.delete(`${i}:${j}`);
+                                            });
+                                            return next;
+                                          });
                                         }
-                                        return next;
-                                      });
-                                    } else {
-                                      toggleSangjoKey(parentKey);
-                                    }
-                                  }}
-                                  className="w-full flex items-center gap-3 cursor-pointer text-left"
-                                >
-                                  <span className="flex-1 min-w-0 flex items-center gap-2">
-                                    <span
-                                      className="w-4 h-4 rounded-sm border-2 flex items-center justify-center shrink-0"
-                                      style={{
-                                        borderColor: parentSelected
-                                          ? BRAND_COLOR
-                                          : '#d1d5db',
-                                        backgroundColor: parentSelected
-                                          ? BRAND_COLOR
-                                          : 'transparent',
                                       }}
+                                      className={`w-full flex items-center gap-3 text-left ${parentToggleable ? 'cursor-pointer' : 'cursor-default'}`}
                                     >
-                                      {parentSelected && (
-                                        <Check className="w-3 h-3 text-white" />
-                                      )}
-                                    </span>
-                                    {item.label}
+                                  <span className="flex-1 min-w-0 flex items-center gap-2">
+                                    {parentToggleable && (
+                                      <span
+                                        className="w-4 h-4 rounded-sm border-2 flex items-center justify-center shrink-0"
+                                        style={{
+                                          borderColor: parentSelected
+                                            ? BRAND_COLOR
+                                            : '#d1d5db',
+                                          backgroundColor: parentSelected
+                                            ? BRAND_COLOR
+                                            : 'transparent',
+                                        }}
+                                      >
+                                        {parentSelected && (
+                                          <Check className="w-3 h-3 text-white" />
+                                        )}
+                                      </span>
+                                    )}
+                                    {(item.label === '인력지원' ||
+                                      item.label === '전문도우미') &&
+                                    hasSubs
+                                      ? (() => {
+                                          const totalMan = item.items!.reduce(
+                                            (s, _sub, j) => {
+                                              const key = `${i}:${j}`;
+                                              if (
+                                                unselectedSangjoKeys.has(key)
+                                              )
+                                                return s;
+                                              return (
+                                                s + (sangjoQuantities[key] ?? 1)
+                                              );
+                                            },
+                                            0,
+                                          );
+                                          return `${item.label} (${totalMan}명 * 2일)`;
+                                        })()
+                                      : item.label}
                                   </span>
                                   <span className="shrink-0 w-28 text-[15px] font-bold text-gray-900 text-right">
                                     {parentTotal.toLocaleString()}원
                                   </span>
-                                </button>
+                                    </button>
+                                  );
+                                })()}
+                                {/* 라디오 부모: 선택된 sub의 통계 라벨을 부모 아래 표시 */}
+                                {RADIO_PARENT_LABELS.has(item.label) && item.items && (() => {
+                                  const selectedSub = item.items.find((_, j) => !unselectedSangjoKeys.has(`${i}:${j}`));
+                                  if (!selectedSub) return null;
+                                  if (selectedSub.note) {
+                                    return (
+                                      <div className="mt-1.5 pl-4 pr-28">
+                                        <span className="inline-block text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-2xl bg-gray-100 text-gray-600 break-keep">
+                                          {selectedSub.note.split('\n')[0].split(/(\d{1,3}(?:,\d{3})*(?:건|개|원)|예담라이프)/).map((part, k) =>
+                                            /^\d{1,3}(?:,\d{3})*(?:건|개|원)$/.test(part) || part === '예담라이프' ? (
+                                              <span key={k} className="font-extrabold mx-0.5" style={{ color: LIVE_LABEL_HIGHLIGHT }}>{part}</span>
+                                            ) : (
+                                              <React.Fragment key={k}>{part}</React.Fragment>
+                                            )
+                                          )}
+                                        </span>
+                                      </div>
+                                    );
+                                  }
+                                  if (hasLiveStatsLabel(selectedSub.label)) {
+                                    return (
+                                      <div className="mt-1.5 pl-4 pr-28" aria-busy="true">
+                                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-full bg-gray-100">
+                                          <span className="inline-block h-2.5 w-24 rounded-full bg-gray-200 animate-pulse" />
+                                          <span className="inline-block h-2.5 w-10 rounded-full bg-gray-200 animate-pulse" />
+                                        </span>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                                 {item.items?.map((sub, j) => {
                                   const subKey = `${i}:${j}`;
-                                  const subSelected =
-                                    !unselectedSangjoKeys.has(subKey);
-                                  const supportsQty = /1벌|1대/.test(sub.label);
+                                  const supportsQty = /1벌|1대|1명/.test(sub.label);
                                   const qty = sangjoQuantities[subKey] ?? 1;
+                                  const isRadio = RADIO_PARENT_LABELS.has(
+                                    item.label,
+                                  );
+                                  const canToggle = isRadio || !!sub.optional;
+                                  const subSelected = canToggle
+                                    ? !unselectedSangjoKeys.has(subKey)
+                                    : true;
                                   return (
                                     <div key={j}>
                                       <div className="mt-3 pl-4 flex items-start gap-2 text-[13px]">
@@ -2410,54 +2539,51 @@ export function FuneralCostModal({
                                         <div className="flex-1 min-w-0 flex flex-col">
                                           {/* 라벨행 */}
                                           <div className="flex items-center gap-2 overflow-hidden">
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                if (
-                                                  RADIO_PARENT_LABELS.has(
-                                                    item.label,
-                                                  )
-                                                ) {
-                                                  setUnselectedSangjoKeys(
-                                                    (prev) => {
-                                                      const next = new Set(
-                                                        prev,
-                                                      );
-                                                      item.items!.forEach(
-                                                        (_, k) =>
-                                                          next.add(`${i}:${k}`),
-                                                      );
-                                                      next.delete(subKey);
-                                                      return next;
-                                                    },
-                                                  );
-                                                } else {
-                                                  toggleSangjoKey(subKey);
-                                                }
-                                              }}
-                                              className="shrink-0 w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center cursor-pointer"
-                                              style={{
-                                                borderColor: subSelected
-                                                  ? BRAND_COLOR
-                                                  : '#d1d5db',
-                                                backgroundColor: subSelected
-                                                  ? BRAND_COLOR
-                                                  : 'transparent',
-                                              }}
-                                            >
-                                              {subSelected && (
-                                                <Check className="w-2.5 h-2.5 text-white" />
-                                              )}
-                                            </button>
+                                            {canToggle && (
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  if (isRadio) {
+                                                    setUnselectedSangjoKeys(
+                                                      (prev) => {
+                                                        const next = new Set(
+                                                          prev,
+                                                        );
+                                                        item.items!.forEach(
+                                                          (_, k) =>
+                                                            next.add(
+                                                              `${i}:${k}`,
+                                                            ),
+                                                        );
+                                                        next.delete(subKey);
+                                                        return next;
+                                                      },
+                                                    );
+                                                  } else {
+                                                    toggleSangjoKey(subKey);
+                                                  }
+                                                }}
+                                                className="shrink-0 w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center cursor-pointer"
+                                                style={{
+                                                  borderColor: subSelected
+                                                    ? BRAND_COLOR
+                                                    : '#d1d5db',
+                                                  backgroundColor: subSelected
+                                                    ? BRAND_COLOR
+                                                    : 'transparent',
+                                                }}
+                                              >
+                                                {subSelected && (
+                                                  <Check className="w-2.5 h-2.5 text-white" />
+                                                )}
+                                              </button>
+                                            )}
                                             <span
-                                              role="button"
-                                              tabIndex={0}
+                                              role={canToggle ? 'button' : undefined}
+                                              tabIndex={canToggle ? 0 : -1}
                                               onClick={() => {
-                                                if (
-                                                  RADIO_PARENT_LABELS.has(
-                                                    item.label,
-                                                  )
-                                                ) {
+                                                if (!canToggle) return;
+                                                if (isRadio) {
                                                   setUnselectedSangjoKeys(
                                                     (prev) => {
                                                       const next = new Set(
@@ -2477,14 +2603,20 @@ export function FuneralCostModal({
                                               }}
                                               onKeyDown={(e) => {
                                                 if (
-                                                  e.key === 'Enter' ||
-                                                  e.key === ' '
+                                                  canToggle &&
+                                                  (e.key === 'Enter' ||
+                                                    e.key === ' ')
                                                 )
                                                   e.currentTarget.click();
                                               }}
-                                              className={`truncate cursor-pointer select-none ${subSelected ? 'text-gray-600' : 'text-gray-400'}`}
+                                              className={`truncate select-none ${canToggle ? 'cursor-pointer' : 'cursor-default'} ${subSelected ? 'text-gray-600' : 'text-gray-400'}`}
                                             >
                                               {sub.label}
+                                              {sub.optional && (
+                                                <span className="ml-1 text-[11px] text-gray-400">
+                                                  (선택)
+                                                </span>
+                                              )}
                                             </span>
                                             {supportsQty && subSelected && (
                                               <div className="shrink-0 flex items-center gap-1.5 border border-gray-200 rounded-full px-1 py-0.5">
@@ -2495,14 +2627,14 @@ export function FuneralCostModal({
                                                       (prev) => ({
                                                         ...prev,
                                                         [subKey]: Math.max(
-                                                          1,
+                                                          MIN_SANGJO_QUANTITIES[subKey] ?? 1,
                                                           (prev[subKey] ?? 1) -
                                                             1,
                                                         ),
                                                       }),
                                                     )
                                                   }
-                                                  disabled={qty <= 1}
+                                                  disabled={qty <= (MIN_SANGJO_QUANTITIES[subKey] ?? 1)}
                                                   className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed text-sm leading-none"
                                                 >
                                                   −
@@ -2529,49 +2661,44 @@ export function FuneralCostModal({
                                               </div>
                                             )}
                                           </div>
-                                          {/* note — 왼쪽 열 안에서 렌더링 */}
-                                          {sub.note ? (
+                                          {/* note — 라디오 부모는 부모 행에 표시하므로 sub에서는 숨김 */}
+                                          {!isRadio && (sub.note ? (
                                             <div className="mt-1.5 ml-[1.4rem]">
-                                              <div className="flex items-start gap-1.5">
-                                                <span className="text-[11px] text-gray-400 leading-relaxed">
-                                                  ㄴ
-                                                </span>
-                                                <span className="inline-block text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-2xl bg-gray-100 text-gray-600 break-keep">
-                                                  {sub.note
-                                                    .split('\n')[0]
-                                                    .split(
-                                                      /(\d{1,3}(?:,\d{3})*(?:건|개|원)|예담라이프)/,
-                                                    )
-                                                    .map((part, k) =>
-                                                      /^\d{1,3}(?:,\d{3})*(?:건|개|원)$/.test(
-                                                        part,
-                                                      ) ||
-                                                      part === '예담라이프' ? (
-                                                        <span
-                                                          key={k}
-                                                          className="font-extrabold mx-0.5"
-                                                          style={{
-                                                            color:
-                                                              LIVE_LABEL_HIGHLIGHT,
-                                                          }}
-                                                        >
-                                                          {part}
-                                                        </span>
-                                                      ) : (
-                                                        <React.Fragment key={k}>
-                                                          {part}
-                                                        </React.Fragment>
-                                                      ),
-                                                    )}
-                                                </span>
-                                              </div>
+                                              <span className="inline-block text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-2xl bg-gray-100 text-gray-600 break-keep">
+                                                {sub.note
+                                                  .split('\n')[0]
+                                                  .split(
+                                                    /(\d{1,3}(?:,\d{3})*(?:건|개|원)|예담라이프)/,
+                                                  )
+                                                  .map((part, k) =>
+                                                    /^\d{1,3}(?:,\d{3})*(?:건|개|원)$/.test(
+                                                      part,
+                                                    ) ||
+                                                    part === '예담라이프' ? (
+                                                      <span
+                                                        key={k}
+                                                        className="font-extrabold mx-0.5"
+                                                        style={{
+                                                          color:
+                                                            LIVE_LABEL_HIGHLIGHT,
+                                                        }}
+                                                      >
+                                                        {part}
+                                                      </span>
+                                                    ) : (
+                                                      <React.Fragment key={k}>
+                                                        {part}
+                                                      </React.Fragment>
+                                                    ),
+                                                  )}
+                                              </span>
                                               {sub.note
                                                 .split('\n')
                                                 .slice(1)
                                                 .map((line, k) => (
                                                   <p
                                                     key={k}
-                                                    className="mt-1 ml-3 text-[11px] text-gray-400 leading-relaxed"
+                                                    className="mt-1 text-[11px] text-gray-400 leading-relaxed"
                                                   >
                                                     {line}
                                                   </p>
@@ -2583,17 +2710,12 @@ export function FuneralCostModal({
                                               aria-busy="true"
                                               aria-label="실시간 평균 비용 불러오는 중"
                                             >
-                                              <div className="flex items-start gap-1.5">
-                                                <span className="text-[11px] text-gray-400 leading-relaxed">
-                                                  ㄴ
-                                                </span>
-                                                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-full bg-gray-100">
-                                                  <span className="inline-block h-2.5 w-24 rounded-full bg-gray-200 animate-pulse" />
-                                                  <span className="inline-block h-2.5 w-10 rounded-full bg-gray-200 animate-pulse" />
-                                                </span>
-                                              </div>
+                                              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold leading-relaxed px-2 py-0.5 rounded-full bg-gray-100">
+                                                <span className="inline-block h-2.5 w-24 rounded-full bg-gray-200 animate-pulse" />
+                                                <span className="inline-block h-2.5 w-10 rounded-full bg-gray-200 animate-pulse" />
+                                              </span>
                                             </div>
-                                          ) : null}
+                                          ) : null)}
                                         </div>
                                         {/* 우: 가격 */}
                                         {typeof sub.price === 'number' && (
@@ -2971,149 +3093,38 @@ export function FuneralCostModal({
                     </div>
                   )}
 
-                  {/* 염습/입관 항목 — 데이터 있을 때만 노출 */}
-                  {encoffinCategoryItems.length > 0 && (
-                    <div
-                      id="fc-table-encoffin"
-                      className="border border-gray-200 rounded-xl overflow-hidden mb-4 scroll-mt-4"
-                    >
-                      <button
-                        onClick={() => setEncoffinListOpen(!encoffinListOpen)}
-                        className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
-                      >
-                        <div className="flex flex-col items-start gap-0.5">
-                          <span className="text-sm font-bold text-gray-700">
-                            염습/입관
-                          </span>
-                          {(() => {
-                            const defaultIdx = encoffinCategoryItems.findIndex(
-                              (f) => f.품종상세 === '일반',
-                            );
-                            const effectiveIdxs =
-                              checkedEncoffinIndexes.length > 0
-                                ? checkedEncoffinIndexes
-                                : defaultIdx >= 0
-                                  ? [defaultIdx]
-                                  : [];
-                            if (effectiveIdxs.length === 0) return null;
-                            const sum = effectiveIdxs.reduce(
-                              (s, i) =>
-                                s + (encoffinCategoryItems[i]?.요금 ?? 0),
-                              0,
-                            );
-                            return (
-                              <span
-                                className="text-xs font-semibold"
-                                style={{ color: BRAND_COLOR }}
-                              >
-                                선택 합계: {sum.toLocaleString()}원
-                              </span>
-                            );
-                          })()}
-                        </div>
-                        <ChevronDown
-                          className="w-5 h-5 text-gray-400 shrink-0 transition-transform"
-                          style={{
-                            transform: encoffinListOpen
-                              ? 'rotate(180deg)'
-                              : 'rotate(0)',
-                          }}
-                        />
-                      </button>
-                      {encoffinListOpen &&
-                        (() => {
-                          const defaultIdx = encoffinCategoryItems.findIndex(
-                            (f) => f.품종상세 === '일반',
-                          );
-                          return encoffinCategoryItems.map((fee, idx) => {
-                            const isManuallyChecked =
-                              checkedEncoffinIndexes.includes(idx);
-                            const isDefault = idx === defaultIdx;
-                            // 수동 체크가 하나도 없으면 default 항목을 시각적으로 체크 처리
-                            const isChecked =
-                              isManuallyChecked ||
-                              (checkedEncoffinIndexes.length === 0 &&
-                                isDefault);
-                            const desc =
-                              fee.임대내용 ||
-                              (typeof fee['서비스내용'] === 'string'
-                                ? (fee['서비스내용'] as string)
-                                : '');
-                            return (
-                              <button
-                                key={idx}
-                                onClick={() =>
-                                  setCheckedEncoffinIndexes(
-                                    isManuallyChecked ? [] : [idx],
-                                  )
-                                }
-                                className="w-full px-4 py-2.5 flex items-center gap-3 text-sm border-t border-gray-100 text-left cursor-pointer transition-colors"
-                                style={
-                                  isChecked
-                                    ? { backgroundColor: '#e8eddf' }
-                                    : undefined
-                                }
-                              >
-                                <div
-                                  className="w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0"
-                                  style={{
-                                    borderColor: isChecked
-                                      ? BRAND_COLOR
-                                      : '#d1d5db',
-                                    backgroundColor: isChecked
-                                      ? BRAND_COLOR
-                                      : 'transparent',
-                                  }}
-                                >
-                                  {isChecked && (
-                                    <Check className="w-3 h-3 text-white" />
-                                  )}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <span
-                                    className={
-                                      isChecked
-                                        ? 'font-bold text-gray-900'
-                                        : 'text-gray-600'
-                                    }
-                                  >
-                                    {fee.품명}
-                                  </span>
-                                  {desc && (
-                                    <p className="text-xs text-gray-400 mt-0.5">
-                                      {desc}
-                                    </p>
-                                  )}
-                                </div>
-                                <span
-                                  className={`shrink-0 ml-3 ${isChecked ? 'font-bold text-gray-900' : 'text-gray-500'}`}
-                                >
-                                  {fee.요금_표시}원
-                                </span>
-                              </button>
-                            );
-                          });
-                        })()}
-                    </div>
-                  )}
-
                   {/* ── 차트로 비교하기 ── */}
                   {(() => {
                     let yedam: { product: string; price: number };
                     if (funeralType === 'nobinso') {
-                      yedam = { product: '예담 1호', price: 1300000 };
-                    } else if (selectedSize === 'large') {
-                      yedam = { product: '예담 3호', price: 3400000 };
-                    } else if (
-                      selectedSize === 'premium' ||
-                      selectedSize === 'vip'
-                    ) {
+                      yedam = { product: '예담 무빈소', price: 1300000 };
+                    } else if (selectedSize === 'vip') {
+                      yedam = { product: '예담 VIP', price: 5800000 };
+                    } else if (selectedSize === 'premium') {
                       yedam = { product: '예담 4호', price: 4600000 };
+                    } else if (
+                      selectedSize === 'medium' ||
+                      selectedSize === 'large'
+                    ) {
+                      yedam = { product: '예담 3호', price: 3400000 };
                     } else {
                       yedam = { product: '예담 2호', price: 2300000 };
                     }
 
-                    const prepayPrice = 1800000;
+                    let prepayPrice: number;
+                    if (funeralType === 'nobinso') {
+                      prepayPrice = 2500000;
+                    } else if (selectedSize === 'vip') {
+                      prepayPrice = 8130000;
+                    } else if (selectedSize === 'premium') {
+                      prepayPrice = 8130000;
+                    } else if (selectedSize === 'large') {
+                      prepayPrice = 5114000;
+                    } else if (selectedSize === 'medium') {
+                      prepayPrice = 4650000;
+                    } else {
+                      prepayPrice = 3970000;
+                    }
                     const hallSangjo = result.sangjoTotal;
                     const facility = result.basicTotal;
 
@@ -3205,15 +3216,6 @@ export function FuneralCostModal({
                             warnings.push({
                               msg: '안치실 이용료가 선택되지 않았습니다.',
                               targetId: 'fc-table-mortuary',
-                            });
-                          }
-                          if (
-                            encoffinCategoryItems.length > 0 &&
-                            checkedEncoffinIndexes.length === 0
-                          ) {
-                            warnings.push({
-                              msg: '염습/입관 사용료가 선택되지 않았습니다.',
-                              targetId: 'fc-table-encoffin',
                             });
                           }
                           if (warnings.length === 0) return null;
@@ -3345,7 +3347,7 @@ export function FuneralCostModal({
                                 className="text-[11px] font-semibold whitespace-nowrap leading-tight"
                                 style={{ color: '#374151' }}
                               >
-                                장례식장 &apos;상조&apos;
+                                &apos;상조&apos;
                                 <br />
                                 평균 비용
                               </span>
@@ -3410,14 +3412,14 @@ export function FuneralCostModal({
                             {bars.map((b, i) => (
                               <div
                                 key={`l-${i}`}
-                                className="pt-2.5 self-center flex items-center justify-center gap-1"
+                                className="pt-2.5 self-center w-full text-center"
                               >
                                 <span
-                                  className="inline-block w-2 h-2 rounded-full shrink-0"
+                                  className="inline-block w-2 h-2 rounded-full mr-1 align-middle"
                                   style={{ backgroundColor: b.barColor }}
                                 />
                                 <span
-                                  className={`line-clamp-2 leading-tight max-w-[52px] break-keep ${b.isHighlight ? 'text-xs font-bold' : 'text-[10px] sm:text-[11px] font-semibold'}`}
+                                  className={`align-middle leading-tight break-keep ${i === 2 ? 'whitespace-normal' : 'whitespace-nowrap'} ${b.isHighlight ? 'text-xs font-bold' : 'text-[10px] sm:text-[11px] font-semibold'}`}
                                   style={{ color: b.labelColor }}
                                 >
                                   {b.label}

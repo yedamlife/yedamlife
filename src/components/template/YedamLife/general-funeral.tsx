@@ -1023,7 +1023,11 @@ export function GeneralFuneral({
                         width={32}
                         height={h(bars[2].serviceFee)}
                         viewBox={`0 0 32 ${h(bars[2].serviceFee)}`}
-                        style={{ display: 'block', minWidth: 32, flexShrink: 0 }}
+                        style={{
+                          display: 'block',
+                          minWidth: 32,
+                          flexShrink: 0,
+                        }}
                         aria-hidden="true"
                       >
                         <path
@@ -1035,13 +1039,15 @@ export function GeneralFuneral({
                           fill="none"
                         />
                       </svg>
-                      <span className="text-[11px] sm:text-xs font-semibold whitespace-nowrap" style={{ color: '#374151' }}>
-                        장례식장 &apos;상조&apos;
+                      <span
+                        className="text-[11px] sm:text-xs font-semibold whitespace-nowrap"
+                        style={{ color: '#374151' }}
+                      >
+                        &apos;상조&apos;
                         <br />
                         평균 비용
                       </span>
                     </div>
-
 
                     {/* Row 4: 장례식장 비용 (연한색, 높이 동일) */}
                     {bars.map((bar) => (
@@ -1070,7 +1076,11 @@ export function GeneralFuneral({
                         width={32}
                         height={h(p.facilityFee)}
                         viewBox={`0 0 32 ${h(p.facilityFee)}`}
-                        style={{ display: 'block', minWidth: 32, flexShrink: 0 }}
+                        style={{
+                          display: 'block',
+                          minWidth: 32,
+                          flexShrink: 0,
+                        }}
                         aria-hidden="true"
                       >
                         <path
@@ -1082,7 +1092,10 @@ export function GeneralFuneral({
                           fill="none"
                         />
                       </svg>
-                      <span className="text-[11px] sm:text-xs font-semibold whitespace-nowrap" style={{ color: '#374151' }}>
+                      <span
+                        className="text-[11px] sm:text-xs font-semibold whitespace-nowrap"
+                        style={{ color: '#374151' }}
+                      >
                         장례식장 기본 이용료
                       </span>
                     </div>

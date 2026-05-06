@@ -859,8 +859,11 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                         fill="none"
                       />
                     </svg>
-                    <span className="text-[11px] sm:text-xs font-semibold whitespace-nowrap" style={{ color: '#374151' }}>
-                      장례식장 &apos;상조&apos;
+                    <span
+                      className="text-[11px] sm:text-xs font-semibold whitespace-nowrap"
+                      style={{ color: '#374151' }}
+                    >
+                      &apos;상조&apos;
                       <br />
                       평균 비용
                     </span>
@@ -905,7 +908,10 @@ export function CorporateFuneral(props: CorporateFuneralProps) {
                         fill="none"
                       />
                     </svg>
-                    <span className="text-[11px] sm:text-xs font-semibold whitespace-nowrap" style={{ color: '#374151' }}>
+                    <span
+                      className="text-[11px] sm:text-xs font-semibold whitespace-nowrap"
+                      style={{ color: '#374151' }}
+                    >
                       장례식장 기본 이용료
                     </span>
                   </div>
